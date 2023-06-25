@@ -15,10 +15,10 @@ const teamStats = {
   scorers: [],
 };
 const gameDefault = {
-  lastKicked: nil,
-  preLastKick: nil,
-  red: ...teamStats,
-  blue: ...teamStats,
+  lastKicked: null,
+  preLastKick: null,
+  red: { ...teamStats },
+  blue: { ...teamStats },
 };
 
 var game = {
@@ -75,7 +75,7 @@ function updateTeamPlayers() {
 // Update information to monitor scorers, assisters, possession and passing accuracy
 function updateBallKick(player) {
   // Update information to count assister later
-  if ( game.lastKicked != nil ) {
+  if ( game.lastKicked != null ) {
     game.preLastKicked = Object.assign({}, game.lastKicked);
   };
   // Update information about scorer
@@ -139,7 +139,7 @@ function countScorer(team) {
 }
 
 function countAssister(team) {
-  if ( preLastKicked == nil ) return;
+  if ( preLastKicked == null ) return;
   if ( preLastKicked.team != team ) return; // Not an assist
   if ( preLastKicked.id == lastKicked.id ) return; // Solo goal
   room.sendChat(`Kiến tạo thuộc về @${preLastKicked.name}`);
@@ -188,7 +188,7 @@ function gameStartComment(player) {
 }
 
 function reset() {
-  game = {...gameDefault};
+  game = { ...gameDefault };
 }
 
 room.onPlayerJoin = function(player) {
