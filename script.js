@@ -37,7 +37,7 @@ room.setCustomStadium('{"name":"HaxViet Premier League from HaxMaps","width":900
 
 // If player is known, set to admin
 function checkAdmin(player) {
-  if ( admins.includes(player.playerName) ) {
+  if ( admins.includes(player.name) ) {
     room.setPlayerAdmin(player.id, true);
   };
 }
@@ -53,16 +53,20 @@ function updateAdmins() {
 
 // If there are no admins left in the room give admin to one of the remaining players.
 function updateTeamPlayers() {
-  // Get all players
-  let players = room.getPlayerList();
-  if ( players.length == 0 ) return; // No players left, do nothing.
   // Move players to teams until it's enough
   while ( true ) {
-    let specPlayers = players.filter(player => player.team == 0); // Get bench players (like Penaldo)
-    let redPlayers = players.filter(player => player.team == 1); // Get RED players
-    let bluePlayers = players.filter(player => player.team == 2); // Get RED players
+    // Get all players
+    let players = room.getPlayerList();
+    if ( players.length == 0 ) return; // No players left
 
-    if ( (redPlayers.length == bluePlayers.length == 5) || specPlayers.length == 0 ) return; // If there are enough players or no players left in the Spectators
+    // Get bench players (like Penaldo)
+    let specPlayers = players.filter(player => player.team == 0);
+    if ( specPlayers.length == 0 ) return; // No players left in the Spectators
+
+    // Get players from RED and BLUE
+    let redPlayers = players.filter(player => player.team == 1);
+    let bluePlayers = players.filter(player => player.team == 2);
+    if ( redPlayers.length == bluePlayers.length == 5 ) return; // There there are enough players
 
     // Find the team that needs new players the most
     let missingTeam = redPlayers.length > bluePlayers.length ? 2 : 1;
@@ -97,7 +101,7 @@ function celebrateGoal(team) {
   let teamScores = ( team == 1 ) ? scores.red : scores.blue;
   let opponentScores = ( team == 1 ) ? scores.blue : scores.red;
   // Get score line in string
-  let scoreLine = `${teamScores}-${opponentScores}`;
+  let scoreline = `${teamScores}-${opponentScores}`;
 
   var comment = undefined;
   // Design a good comment :P
@@ -176,15 +180,11 @@ function checkFlex(player, message) {
 }
 
 function sayHello(player) {
-  if ( player.admin ) {
-    room.sendChat(`Chào mừng @${player.name} đến với ban huấn luyện`);
-  } else {
-    room.sendChat(`Chào mừng @${player.name} đến với băng ghế dự bị cùng Cristiano Ronaldo`);
-  };
+  room.sendChat(`Chào mừng @${player.name} đến với băng ghế dự bị cùng Cristiano Ronaldo`);
 }
 
-function gameStartComment(player) {
-  room.sendChat(`Chào mừng mọi người đến với SVĐ ${stadium}, hi vọng mọi người đã và đang có một ngày không tốt lành`)
+function gameStartComment() {
+  room.sendChat(`Chào mừng đến với SVĐ ${stadium}, hi vọng mọi người đã và đang có một ngày không tốt lành`)
 }
 
 function reset() {
@@ -193,6 +193,7 @@ function reset() {
 
 room.onPlayerJoin = function(player) {
   checkAdmin(player);
+  updateAdmins();
   sayHello(player);
   updateTeamPlayers();
 }
@@ -225,6 +226,11 @@ room.onTeamVictory = function(scores) {
 room.onGameStart = function(byPlayer) {
   reset();
   gameStartComment();
+}
+
+room.onGameStop = function(byPlayer) {
+  if (byPlayer == null) return;
+  room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu")
 }
 
 room.onGamePause = function(byPlayer) {
