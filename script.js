@@ -47,31 +47,31 @@ function updateAdmins() {
   // Get all players
   let players = room.getPlayerList();
   if ( players.length == 0 ) return; // No players left, do nothing.
-  if ( players.find((player) => player.admin) != null ) return; // There's an admin left so do nothing.
+  if ( players.find((player) => player.admin && player.id != 0) != undefined ) return; // There's an admin left so do nothing.
   room.setPlayerAdmin(players[0].id, true); // Give admin to the first non admin player in the list
 }
 
 // If there are no admins left in the room give admin to one of the remaining players.
-function updateTeamPlayers() {
+async function updateTeamPlayers() {
   // Move players to teams until it's enough
   while ( true ) {
     // Get all players
     let players = room.getPlayerList();
-    if ( players.length == 0 ) return; // No players left
 
     // Get bench players (like Penaldo)
-    let specPlayers = players.filter(player => player.team == 0);
+    let specPlayers = players.filter(player => (player.team == 0) && (player.id != 0)); // Exclude the host from the Spectators
     if ( specPlayers.length == 0 ) return; // No players left in the Spectators
 
-    // Get players from RED and BLUE
+    // Get players from 2 teams
     let redPlayers = players.filter(player => player.team == 1);
     let bluePlayers = players.filter(player => player.team == 2);
-    if ( redPlayers.length == bluePlayers.length == 5 ) return; // There there are enough players
+    if ( redPlayers.length == bluePlayers.length == 5 ) return; // There are enough players
 
     // Find the team that needs new players the most
     let missingTeam = redPlayers.length > bluePlayers.length ? 2 : 1;
 
-    room.setPlayerTeam(specPlayers[0].id, missingTeam);
+    // API functions that modify the game's state execute asynchronously, so we have to wait before recheck everything
+    await room.setPlayerTeam(specPlayers[0].id, missingTeam);
     room.sendChat(`@${specPlayers[0].name} đã được tung vào sân`);
   };
 }
