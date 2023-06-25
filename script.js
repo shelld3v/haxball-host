@@ -37,9 +37,9 @@ room.setCustomStadium('{"name":"HaxViet Premier League from HaxMaps","width":900
 
 // If player is known, set to admin
 function checkAdmin(player) {
-  if ( (player.playerName) in admins ) {
+  if ( admins.includes(player.playerName) ) {
     room.setPlayerAdmin(player.id, true);
-  }
+  };
 }
 
 // If there are no admins left in the room give admin to one of the remaining players.
@@ -180,7 +180,7 @@ function sayHello(player) {
     room.sendChat(`Chào mừng @${player.name} đến với ban huấn luyện`);
   } else {
     room.sendChat(`Chào mừng @${player.name} đến với băng ghế dự bị cùng Cristiano Ronaldo`);
-  }
+  };
 }
 
 function gameStartComment(player) {
