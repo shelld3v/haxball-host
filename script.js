@@ -1,18 +1,23 @@
 const STADIUM = "De Paul";
-const START_GAME_COMMENT = `Chào mừng đến với SVĐ ${STADIUM}, tôi là Trông Anh Ngược, người bình luận cho các bạn ngày hôm nay`
+const START_GAME_COMMENT = `Chào mừng đến với SVĐ ${STADIUM}, tôi là Trông Anh Ngược, BLV của các bạn ngày hôm nay`
 const STATS_COLOR = 0x990099;
 const GREEN = 0x00FF00;
 const RED = 0xFF0000;
 
 const admins = [
-  ".dep try nhat sever:3",
+  ". deptry nhat sever:33",
   "vit",
   "Linhh:3",
+  "MatQuyenKiemSoat",
+  "Licha",
+  "mec",
+  "hvy",
 ];
 const replies = {
   "tin chuẩn chưa a": "Chuẩn em nhé",
   "ai hỏi": "Tao hỏi",
   "óc": "Toxic nên anh sẽ block em nhé",
+  "mmb": "Mẹ tao béo, nhưng ít nhất tao có mẹ",
 };
 const comments = {
   "-4": "liệu còn hy vọng nào không",
@@ -40,8 +45,10 @@ const gameDefault = {
 };
 
 var game = JSON.parse(JSON.stringify(gameDefault));
-var autoPickDisabled = false;
-
+var config = {
+  wait: false,
+  autoPickDisabled: false,
+}
 var room = HBInit({
   roomName: "Phòng tự động của De Paul",
   maxPlayers: 30,
@@ -54,7 +61,7 @@ room.setCustomStadium('{"name":"HaxViet Premier League from HaxMaps","width":900
 
 // Get a chat-pingable tag from player's name
 function getTag(name) {
-  return "@" + name.replace(" ", "_");
+  return "@" + name.replaceAll(" ", "_");
 }
 
 function formatTime(time) {
@@ -99,7 +106,7 @@ function updateAdmins() {
 
 // Move players to teams until it's enough
 async function updateTeamPlayers() {
-  if ( autoPickDisabled ) return;
+  if ( config.autoPickDisabled ) return;
   while ( true ) {
     // Get all players except admins because they can do it themself
     let players = getPlayers();
@@ -118,7 +125,6 @@ async function updateTeamPlayers() {
 
     // API functions that modify the game's state execute asynchronously, so we have to wait before rechecking everything
     await room.setPlayerTeam(specPlayers[0].id, missingTeam);
-    room.sendAnnouncement(`${specPlayers[0].name} đã được tung vào sân`, null, GREEN);
   };
 }
 
@@ -197,45 +203,53 @@ function countScorer(team) {
 function countAssister(team) {
   if (
     (game.preLastKicked == null) ||
-    (game.lastKicked != team) || // Own goal
+    (game.lastKicked.team != team) || // Own goal
     (game.preLastKicked.id) == game.lastKicked.id // Solo goal
   ) return;
   // Assisted by the opponent team, sometimes comment about it
-  if ( game.preLastKicked.team != team && randomBoolean() ) {
-     room.sendChat(`Một sai lầm đến từ ${getTag(game.preLastKicked.name)}`);
+  if ( game.preLastKicked.team != team && randomBoolean(30) ) {
+    room.sendChat(`${getTag(game.preLastKicked.name)} đã làm không tốt nhiệm vụ của mình`);
+  } else if ( game.preLastKicked.team == team ) {
+    room.sendChat(`Kiến tạo thuộc về ${getTag(game.preLastKicked.name)}`);
   };
-  room.sendChat(`Kiến tạo thuộc về ${getTag(game.preLastKicked.name)}`);
 }
 
 function reportStats(scores) {
-  room.sendAnnouncement(` RED ${scores.red}-${scores.blue} BLUE`, null, STATS_COLOR, "bold");
+  room.sendAnnouncement(` RED ${scores.red}-${scores.blue} BLUE`, null, STATS_COLOR, "bold", 0);
   // Possession stats
   let totalKicks = game.red.kicks + game.blue.kicks;
   let redPossession = Math.round((game.red.kicks / totalKicks) * 100)
   let bluePossession = 100 - redPossession;
-  room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% | BLUE ${bluePossession}%`, null, STATS_COLOR);
+  room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% | BLUE ${bluePossession}%`, null, STATS_COLOR, 0);
   // Pass accuracy stats
   let redPasses = game.red.kicks - game.red.wallKicks
   let bluePasses = game.blue.kicks - game.blue.wallKicks
   let redAccuracy = redPasses != 0 ? Math.round((game.red.accuratePasses / redPasses) * 100): 0;
   let blueAccuracy = bluePasses != 0 ? Math.round((game.blue.accuratePasses / bluePasses) * 100): 0;
-  room.sendAnnouncement(`Tỉ lệ chuyền bóng chính xác: RED ${redAccuracy}% | BLUE ${blueAccuracy}%`, null, STATS_COLOR);
+  room.sendAnnouncement(`Tỉ lệ chuyền bóng chính xác: RED ${redAccuracy}% | BLUE ${blueAccuracy}%`, null, STATS_COLOR, 0);
   // Wall kicks stats
-  room.sendAnnouncement(`Đập tường thành công: RED ${game.red.wallKicks} | BLUE ${game.blue.wallKicks}`, null, STATS_COLOR);
+  room.sendAnnouncement(`Đập tường thành công: RED ${game.red.wallKicks} | BLUE ${game.blue.wallKicks}`, null, STATS_COLOR, 0);
   // Scorers information
   if ( game.red.scorers.length != 0 ) {
-    room.sendAnnouncement(`Ghi bàn cho RED: ${game.red.scorers.join(", ")}`, null, STATS_COLOR);
+    room.sendAnnouncement(`Ghi bàn cho RED: ${game.red.scorers.join(", ")}`, null, STATS_COLOR, 0);
   };
   if ( game.blue.scorers.length != 0 ) {
-    room.sendAnnouncement(`Ghi bàn cho BLUE: ${game.blue.scorers.join(", ")}`, null, STATS_COLOR);
+    room.sendAnnouncement(`Ghi bàn cho BLUE: ${game.blue.scorers.join(", ")}`, null, STATS_COLOR, 0);
   }
 }
 
-function processCommand(player, command) {
+function processCommand(player, alias) {
+  if ( alias == "var" ) {
+    room.sendAnnouncement("Phòng VAR thông báo không có dấu hiệu của phạm lỗi", null, GREEN, 0);
+  };
   if ( !player.admin ) return; // No permission to run commands below
-  if ( command == "noautopick" ) {
-    autoPickDisabled = true;
-    room.sendAnnouncement("Đã tắt tự động thay người", player.id, 0x00FF00);
+  if ( alias == "wait" ) {
+    config.wait = true;
+    room.sendAnnouncement("Đã dừng tự động cấp Admin", player.id, GREEN, 0);
+  };
+  if ( alias == "noautopick" ) {
+    config.autoPickDisabled = true;
+    room.sendAnnouncement("Đã tắt tự động thay người", player.id, GREEN, 0);
   };
 }
 
@@ -261,8 +275,35 @@ function gameStartComment() {
   room.sendChat(START_GAME_COMMENT);
 }
 
+// Give another player admin if current admins seem to be unresponsive
+async function monitorInactivity() {
+  await new Promise(r => setTimeout(r, 10000));// Wait 5 seconds
+  if ( room.getScores() != null ) return; // Game has started
+
+  // Room is inactive, are admins AFK?
+  let players = getPlayers()
+  let admins = players.filter((player) => player.admin);
+  if (
+    (admins.length == 0) || // No one else in the room:((
+    (admins.length >= 4) // I don't think all 4 admins are AFK :P
+  ) return;
+  // Notify admins about inactivity, give random admin if no action is made from current admins
+  let mentionAdmins = admins.map((admin) => getTag(admin.name)).join(" "); // Tag all admins
+  room.sendChat(`${mentionAdmins} vui lòng khởi động trận đấu hoặc chat !wait trong 15 giây trước khi room cấp Admin ngẫu nhiên`)
+  await new Promise(r => setTimeout(r, 15000));
+  if ( wait || room.getScores() != null ) return; // Admins are up :D
+
+  let nonAdminPlayer = players.find((player) => !player.admin)
+  if ( nonAdminPlayer == undefined ) {
+    room.sendAnnouncement("Không có người chơi để cấp Admin!", null, RED);
+    return;
+  }
+  room.setPlayerAdmin(nonAdminPlayer.id, true);
+}
+
 function reset() {
   game = JSON.parse(JSON.stringify(gameDefault));
+  config.wait = false;
 }
 
 room.onPlayerJoin = function(player) {
@@ -288,12 +329,6 @@ room.onTeamGoal = function(team) {
   countAssister(team);
 }
 
-room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
-  if ( changedPlayer.team == 0 ) {
-    room.sendAnnouncement(`${changedPlayer.name} đã được cho ra nghỉ`, null, RED);
-  };
-}
-
 room.onPlayerChat = function(player, message) {
   checkReply(player, message);
 }
@@ -308,8 +343,10 @@ room.onGameStart = function(byPlayer) {
 }
 
 room.onGameStop = function(byPlayer) {
-  if (byPlayer == null) return;
-  room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu")
+  if (byPlayer != null) {
+    room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu")
+  };
+  monitorInactivity();
 }
 
 room.onGamePause = function(byPlayer) {
