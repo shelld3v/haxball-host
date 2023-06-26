@@ -9,15 +9,6 @@ const BLUE_TEAM_COLORS = [0x0099FF];
 const RED_TEAM_ANGLE = 60;
 const BLUE_TEAM_ANGLE = 60;
 
-const admins = [
-  ". deptry nhat sever:33",
-  "vit",
-  "Linhh:3",
-  "MatQuyenKiemSoat",
-  "Licha",
-  "hvy",
-  "THẦY 10 KHÓ",
-];
 const replies = {
   "tin chuẩn chưa a": "Chuẩn em nhé",
   "ai hỏi": "Tao hỏi",
@@ -95,11 +86,6 @@ async function validatePlayer(player) {
   let sameNamePlayer = players.find((_player) => (_player.name == player.name) && (_player.id != player.id));
   if ( sameNamePlayer == undefined ) return;
   room.kickPlayer(player.id, "Tên người chơi đã tồn tại, vui lòng thay tên");
-}
-
-// If player is known, set to admin
-function checkAdmin(player) {
-  admins.includes(player.name) && room.setPlayerAdmin(player.id, true);
 }
 
 // If there are no admins left in the room give admin to one of the remaining players.
@@ -348,7 +334,6 @@ function reset() {
 
 room.onPlayerJoin = function(player) {
   validatePlayer(player);
-  checkAdmin(player);
   updateAdmins();
   sayHello(player);
   updateTeamPlayers();
