@@ -350,8 +350,7 @@ room.onPlayerBallKick = function(player) {
 
 room.onTeamGoal = function(team) {
   celebrateGoal(team);
-  countScorer(team);
-  countAssister(team);
+  updateStats(team);
 }
 
 room.onPlayerChat = function(player, message) {
