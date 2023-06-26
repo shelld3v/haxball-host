@@ -202,9 +202,11 @@ function updateStats(team) {
   if (
     (game.preLastKicked == null) || // Kick-off goal
     (game.preLastKicked.id == game.lastKicked.id) // Solo goal
-  ) {} else if ( game.preLastKicked.team != team && randomBoolean(30) ) { // Assisted by the opponent team, sometimes comment about it
-    comment = comment.concat(", ", `${getTag(game.preLastKicked.name)} đã làm không tốt`);
-  } else if ( game.preLastKicked.team == team ) {
+  ) {} else if ( game.preLastKicked.team != team ) { // Assisted by the opponent team
+    if ( randomBoolean(30) ) { // Only comment about it sometimes
+      comment = comment.concat(", ", `${getTag(game.preLastKicked.name)} đã làm không tốt`);
+    };
+  } else {
     comment = comment.concat(", ", `kiến tạo thuộc về ${getTag(game.preLastKicked.name)}`);
   };
 
@@ -351,6 +353,7 @@ room.onPlayerBallKick = function(player) {
 room.onTeamGoal = function(team) {
   celebrateGoal(team);
   updateStats(team);
+  lastKicked = preLastKicked = null;
 }
 
 room.onPlayerChat = function(player, message) {
