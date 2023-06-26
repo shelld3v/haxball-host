@@ -1,4 +1,7 @@
-const stadium = "HV De Paul";
+const STADIUM = "HV De Paul";
+const START_GAME_COMMENT = `Chào mừng đến với SVĐ ${STADIUM}, tôi là Trông Anh Ngược, người sẽ bình luận cho các bạn ngày hôm nay`
+const STATS_COLOR = 0x990099;
+
 const admins = [
   ".dep try nhat sever:3",
   "vit",
@@ -6,8 +9,8 @@ const admins = [
 ];
 const replies = {
   "tin chuẩn chưa a": "Chuẩn em nhé",
-  "chất": "Anh chất hay máy sấy chất? Hồi còn ở nhà 5 tầng anh cx chưa dùng máy sấy đâu",
-  "anh biết tiếng pháp": "Anh có thể nghe hiểu tiếng TBN (nếu nói chậm), đọc đc báo BĐN, tiếng Pháp thì em hỏi con gái anh, nói như ng Paris",
+  "ai hỏi": "Tao hỏi",
+  "óc": "Toxic nên anh sẽ block em nhé",
 };
 const comments = {
   "-4": "liệu còn hy vọng nào không",
@@ -18,7 +21,7 @@ const comments = {
   "1": "một cách biệt đã được tạo ra",
   "2": "cách biệt đã được nâng lên 2 bàn",
   "3": "chuyện gì đang xảy ra vậy?",
-  "4": `ác mộng đang diễn tại SVĐ ${stadium}`,
+  "4": `ác mộng đang diễn tại SVĐ ${STADIUM}`,
   "5": "hết cứu rồi, hết cứu thật rồi",
 };
 const teamStats = {
@@ -40,7 +43,7 @@ var room = HBInit({
   roomName: "Phòng tự động của De Paul",
   maxPlayers: 20,
   playerName: "BLV Trông Anh Ngược",
-  public: true,
+  public: false,
 });
 room.setScoreLimit(0);
 room.setTimeLimit(5);
@@ -51,16 +54,26 @@ function getPlayers() {
   return room.getPlayerList().filter((player) => player.id != 0);
 }
 
-// Get a chat-taggable username from player's name
-function formatTag(name) {
-  return name.replace(" ", "_");
+// Get a chat-pingable tag from player's name
+function getTag(name) {
+  return "@" + name.replace(" ", "_");
+}
+
+function formatTime(time) {
+  let minutes = Math.floor(time / 60);
+  let seconds = Math.floor(time - minutes * 60);
+  return minutes != 0 ? `${minutes}'${seconds}''` : `${seconds}''`;
+}
+
+// Return a random boolean, with an optional probability of getting true
+function randomBoolean(probability = 50) {
+  return Math.random() < (probability / 100);
 }
 
 // If player is known, set to admin
 function checkAdmin(player) {
-  if ( admins.includes(player.name) ) {
-    room.setPlayerAdmin(player.id, true);
-  };
+  if ( !admins.includes(player.name) ) return;
+  room.setPlayerAdmin(player.id, true);
 }
 
 // If there are no admins left in the room give admin to one of the remaining players.
@@ -70,13 +83,12 @@ function updateAdmins() {
   if (
     players.length == 0 || // No players left
     players.find((player) => player.admin) != undefined // There's an admin left
-  ) { return };
+  ) return;
   room.setPlayerAdmin(players[0].id, true); // Give admin to the first non admin player in the list
 }
 
-// If there are no admins left in the room give admin to one of the remaining players.
+// Move players to teams until it's enough
 async function updateTeamPlayers() {
-  // Move players to teams until it's enough
   while ( true ) {
     // Get all players
     let players = getPlayers();
@@ -95,7 +107,7 @@ async function updateTeamPlayers() {
 
     // API functions that modify the game's state execute asynchronously, so we have to wait before recheck everything
     await room.setPlayerTeam(specPlayers[0].id, missingTeam);
-    room.sendChat(`@${formatTag(specPlayers[0].name)} đã được tung vào sân`);
+    room.sendAnnouncement(`${specPlayers[0].name} đã được tung vào sân`, null, 0x00FF00);
   };
 }
 
@@ -161,65 +173,68 @@ function celebrateGoal(team) {
 function countScorer(team) {
   // Update stat about scorers
   scorers = team == 1 ? game.red.scorers : game.blue.scorers;
-  time = Math.round(room.getScores().time);
+  time = formatTime(room.getScores().time);
   if ( game.lastKicked.team != team ) { // Own goal
-    scorers.push(`@${formatTag(game.lastKicked.name)} ${time}' (OG)`);
-    room.sendChat(`Một pha phản lưới nhà do sai lầm của @${formatTag(game.lastKicked.name)}`);
+    scorers.push(`${game.lastKicked.name} ${time} (OG)`);
+    room.sendChat(`Một pha phản lưới nhà do sai lầm của ${getTag(game.lastKicked.name)}`);
     return;
   };
-  scorers.push(`@${formatTag(game.lastKicked.name)} ${time}'`);
-  room.sendChat(`@${formatTag(game.lastKicked.name)} là người đã ghi bàn`);
+  scorers.push(`${game.lastKicked.name} ${time}`);
+  room.sendChat(`${getTag(game.lastKicked.name)} là người đã ghi bàn`);
 }
 
 function countAssister(team) {
   if (
     (game.preLastKicked == null) ||
-    (game.preLastKicked.team != team) || // Assisted by the opponent team
     (game.lastKicked != team) || // Own goal
     (game.preLastKicked.id) == game.lastKicked.id // Solo goal
   ) return;
-  room.sendChat(`Kiến tạo thuộc về @${formatTag(game.preLastKicked.name)}`);
+  // Assisted by the opponent team, sometimes comment about it
+  if ( game.preLastKicked.team != team && randomBoolean() ) {
+     room.sendChat(`Một sai lầm đến từ ${getTag(game.preLastKicked.name)}`);
+  };
+  room.sendChat(`Kiến tạo thuộc về ${getTag(game.preLastKicked.name)}`);
 }
 
 function reportStats(scores) {
-  room.sendChat(`| RED ${scores.red}-${scores.blue} BLUE`);
+  room.sendAnnouncement(` RED ${scores.red}-${scores.blue} BLUE`, null, STATS_COLOR, "bold");
   // Possession stats
   let totalKicks = game.red.kicks + game.blue.kicks;
   let redPossession = Math.round((game.red.kicks / totalKicks) * 100)
   let bluePossession = 100 - redPossession;
-  room.sendChat(`|Kiểm soát bóng: RED ${redPossession}% | BLUE ${bluePossession}%`);
+  room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% | BLUE ${bluePossession}%`, null, STATS_COLOR);
   // Pass accuracy stats
   let redPasses = game.red.kicks - game.red.wallKicks
   let bluePasses = game.blue.kicks - game.blue.wallKicks
   let redAccuracy = redPasses != 0 ? Math.round((game.red.accuratePasses / redPasses) * 100): 0;
   let blueAccuracy = bluePasses != 0 ? Math.round((game.blue.accuratePasses / bluePasses) * 100): 0;
-  room.sendChat(`|Tỉ lệ chuyền bóng chính xác: RED ${redAccuracy}% | BLUE ${blueAccuracy}%`);
+  room.sendAnnouncement(`Tỉ lệ chuyền bóng chính xác: RED ${redAccuracy}% | BLUE ${blueAccuracy}%`, null, STATS_COLOR);
   // Wall kicks stats
-  room.sendChat(`|Đập tường thành công: RED ${game.red.wallKicks} | BLUE ${game.blue.wallKicks}`);
+  room.sendAnnouncement(`Đập tường thành công: RED ${game.red.wallKicks} | BLUE ${game.blue.wallKicks}`, null, STATS_COLOR);
   // Scorers information
-  room.sendChat(`|Ghi bàn cho RED: ${game.red.scorers.join(", ")}`);
-  room.sendChat(`|Ghi bàn cho BLUE: ${game.blue.scorers.join(", ")}`);
+  if ( game.red.scorers.length != 0 ) {
+    room.sendAnnouncement(`Ghi bàn cho RED: ${game.red.scorers.join(", ")}`, null, STATS_COLOR);
+  };
+  if ( game.blue.scorers.length != 0 ) {
+    room.sendAnnouncement(`Ghi bàn cho BLUE: ${game.blue.scorers.join(", ")}`, null, STATS_COLOR);
+  }
 }
 
-function checkFlex(player, message) {
-  if ( message.length < 4 ) return true;
-
+async function checkReply(player, message) {
   message = message.toLowerCase();
   for ( const [keyword, response] of Object.entries(replies) ) { // Check if the message needs a flex
     if ( message.startsWith(keyword) ) {
-      room.sendChat(`@${formatTag(player.name)} ${response}`);
+      room.sendChat(`${getTag(player.name)} ${response}`);
     };
   };
-
-  return true;
 }
 
 function sayHello(player) {
-  room.sendChat(`Chào mừng @${formatTag(player.name)} đến với băng ghế dự bị cùng Cristiano Ronaldo`);
+  room.sendChat(`Chào mừng ${getTag(player.name)} đến với băng ghế dự bị cùng Cristiano Ronaldo`);
 }
 
 function gameStartComment() {
-  room.sendChat(`Chào mừng đến với SVĐ ${stadium}, nơi tưởng niệm sự ra đi của huyền thoại haxball "De Paul"`)
+  room.sendChat(START_GAME_COMMENT);
 }
 
 function reset() {
@@ -235,9 +250,7 @@ room.onPlayerJoin = function(player) {
 
 room.onPlayerLeave = function(player) {
   updateAdmins();
-  if ( player.team == 0 ) {
-    updateTeamPlayers();
-  };
+  if ( player.team != 0 ) updateTeamPlayers();
 }
 
 room.onPlayerBallKick = function(player) {
@@ -250,8 +263,14 @@ room.onTeamGoal = function(team) {
   countAssister(team);
 }
 
+room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
+  if ( changedPlayer.team == 0 ) {
+    room.sendAnnouncement(`${changedPlayer.name} đã được cho ra nghỉ`, null, 0xFF0000);
+  };
+}
+
 room.onPlayerChat = function(player, message) {
-  checkFlex(player, message);
+  checkReply(player, message);
 }
 
 room.onTeamVictory = function(scores) {
