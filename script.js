@@ -14,8 +14,6 @@ const replies = {
   "ai hỏi": "Tao hỏi",
   "óc": "Toxic nên anh sẽ block em nhé",
   "memaybeo": "Mẹ tao béo, nhưng ít nhất tao có mẹ",
-  "rùa": "Một fan MU cho hay...",
-  "gánh ": "Gánh thì cũng ghê đó, nhưng mày có người yêu không? 😏",
 };
 const comments = {
   "-4": "liệu còn hy vọng nào không",
@@ -92,10 +90,7 @@ async function validatePlayer(player) {
 function updateAdmins() {
   // Get all players
   let players = getPlayers();
-  if (
-    players.length == 0 || // No players left
-    players.find((player) => player.admin) != undefined // There's an admin left
-  ) return;
+  if ( players.find((player) => player.admin) != undefined ) return; // There's an admin left
   room.setPlayerAdmin(players[0].id, true); // Give admin to the first non-admin player in the list
 }
 
@@ -103,7 +98,7 @@ function updateAdmins() {
 async function updateTeamPlayers() {
   if ( config.autoPickDisabled ) return;
   while ( true ) {
-    // Get all players except admins because they can do it themself
+    // Get all players except host player
     let players = getPlayers();
 
     // Get a bench player (like Penaldo) that aren't admins cause admins can do it themself
@@ -116,7 +111,7 @@ async function updateTeamPlayers() {
     if ( (redPlayers.length >= 5) && (bluePlayers.length >= 5) ) return; // There are enough players
 
     // Find the team that needs new players the most
-    let missingTeam = redPlayers.length > bluePlayers.length ? 2 : 1;
+    let missingTeam = ( redPlayers.length > bluePlayers.length ) ? 2 : 1;
 
     // API functions that modify the game's state execute asynchronously, so we have to wait before rechecking everything
     await room.setPlayerTeam(specPlayer.id, missingTeam);
@@ -132,7 +127,7 @@ function updateBallKick(player) {
   // Update information about scorer
   game.lastKicked = player;
 
-  team = player.team == 1 ? game.red : game.blue;
+  team = ( player.team == 1 ) ? game.red : game.blue;
   // Update total kicks
   team.kicks++;
   // Update accurate kicks
@@ -190,33 +185,30 @@ function celebrateGoal(team) {
   room.sendChat(`${scream} ${scoreline}, ${comment}`);
 }
 
-function countScorer(team) {
+function updateStats(team) {
   // Update stat about scorers
   scorers = team == 1 ? game.red.scorers : game.blue.scorers;
   time = formatTime(room.getScores().time);
+
   if ( game.lastKicked.team != team ) { // Own goal
     scorers.push(`${game.lastKicked.name} ${time} (OG)`);
-    room.sendChat(`Một pha phản lưới nhà do sai lầm của ${getTag(game.lastKicked.name)}`);
+    room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(game.lastKicked.name)}`);
     return;
   };
-  scorers.push(`${game.lastKicked.name} ${time}`);
-  room.sendChat(`${getTag(game.lastKicked.name)} là người đã ghi bàn`);
-}
 
-function countAssister(team) {
+  scorers.push(`${game.lastKicked.name} ${time}`);
+  let message = `${getTag(game.lastKicked.name)} là người đã ghi bàn`;
+
   if (
-    (game.preLastKicked == null) ||
-    (game.lastKicked.team != team) || // Own goal
-    (game.preLastKicked.id) == game.lastKicked.id // Solo goal
-  ) return;
-  // Assisted by the opponent team, sometimes comment about it
-  if ( game.preLastKicked.team != team && randomBoolean(30) ) {
-    room.sendChat(`${getTag(game.preLastKicked.name)} đã làm không tốt nhiệm vụ của mình`);
-    return;
+    (game.preLastKicked == null) || // Kick-off goal
+    (game.preLastKicked.id == game.lastKicked.id) // Solo goal
+  ) {} else if ( game.preLastKicked.team != team && randomBoolean(30) ) { // Assisted by the opponent team, sometimes comment about it
+    comment = comment.concat(", ", `${getTag(game.preLastKicked.name)} đã làm không tốt`);
+  } else if ( game.preLastKicked.team == team ) {
+    comment = comment.concat(", ", `kiến tạo thuộc về ${getTag(game.preLastKicked.name)}`);
   };
-  if ( game.preLastKicked.team == team ) {
-    room.sendChat(`Kiến tạo thuộc về ${getTag(game.preLastKicked.name)}`);
-  };
+
+  room.sendChat(comment);
 }
 
 function reportStats(scores) {
@@ -256,10 +248,13 @@ function processCommand(player, command) {
       room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN, 0);
       return false;
     case "var":
-      room.sendAnnouncement("Phòng VAR thông báo không có dấu hiệu của phạm lỗi", null, GREEN, 0);
+      room.sendAnnouncement("Phòng VAR thông báo không có lỗi, vui lòng mua gói VAR để cải thiện chất lượng", null, GREEN, 0);
       return true;
     case "penalty":
-      room.sendAnnouncement("Team bên kìa đã mua tài nên không có penalty", null, RED, 0);
+      room.sendAnnouncement("Trọng tài quyết định chỉ trao penalty cho những đội tên Real Madrid", null, RED, 0);
+      return true;
+    case "ref":
+      room.sendAnnouncement("Đội bạn đã đăng kí gói trọng tài nên không có lỗi", null, RED, 0);
       return true;
   };
 
@@ -281,9 +276,10 @@ function processCommand(player, command) {
   return true;
 }
 
-async function processResponse(player, message) {
+// Check if the message needs a reply
+async function processReply(player, message) {
   message = message.toLowerCase();
-  for ( const [keyword, response] of Object.entries(replies) ) { // Check if the message needs a reply
+  for ( const [keyword, response] of Object.entries(replies) ) {
     message.startsWith(keyword) && room.sendChat(`${getTag(player.name)} ${response}`);
   };
 }
@@ -293,7 +289,7 @@ function processMessage(player, message) {
     return processCommand(player, message.slice(1));
   }
 
-  processResponse(player, message);
+  processReply(player, message);
   return true;
 }
 
