@@ -251,7 +251,7 @@ function processCommand(player, command) {
 
   switch ( alias ) {
     case "login":
-      if ( value != ADMIN_PASSWORD ) return;
+      if ( value != ADMIN_PASSWORD ) return false;
       room.setPlayerAdmin(player.id, true);
       room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN, 0);
       return false;
