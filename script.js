@@ -273,6 +273,10 @@ function processCommand(player, command) {
       config.autoPickDisabled = true;
       room.sendAnnouncement("Đã tắt tự động thay người", player.id, GREEN, 0);
       break;
+    case "autopick":
+      config.autoPickDisabled = false;
+      room.sendAnnouncement("Đã bật tự động thay người", player.id, GREEN, 0);
+      break;
   };
   return true;
 }
