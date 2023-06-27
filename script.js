@@ -296,7 +296,7 @@ function gameStartComment() {
 
 // Give another player admin if current admins seem to be unresponsive
 async function monitorInactivity() {
-  await new Promise(r => setTimeout(r, 10000));// Wait 5 seconds
+  await new Promise(r => setTimeout(r, 10000));// Wait 10 seconds
   if ( room.getScores() != null ) return; // Game has started
 
   // Room is inactive, are admins AFK?
