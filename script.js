@@ -4,6 +4,15 @@ const STATS_COLOR = 0x990099;
 const GREEN = 0x00FF00;
 const RED = 0xFF0000;
 
+const commands = { // Format: "alias: [function, requiresAdmin]"
+  "help": [helpFunc, false],
+  "var": [varFunc, false],
+  "penalty": [penaltyFunc, false],
+  "login": [loginFunc, false],
+  "wait": [waitFunc, true],
+  "noautopick": [disableAutoPickFunc, true],
+  "autopick": [disableAutoPickFunc, true],
+}
 const replies = {
   "tin chuẩn chưa a": "Chuẩn em nhé",
   "óc": "Toxic nên anh sẽ block em nhé",
@@ -79,8 +88,8 @@ function getPlayers() {
 // If player's name has already existed, kick them
 async function validatePlayer(player) {
   let players = room.getPlayerList();
-  let sameNamePlayer = players.find((_player) => (_player.name == player.name) && (_player.id != player.id));
-  if ( sameNamePlayer == undefined ) return;
+  let nameExists = players.some((_player) => (_player.name == player.name) && (_player.id != player.id));
+  if ( nameExists ) return;
   room.kickPlayer(player.id, "Tên người chơi đã tồn tại, vui lòng thay tên");
 }
 
@@ -88,7 +97,7 @@ async function validatePlayer(player) {
 function updateAdmins() {
   // Get all players
   let players = getPlayers();
-  if ( players.find((player) => player.admin) != undefined ) return; // There's an admin left
+  if ( players.some((player) => player.admin) ) return; // There's an admin left
   room.setPlayerAdmin(players[0].id, true); // Give admin to the first non-admin player in the list
 }
 
@@ -102,13 +111,13 @@ async function updateTeamPlayers() {
   let specPlayer = players.find(player => (player.team == 0) && !player.admin);
   if ( specPlayer == undefined ) return; // No players left in the Spectators
 
-  // Get players from 2 teams
-  let redPlayers = players.filter(player => player.team == 1);
-  let bluePlayers = players.filter(player => player.team == 2);
-  if ( (redPlayers.length >= 5) && (bluePlayers.length >= 5) ) return; // There are enough players
+  // Count players from 2 teams
+  let redPlayersCount = players.filter(player => player.team == 1).length;
+  let bluePlayersCount = players.filter(player => player.team == 2).length;
+  if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) return; // There are enough players
 
   // Find the team that needs new players the most
-  let missingTeam = ( redPlayers.length > bluePlayers.length ) ? 2 : 1;
+  let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
 
   // API functions that modify the game's state execute asynchronously, so we have to wait before rechecking everything
   await room.setPlayerTeam(specPlayer.id, missingTeam);
@@ -132,6 +141,84 @@ async function updateBallKick(player) {
   if (player.team == game.lastKicked[1].team) {
     team.accuratePasses++;
   };
+}
+
+function varFunc(value, player) {
+  room.sendAnnouncement("Phòng VAR thông báo không có lỗi, vui lòng mua gói VAR để cải thiện chất lượng", null, GREEN, 0);
+  return true;
+}
+
+function penaltyFunc(penalty, player) {
+  room.sendAnnouncement("Trọng tài quyết định chỉ trao penalty cho những đội tên Real Madrid", null, RED, 0);
+  return true;
+}
+
+function loginFunc(password, player) {
+  if ( password == ADMIN_PASSWORD ) {
+    room.setPlayerAdmin(player.id, true);
+    room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN, 0);
+  } else {
+    room.kickPlayer(played.id, "Bạn đã nhập sai mật khẩu, vui lòng thử lại");
+  };
+  return false;
+}
+
+function waitFunc(value, player) {
+  config.wait = true;
+  room.sendAnnouncement("Đã dừng tự động cấp Admin", null, GREEN, 0);
+  return true;
+}
+
+function disableAutoPickFunc(value, player) {
+  config.autoPickDisabled = true;
+  room.sendAnnouncement("Đã tắt tự động thay người", player.id, GREEN, 0);
+  return true;
+}
+
+function enableAutoPickFunc(value, player) {
+  config.autoPickDisabled = false;
+  room.sendAnnouncement("Đã bật tự động thay người", player.id, GREEN, 0);
+  return true;
+}
+
+function helpFunc(value, player) {
+  let allAlias = Object.keys(commands.filter((command) => !command[1] || player.admin));
+  allAlias = allAlias.map((alias) => "!" + alias)
+  room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, BLUE, 0);
+  return true;
+}
+
+function processCommand(player, command) {
+  // Get alias and value from command
+  let splitIndex = command.indexOf(" ");
+  splitIndex = ( splitIndex != -1 ) ? splitIndex : command.length;
+  let [alias, value] = [command.slice(0, splitIndex), command.slice(splitIndex + 1)];
+  let found = commands[alias];
+  if ( found == undefined ) return true;
+
+  let [func, requiresAdmin] = found;
+  if ( requiresAdmin && !player.admin ) {
+    room.sendAnnouncement("Bạn cần phải là Admin để thực hiện lệnh này", player.id, RED, 0);
+    return false;
+  }
+  return func(value, player);
+}
+
+// Check if the message needs a reply
+async function processReply(player, message) {
+  message = message.toLowerCase();
+  for ( const [keyword, response] of Object.entries(replies) ) {
+    message.startsWith(keyword) && room.sendChat(`${getTag(player.name)} ${response}`);
+  };
+}
+
+function processMessage(player, message) {
+  if ( message.startsWith("!") ) { // Indicating a command
+    return processCommand(player, message.slice(1));
+  }
+
+  processReply(player, message);
+  return true;
 }
 
 function celebrateGoal(team) {
@@ -239,72 +326,6 @@ function reportStats(scores) {
   };
 }
 
-function processCommand(player, command) {
-  // Get alias and value from command
-  let splitIndex = command.indexOf(" ");
-  splitIndex = ( splitIndex != -1 ) ? splitIndex : command.length;
-  let [alias, value] = [command.slice(0, splitIndex), command.slice(splitIndex + 1)];
-
-  switch ( alias ) {
-    case "login":
-      if ( value != ADMIN_PASSWORD ) return false;
-      room.setPlayerAdmin(player.id, true);
-      room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN, 0);
-      return false;
-    case "var":
-      room.sendAnnouncement("Phòng VAR thông báo không có lỗi, vui lòng mua gói VAR để cải thiện chất lượng", null, GREEN, 0);
-      return true;
-    case "penalty":
-      room.sendAnnouncement("Trọng tài quyết định chỉ trao penalty cho những đội tên Real Madrid", null, RED, 0);
-      return true;
-    case "ref":
-      room.sendAnnouncement("Đội bạn đã đăng kí gói trọng tài nên không có lỗi", null, RED, 0);
-      return true;
-  };
-
-  if ( !player.admin ) return true; // No permission to run commands below
-  switch ( alias ) {
-    case "wait":
-      config.wait = true;
-      room.sendAnnouncement("Đã dừng tự động cấp Admin", player.id, GREEN, 0);
-      break;
-    case "noautopick":
-      config.autoPickDisabled = true;
-      room.sendAnnouncement("Đã tắt tự động thay người", player.id, GREEN, 0);
-      break;
-    case "autopick":
-      config.autoPickDisabled = false;
-      room.sendAnnouncement("Đã bật tự động thay người", player.id, GREEN, 0);
-      break;
-  };
-  return true;
-}
-
-// Check if the message needs a reply
-async function processReply(player, message) {
-  message = message.toLowerCase();
-  for ( const [keyword, response] of Object.entries(replies) ) {
-    message.startsWith(keyword) && room.sendChat(`${getTag(player.name)} ${response}`);
-  };
-}
-
-function processMessage(player, message) {
-  if ( message.startsWith("!") ) { // Indicating a command
-    return processCommand(player, message.slice(1));
-  }
-
-  processReply(player, message);
-  return true;
-}
-
-function sayHello(player) {
-  room.sendChat(`Chào mừng ${getTag(player.name)} đến với băng ghế dự bị cùng Cristiano Ronaldo`);
-}
-
-function gameStartComment() {
-  room.sendChat(START_GAME_COMMENT);
-}
-
 // Give another player admin if current admins seem to be unresponsive
 async function monitorInactivity() {
   await new Promise(r => setTimeout(r, 10000));// Wait 10 seconds
@@ -338,8 +359,8 @@ function reset() {
 
 room.onPlayerJoin = function(player) {
   validatePlayer(player);
+  room.sendChat(`Chào mừng ${getTag(player.name)} đến với băng ghế dự bị cùng Cristiano Ronaldo`, player.id);
   updateAdmins();
-  sayHello(player);
   updateTeamPlayers();
 }
 
@@ -368,7 +389,7 @@ room.onTeamVictory = function(scores) {
 
 room.onGameStart = function(byPlayer) {
   reset();
-  gameStartComment();
+  room.sendChat(START_GAME_COMMENT);
 }
 
 room.onGameStop = function(byPlayer) {
@@ -382,4 +403,9 @@ room.onGamePause = function(byPlayer) {
 
 room.onGameUnpause = function(byPlayer) {
   room.sendChat("Trọng tài đã check VAR và trận đấu được TIẾP TỤC");
+}
+
+room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
+  // Log this for admin to monitor kicking activity
+  console.log(`${kickedPlayer.name} was kicked by ${byPlayer.name} (reason: ${reason})`)
 }
