@@ -166,7 +166,7 @@ function penaltyFunc(penalty, player) {
 }
 
 function loginFunc(password, player) {
-  switch password {
+  switch ( password ) {
     case "":
       room.sendAnnouncement("Vui lòng đính kèm mật khẩu: !login <mật khẩu>", player.id, RED, 0);
       break;
