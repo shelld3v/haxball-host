@@ -9,7 +9,7 @@ const replies = {
   "óc": "Toxic nên anh sẽ block em nhé",
   "memaybeo": "Mẹ tao béo, nhưng ít nhất tao có mẹ",
 };
-const comments = {
+const goalComments = {
   "-4": "liệu còn hy vọng nào không",
   "-3": "tỉ số đã được rút ngắn",
   "-2": "liệu sẽ có một cuộc lội ngược dòng xảy ra?",
@@ -20,6 +20,11 @@ const comments = {
   "3": "cách biệt đã trở nên quá lớn để hy vọng cho một cuộc lội ngược dòng",
   "4": "một cơn ác mộng",
   "5": "hết cứu thật rồi",
+};
+const scorerComments = {
+  "1": "Cú đúp cho",
+  "2": "Hattrick của",
+  "3": "Thật không thể tin được, một cú poker từ",
 };
 const teamStats = {
   accuratePasses: 0,
@@ -167,8 +172,8 @@ function celebrateGoal(team) {
           comment = "một bàn thắng danh dự";
         };
     };
-  } else if (goalDiff in comments) {
-    comment = comments[goalDiff];
+  } else {
+    comment = goalComments[goalDiff] || comment;
   };
 
   room.sendChat(`${scream} ${scoreline}, ${comment}`);
@@ -185,7 +190,14 @@ function updateStats(team) {
     return;
   };
   goals.push(`${scorer.name} ${time}`);
+
   let comment = `${getTag(scorer.name)} là người đã ghi bàn`;
+  let scored = goals.filter((goal) => goal.startsWith(scorer.name));
+  // Better comment if player has already scored before
+  if ( scored.length != 0 ) {
+    comment = scorerComments[scored.length] || `Đây đã là bàn thắng thứ ${scored.length + 1} trong trận đấu này của`;
+    comment = comment.concat(" ", getTag(scorer.name));
+  }
 
   // Validate assister
   let assister = game.lastKicked[1];
