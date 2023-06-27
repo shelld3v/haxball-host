@@ -148,6 +148,11 @@ async function updateBallKick(player) {
   };
   // Other cases are wall kicks and duels, not counting as a pass to eliminate the previous pass count
   team.possessedKicks++;
+
+  // Check for commentary
+  if ( room.getScores().time > room.getScores().timeLimit ) {
+    room.sendChat("Vậy là những phút thi đấu chính thức đã kết thúc, chúng ta đang tiến đến khoảng thời gian bù giờ");
+  };
 }
 
 function varFunc(value, player) {
@@ -178,26 +183,26 @@ function loginFunc(password, player) {
 function waitFunc(value, player) {
   config.wait = true;
   room.sendAnnouncement("Đã dừng tự động cấp Admin", null, GREEN, 0);
-  return true;
+  return false;
 }
 
 function disableAutoPickFunc(value, player) {
   config.autoPickDisabled = true;
-  room.sendAnnouncement("Đã tắt tự động thay người", player.id, GREEN, 0);
-  return true;
+  room.sendAnnouncement("Đã tắt tự động thay người, bật lại bằng lệnh !autopick", player.id, GREEN, 0);
+  return false;
 }
 
 function enableAutoPickFunc(value, player) {
   config.autoPickDisabled = false;
   room.sendAnnouncement("Đã bật tự động thay người", player.id, GREEN, 0);
-  return true;
+  return false;
 }
 
 function helpFunc(value, player) {
   let allAlias = Object.keys(commands).filter((command) => !commands[command][1] || player.admin);
   allAlias = allAlias.map((alias) => "!" + alias)
   room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, GREEN, 0);
-  return true;
+  return false;
 }
 
 function processCommand(player, command) {
@@ -278,8 +283,8 @@ function celebrateGoal(team) {
   room.sendChat(`${scream} ${scoreline}, ${comment}`);
 }
 
+// Update stat about scorers and assisters
 function updateStats(team) {
-  // Update stat about scorers
   let goals = team == 1 ? game.red.goals : game.blue.goals;
   let time = formatTime(room.getScores().time);
   let scorer = game.lastKicked[0];
@@ -298,7 +303,6 @@ function updateStats(team) {
     comment = comment.concat(" ", getTag(scorer.name));
   }
 
-  // Validate assister
   let assister = game.lastKicked[1];
   if (
     (assister == null) || // Kick-off goal
@@ -358,6 +362,8 @@ async function monitorInactivity() {
     return;
   }
   room.setPlayerAdmin(nonAdminPlayer.id, true);
+  // Monitor again, make sure the new admin isn't AFK too
+  monitorInactivity();
 }
 
 function reset() {
