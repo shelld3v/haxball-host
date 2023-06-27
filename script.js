@@ -373,6 +373,12 @@ room.onPlayerLeave = function(player) {
   (player.team != 0) && updateTeamPlayers();
 }
 
+room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
+  // Move host player back to Spectators if it was moved to a team
+  if ( changedPlayer.id != 0 ) return;
+  room.setTeamPlayer(0, 0);
+}
+
 room.onPlayerAdminChange = function(changedPlayer, byPlayer) {
   if ( changedPlayer.admin ) return;
   updateAdmins();
