@@ -416,5 +416,6 @@ room.onGameUnpause = function(byPlayer) {
 
 room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
   // Log this for admin to monitor kicking activity
-  console.log(`${kickedPlayer.name} was kicked by ${byPlayer.name} (reason: ${reason})`)
+  action = ban ? "banned" : "kicked";
+  console.log(`${kickedPlayer.name} was ${action} by ${byPlayer.name} (reason: ${reason})`);
 }
