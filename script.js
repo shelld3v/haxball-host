@@ -161,11 +161,16 @@ function penaltyFunc(penalty, player) {
 }
 
 function loginFunc(password, player) {
-  if ( password == ADMIN_PASSWORD ) {
-    room.setPlayerAdmin(player.id, true);
-    room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN, 0);
-  } else {
-    room.kickPlayer(player.id, "Bạn đã nhập sai mật khẩu, vui lòng thử lại");
+  switch password {
+    case "":
+      room.sendAnnouncement("Vui lòng đính kèm mật khẩu: !login <mật khẩu>", player.id, RED, 0);
+      break;
+    case ADMIN_PASSWORD:
+      room.setPlayerAdmin(player.id, true);
+      room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN, 0);
+      break;
+    default:
+      room.kickPlayer(player.id, "Bạn đã nhập sai mật khẩu, vui lòng thử lại");
   };
   return false;
 }
