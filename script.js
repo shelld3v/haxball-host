@@ -1,17 +1,11 @@
 const ADMIN_PASSWORD = "nyc";
-const STADIUM = "De Paul";
-const START_GAME_COMMENT = `Chào mừng đến với SVĐ ${STADIUM}, tôi là Trông Anh Ngược, BLV của các bạn ngày hôm nay`;
+const START_GAME_COMMENT = `Chào mừng đến với SVĐ De Paul, tôi là Trông Anh Ngược, BLV của các bạn ngày hôm nay`;
 const STATS_COLOR = 0x990099;
 const GREEN = 0x00FF00;
 const RED = 0xFF0000;
-const RED_TEAM_COLORS = [0xD60419];
-const BLUE_TEAM_COLORS = [0x0099FF];
-const RED_TEAM_ANGLE = 60;
-const BLUE_TEAM_ANGLE = 60;
 
 const replies = {
   "tin chuẩn chưa a": "Chuẩn em nhé",
-  "ai hỏi": "Tao hỏi",
   "óc": "Toxic nên anh sẽ block em nhé",
   "memaybeo": "Mẹ tao béo, nhưng ít nhất tao có mẹ",
 };
@@ -23,19 +17,18 @@ const comments = {
   "0": "một bàn thắng gỡ hòa vô cùng quan trọng",
   "1": "một cách biệt đã được tạo ra",
   "2": "cách biệt đã được nâng lên 2 bàn",
-  "3": "chuyện quái gì đang xảy ra vậy?",
-  "4": `ác mộng tại SVĐ ${STADIUM}`,
-  "5": "hết cứu rồi, hết cứu thật rồi",
+  "3": "cách biệt đã trở nên quá lớn để hy vọng cho một cuộc lội ngược dòng",
+  "4": "một cơn ác mộng",
+  "5": "hết cứu thật rồi",
 };
 const teamStats = {
   accuratePasses: 0,
   wallKicks: 0,
   kicks: 0,
-  scorers: [],
+  goals: [],
 };
 const gameDefault = {
-  lastKicked: null,
-  preLastKicked: null,
+  lastKicked: [null, null], // 2 last players who kicked the ball
   red: JSON.parse(JSON.stringify(teamStats)),
   blue: JSON.parse(JSON.stringify(teamStats)),
 };
@@ -53,8 +46,8 @@ var room = HBInit({
 });
 room.setScoreLimit(0);
 room.setTimeLimit(5);
-room.setTeamColors(1, RED_TEAM_ANGLE, 0xFFFFFF, RED_TEAM_COLORS);
-room.setTeamColors(2, BLUE_TEAM_ANGLE, 0xFFFFFF, BLUE_TEAM_COLORS);
+room.setTeamColors(1, 60, 0xFFFFFF, [0xD60419]);
+room.setTeamColors(2, 60, 0xFFFFFF, [0x0099FF]);
 room.setCustomStadium('{"name":"HaxViet Premier League from HaxMaps","width":900,"height":404,"spawnDistance":310,"bg":{"type":"grass","width":793,"height":346,"kickOffRadius":95,"cornerRadius":0,"color":"718B5B"},"vertexes":[{"x":-793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":0,"y":404,"trait":"kickOffBarrier"},{"x":0,"y":95,"trait":"kickOffBarrier"},{"x":0,"y":-95,"trait":"line"},{"x":0,"y":-404,"trait":"kickOffBarrier"},{"x":-821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":-821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":-793,"y":-271,"trait":"line"},{"x":-572,"y":-50,"trait":"line"},{"x":793,"y":-271,"trait":"line"},{"x":572,"y":-50,"trait":"line"},{"x":-793,"y":271,"trait":"line"},{"x":-572,"y":50,"trait":"line"},{"x":793,"y":271,"trait":"line"},{"x":572,"y":50,"trait":"line"},{"x":793,"y":346,"bCoef":1,"trait":"ballArea"},{"x":793,"y":-346,"bCoef":1,"trait":"ballArea"},{"x":0,"y":346,"bCoef":0,"trait":"line"},{"x":0,"y":-346,"bCoef":0,"trait":"line"},{"x":0,"y":95,"trait":"kickOffBarrier","_selected":"segment","_data":{"mirror":{}}},{"x":0,"y":-95,"trait":"kickOffBarrier","_selected":"segment","_data":{"mirror":{}}},{"x":802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":-802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":-802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"}],"segments":[{"v0":0,"v1":1,"trait":"ballArea"},{"v0":2,"v1":3,"trait":"ballArea"},{"v0":4,"v1":5,"trait":"ballArea"},{"v0":6,"v1":7,"trait":"ballArea"},{"v0":8,"v1":9,"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":180,"cGroup":["blueKO"],"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":-180,"cGroup":["redKO"],"trait":"kickOffBarrier"},{"v0":10,"v1":11,"trait":"kickOffBarrier"},{"v0":2,"v1":12,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":6,"v1":13,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":1,"v1":14,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":5,"v1":15,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":12,"v1":14,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","x":-821},{"v0":13,"v1":15,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","x":585},{"v0":16,"v1":17,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":18,"v1":19,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":20,"v1":21,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":22,"v1":23,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":17,"v1":21,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":-600},{"v0":19,"v1":23,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":572},{"v0":1,"v1":0,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":5,"v1":4,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":2,"v1":3,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":6,"v1":7,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":0,"v1":24,"vis":true,"color":"FFFFFF","bCoef":1,"trait":"ballArea","y":290},{"v0":3,"v1":25,"vis":true,"color":"FFFFFF","bCoef":1,"trait":"ballArea","y":-290},{"v0":26,"v1":27,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":10,"v1":9,"curve":-180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":29,"v1":28,"curve":180.43079330521417,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","_selected":true,"_data":{"mirror":{},"arc":{"a":[0,-95],"b":[0,95],"curve":180.43079330521417,"radius":95.00067131878964,"center":[0.3571428571409862,0],"from":-1.574555707580645,"to":1.574555707580645}}},{"v0":2,"v1":1,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":6,"v1":5,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":30,"v1":31,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614},{"v0":32,"v1":33,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":34,"v1":35,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":36,"v1":37,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614}],"goals":[{"p0":[-802,-95],"p1":[-802,95],"team":"red"},{"p0":[802,95],"p1":[802,-95],"team":"blue"}],"discs":[{"radius":5,"pos":[-793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[-793,-95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[793,-95],"color":"FFFFFF","trait":"goalPost"}],"planes":[{"normal":[0,1],"dist":-346,"trait":"ballArea","_data":{"extremes":{"normal":[0,1],"dist":-346,"canvas_rect":[-900,-404,900,404],"a":[-900,-346],"b":[900,-346]}}},{"normal":[0,-1],"dist":-346,"trait":"ballArea","_data":{"extremes":{"normal":[0,-1],"dist":-346,"canvas_rect":[-900,-404,900,404],"a":[-900,346],"b":[900,346]}}},{"normal":[0,1],"dist":-404,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,1],"dist":-404,"canvas_rect":[-900,-404,900,404],"a":[-900,-404],"b":[900,-404]}}},{"normal":[0,-1],"dist":-404,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,-1],"dist":-404,"canvas_rect":[-900,-404,900,404],"a":[-900,404],"b":[900,404]}}},{"normal":[1,0],"dist":-900,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[1,0],"dist":-900,"canvas_rect":[-900,-404,900,404],"a":[-900,-404],"b":[-900,404]}}},{"normal":[-1,0],"dist":-900,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[-1,0],"dist":-900,"canvas_rect":[-900,-404,900,404],"a":[900,-404],"b":[900,404]}}}],"traits":{"ballArea":{"vis":false,"bCoef":1,"cMask":["ball"]},"goalPost":{"radius":8,"invMass":0,"bCoef":1},"goalNet":{"vis":true,"bCoef":0.1,"cMask":["all"]},"kickOffBarrier":{"vis":false,"bCoef":0.1,"cGroup":["redKO","blueKO"],"cMask":["red","blue"]},"line":{"vis":true,"bCoef":0,"cMask":[""]},"arco":{"radius":2,"cMask":["n\/d"],"color":"cccccc"}},"playerPhysics":{"acceleration":0.11,"kickingAcceleration":0.1,"kickStrength":7},"ballPhysics":{"radius":7,"color":"EAFF00"},"joints":[],"redSpawnPoints":[],"blueSpawnPoints":[],"canBeStored":false}');
 
 // Get a chat-pingable tag from player's name
@@ -118,25 +111,22 @@ async function updateTeamPlayers() {
   };
 }
 
-// Update information to monitor scorers, assisters, possession and passing accuracy
-function updateBallKick(player) {
-  // Update information to count assister later
-  if ( game.lastKicked != null ) {
-    game.preLastKicked = { ...game.lastKicked };
-  };
-  // Update information about scorer
-  game.lastKicked = player;
+// Update information to monitor last kickers, possession and passing accuracy
+async function updateBallKick(player) {
+  // Update information about 2 last players who kicked the ball
+  game.lastKicked.length = 1;
+  game.lastKicked.unshift(player);
 
   team = ( player.team == 1 ) ? game.red : game.blue;
   // Update total kicks
   team.kicks++;
   // Update accurate kicks
-  if ( game.preLastKicked == null ) return; // Kick-off pass
-  if ( player.id == game.preLastKicked.id) { // Wall kick
+  if ( game.lastKicked[1] == null ) return; // Kick-off pass
+  if ( player.id == game.lastKicked[1].id) { // Wall kick
     team.wallKicks++;
     return;
   }
-  if (player.team == game.preLastKicked.team) {
+  if (player.team == game.lastKicked[1].team) {
     team.accuratePasses++;
   };
 }
@@ -187,27 +177,28 @@ function celebrateGoal(team) {
 
 function updateStats(team) {
   // Update stat about scorers
-  scorers = team == 1 ? game.red.scorers : game.blue.scorers;
-  time = formatTime(room.getScores().time);
-
-  if ( game.lastKicked.team != team ) { // Own goal
-    scorers.push(`${game.lastKicked.name} ${time} (OG)`);
-    room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(game.lastKicked.name)}`);
+  let goals = team == 1 ? game.red.goals : game.blue.goals;
+  let time = formatTime(room.getScores().time);
+  let scorer = game.lastKicked[0];
+  if ( scorer.team != team ) { // Own goal
+    goals.push(`${scorer.name} ${time} (OG)`);
+    room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
     return;
   };
+  goals.push(`${scorer.name} ${time}`);
+  let comment = `${getTag(scorer.name)} là người đã ghi bàn`;
 
-  scorers.push(`${game.lastKicked.name} ${time}`);
-  let message = `${getTag(game.lastKicked.name)} là người đã ghi bàn`;
-
+  // Validate assister
+  let assister = game.lastKicked[1];
   if (
-    (game.preLastKicked == null) || // Kick-off goal
-    (game.preLastKicked.id == game.lastKicked.id) // Solo goal
-  ) {} else if ( game.preLastKicked.team != team ) { // Assisted by the opponent team
+    (assister == null) || // Kick-off goal
+    (assister.id == scorer.id) // Solo goal
+  ) {} else if ( assister.team != team ) { // Assisted by the opponent team
     if ( randomBoolean(30) ) { // Only comment about it sometimes
-      comment = comment.concat(", ", `${getTag(game.preLastKicked.name)} đã làm không tốt`);
+      comment = comment.concat(", ", `${getTag(assister.name)} đã làm không tốt`);
     };
-  } else {
-    comment = comment.concat(", ", `kiến tạo thuộc về ${getTag(game.preLastKicked.name)}`);
+  } else { // A valid assist
+    comment = comment.concat(", ", `kiến tạo thuộc về ${getTag(assister.name)}`);
   };
 
   room.sendChat(comment);
@@ -217,23 +208,23 @@ function reportStats(scores) {
   room.sendAnnouncement(` RED ${scores.red}-${scores.blue} BLUE`, null, STATS_COLOR, "bold", 0);
   // Possession stats
   let totalKicks = game.red.kicks + game.blue.kicks;
-  let redPossession = ~~(game.red.kicks / totalKicks * 100)
+  let redPossession = ~~(game.red.kicks / totalKicks * 100);
   let bluePossession = 100 - redPossession;
   room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% | BLUE ${bluePossession}%`, null, STATS_COLOR, 0);
   // Pass accuracy stats
-  let redPasses = game.red.kicks - game.red.wallKicks
-  let bluePasses = game.blue.kicks - game.blue.wallKicks
+  let redPasses = game.red.kicks - game.red.wallKicks;
+  let bluePasses = game.blue.kicks - game.blue.wallKicks;
   let redAccuracy = redPasses != 0 ? ~~(game.red.accuratePasses / redPasses * 100): 0;
   let blueAccuracy = bluePasses != 0 ? ~~(game.blue.accuratePasses / bluePasses * 100): 0;
   room.sendAnnouncement(`Tỉ lệ chuyền bóng chính xác: RED ${redAccuracy}% | BLUE ${blueAccuracy}%`, null, STATS_COLOR, 0);
   // Wall kicks stats
   room.sendAnnouncement(`Đập tường thành công: RED ${game.red.wallKicks} | BLUE ${game.blue.wallKicks}`, null, STATS_COLOR, 0);
-  // Scorers information
-  if ( game.red.scorers.length != 0 ) {
-    room.sendAnnouncement(`Ghi bàn cho RED: ${game.red.scorers.join(", ")}`, null, STATS_COLOR, 0);
+  // Goals information
+  if ( game.red.goals.length != 0 ) {
+    room.sendAnnouncement(`Bàn thắng của RED: ${game.red.goals.join(", ")}`, null, STATS_COLOR, 0);
   };
-  if ( game.blue.scorers.length != 0 ) {
-    room.sendAnnouncement(`Ghi bàn cho BLUE: ${game.blue.scorers.join(", ")}`, null, STATS_COLOR, 0);
+  if ( game.blue.goals.length != 0 ) {
+    room.sendAnnouncement(`Bàn thắng của BLUE: ${game.blue.goals.join(", ")}`, null, STATS_COLOR, 0);
   };
 }
 
@@ -353,7 +344,7 @@ room.onPlayerBallKick = function(player) {
 room.onTeamGoal = function(team) {
   celebrateGoal(team);
   updateStats(team);
-  lastKicked = preLastKicked = null;
+  game.lastKicked = [null, null]
 }
 
 room.onPlayerChat = function(player, message) {
