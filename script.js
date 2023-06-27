@@ -37,7 +37,7 @@ var game = JSON.parse(JSON.stringify(gameDefault));
 var config = {
   wait: false,
   autoPickDisabled: false,
-}
+};
 var room = HBInit({
   roomName: "Phòng tự động của De Paul",
   maxPlayers: 30,
@@ -90,25 +90,23 @@ function updateAdmins() {
 // Move players to teams until it's enough
 async function updateTeamPlayers() {
   if ( config.autoPickDisabled ) return;
-  while ( true ) {
-    // Get all players except host player
-    let players = getPlayers();
 
-    // Get a bench player (like Penaldo) that aren't admins cause admins can do it themself
-    let specPlayer = players.find(player => (player.team == 0) && !player.admin);
-    if ( specPlayer == undefined ) return; // No players left in the Spectators
+  let players = getPlayers();
 
-    // Get players from 2 teams
-    let redPlayers = players.filter(player => player.team == 1);
-    let bluePlayers = players.filter(player => player.team == 2);
-    if ( (redPlayers.length >= 5) && (bluePlayers.length >= 5) ) return; // There are enough players
+  // Get a bench player (like Penaldo) that aren't admins cause admins can do it themself
+  let specPlayer = players.find(player => (player.team == 0) && !player.admin);
+  if ( specPlayer == undefined ) return; // No players left in the Spectators
 
-    // Find the team that needs new players the most
-    let missingTeam = ( redPlayers.length > bluePlayers.length ) ? 2 : 1;
+  // Get players from 2 teams
+  let redPlayers = players.filter(player => player.team == 1);
+  let bluePlayers = players.filter(player => player.team == 2);
+  if ( (redPlayers.length >= 5) && (bluePlayers.length >= 5) ) return; // There are enough players
 
-    // API functions that modify the game's state execute asynchronously, so we have to wait before rechecking everything
-    await room.setPlayerTeam(specPlayer.id, missingTeam);
-  };
+  // Find the team that needs new players the most
+  let missingTeam = ( redPlayers.length > bluePlayers.length ) ? 2 : 1;
+
+  // API functions that modify the game's state execute asynchronously, so we have to wait before rechecking everything
+  await room.setPlayerTeam(specPlayer.id, missingTeam);
 }
 
 // Update information to monitor last kickers, possession and passing accuracy
