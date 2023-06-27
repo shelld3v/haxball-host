@@ -31,14 +31,14 @@ const goalComments = {
   "5": "hết cứu thật rồi",
 };
 const scorerComments = {
-  "1": "Cú đúp cho",
-  "2": "Hattrick của",
-  "3": "Thật không thể tin được, một cú poker từ",
+  "2": "Cú đúp cho",
+  "3": "Hattrick của",
+  "4": "Thật không thể tin được, một cú poker đến từ",
 };
 const teamStats = {
+  passes: 0,
   accuratePasses: 0,
-  wallKicks: 0,
-  kicks: 0,
+  possessedKicks: 0,
   goals: [],
 };
 const gameDefault = {
@@ -134,14 +134,20 @@ async function updateBallKick(player) {
   // Update total kicks
   team.kicks++;
   // Update accurate kicks
-  if ( game.lastKicked[1] == null ) return; // Kick-off pass
-  if ( player.id == game.lastKicked[1].id) { // Wall kick
-    team.wallKicks++;
+  if ( 
+    (game.lastKicked[1] == null) || // Kick-off pass
+    (player.team != game.lastKicked[1].team) // Received the ball from an opponent player, not a kick from possession
+  ) {
+    team.passes++; // Still a pass
     return;
-  }
-  if (player.team == game.lastKicked[1].team) {
-    team.accuratePasses++;
   };
+
+  if (player.id != game.lastKicked[1].id) { // Received the ball from a teammate, an accurate pass must have been made
+    team.accuratePasses++;
+    team.passes++;
+  };
+  // Other cases are wall kicks and duels, not counting as a pass to eliminate the previous pass count
+  team.possessedKicks++;
 }
 
 function varFunc(value, player) {
@@ -277,13 +283,13 @@ function updateStats(team) {
     room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
     return;
   };
-  goals.push(`${scorer.name} ${time}`);
 
+  goals.push(`${scorer.name} ${time}`);
   let comment = `${getTag(scorer.name)} là người đã ghi bàn`;
-  let hasScored = goals.filter((goal) => goal.startsWith(scorer.name)).length;
-  // Better comment if player has already scored before
-  if ( hasScored != 0 ) {
-    comment = scorerComments[hasScored] || `Đây đã là bàn thắng thứ ${hasScored + 1} trong trận đấu này của`;
+  let hasScored = goals.filter((goal) => goal.startsWith(scorer.name) && !goal.endsWith("OG)")).length;
+  // Better comment if player has scored more than once
+  if ( hasScored != 1 ) {
+    comment = scorerComments[hasScored] || `Đây đã là bàn thắng thứ ${hasScored} trong trận đấu này của`;
     comment = comment.concat(" ", getTag(scorer.name));
   }
 
@@ -306,19 +312,14 @@ function updateStats(team) {
 function reportStats(scores) {
   room.sendAnnouncement(` RED ${scores.red}-${scores.blue} BLUE`, null, STATS_COLOR, "bold", 0);
   // Possession stats
-  let redPossessedKicks = game.red.wallKicks + game.red.accuratePasses;
-  let totalPossessedKicks = redPossessedKicks + game.blue.wallKicks + game.blue.accuratePasses;
-  let redPossession = ~~(redPossessedKicks / totalPossessedKicks * 100);
+  let totalPossessedKicks = game.red.possessedKicks + game.blue.possessedKicks;
+  let redPossession = ~~(game.red.possessedKicks / totalPossessedKicks * 100);
   let bluePossession = 100 - redPossession;
   room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% | BLUE ${bluePossession}%`, null, STATS_COLOR, 0);
   // Pass accuracy stats
-  let redPasses = game.red.kicks - game.red.wallKicks;
-  let bluePasses = game.blue.kicks - game.blue.wallKicks;
-  let redAccuracy = ( redPasses != 0 ) ? ~~(game.red.accuratePasses / redPasses * 100): 0;
-  let blueAccuracy = ( bluePasses != 0 ) ? ~~(game.blue.accuratePasses / bluePasses * 100): 0;
+  let redAccuracy = ( game.red.passes != 0 ) ? ~~(game.red.accuratePasses / game.red.passes * 100): 0;
+  let blueAccuracy = ( game.blue.passes != 0 ) ? ~~(game.blue.accuratePasses / game.blue.passes * 100): 0;
   room.sendAnnouncement(`Tỉ lệ chuyền bóng chính xác: RED ${redAccuracy}% | BLUE ${blueAccuracy}%`, null, STATS_COLOR, 0);
-  // Wall kicks stats
-  room.sendAnnouncement(`Đập tường thành công: RED ${game.red.wallKicks} | BLUE ${game.blue.wallKicks}`, null, STATS_COLOR, 0);
   // Goals information
   if ( game.red.goals.length != 0 ) {
     room.sendAnnouncement(`Bàn thắng của RED: ${game.red.goals.join(", ")}`, null, STATS_COLOR, 0);
