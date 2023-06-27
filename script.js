@@ -1,21 +1,21 @@
 const ADMIN_PASSWORD = "nyc";
 const START_GAME_COMMENT = `Chào mừng đến với SVĐ De Paul, tôi là Trông Anh Ngược, BLV của các bạn ngày hôm nay`;
 const STATS_COLOR = 0x990099;
-const GREEN = 0x00FF00;
 const RED = 0xFF0000;
+const GREEN = 0x00FF00;
 
 const commands = { // Format: "alias: [function, requiresAdmin]"
-  "help": [helpFunc, false],
-  "var": [varFunc, false],
-  "penalty": [penaltyFunc, false],
-  "login": [loginFunc, false],
-  "wait": [waitFunc, true],
-  "noautopick": [disableAutoPickFunc, true],
-  "autopick": [disableAutoPickFunc, true],
+  help: [helpFunc, false],
+  var: [varFunc, false],
+  penalty: [penaltyFunc, false],
+  login: [loginFunc, false],
+  wait: [waitFunc, true],
+  noautopick: [disableAutoPickFunc, true],
+  autopick: [enableAutoPickFunc, true],
 }
 const replies = {
   "tin chuẩn chưa a": "Chuẩn em nhé",
-  "óc": "Toxic nên anh sẽ block em nhé",
+  "ngu": "Toxic nên anh sẽ block em nhé",
   "memaybeo": "Mẹ tao béo, nhưng ít nhất tao có mẹ",
 };
 const goalComments = {
@@ -89,7 +89,7 @@ function getPlayers() {
 async function validatePlayer(player) {
   let players = room.getPlayerList();
   let nameExists = players.some((_player) => (_player.name == player.name) && (_player.id != player.id));
-  if ( nameExists ) return;
+  if ( !nameExists ) return;
   room.kickPlayer(player.id, "Tên người chơi đã tồn tại, vui lòng thay tên");
 }
 
@@ -97,6 +97,7 @@ async function validatePlayer(player) {
 function updateAdmins() {
   // Get all players
   let players = getPlayers();
+  if ( players.length == 0 ) return; // No player left
   if ( players.some((player) => player.admin) ) return; // There's an admin left
   room.setPlayerAdmin(players[0].id, true); // Give admin to the first non-admin player in the list
 }
@@ -158,7 +159,7 @@ function loginFunc(password, player) {
     room.setPlayerAdmin(player.id, true);
     room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN, 0);
   } else {
-    room.kickPlayer(played.id, "Bạn đã nhập sai mật khẩu, vui lòng thử lại");
+    room.kickPlayer(player.id, "Bạn đã nhập sai mật khẩu, vui lòng thử lại");
   };
   return false;
 }
@@ -182,9 +183,9 @@ function enableAutoPickFunc(value, player) {
 }
 
 function helpFunc(value, player) {
-  let allAlias = Object.keys(commands.filter((command) => !command[1] || player.admin));
+  let allAlias = Object.keys(commands).filter((command) => !commands[command][1] || player.admin);
   allAlias = allAlias.map((alias) => "!" + alias)
-  room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, BLUE, 0);
+  room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, GREEN, 0);
   return true;
 }
 
@@ -279,10 +280,10 @@ function updateStats(team) {
   goals.push(`${scorer.name} ${time}`);
 
   let comment = `${getTag(scorer.name)} là người đã ghi bàn`;
-  let scored = goals.filter((goal) => goal.startsWith(scorer.name));
+  let hasScored = goals.filter((goal) => goal.startsWith(scorer.name)).length;
   // Better comment if player has already scored before
-  if ( scored.length != 0 ) {
-    comment = scorerComments[scored.length] || `Đây đã là bàn thắng thứ ${scored.length + 1} trong trận đấu này của`;
+  if ( hasScored != 0 ) {
+    comment = scorerComments[hasScored] || `Đây đã là bàn thắng thứ ${hasScored + 1} trong trận đấu này của`;
     comment = comment.concat(" ", getTag(scorer.name));
   }
 
@@ -347,7 +348,7 @@ async function monitorInactivity() {
 
   let nonAdminPlayer = players.find((player) => !player.admin)
   if ( nonAdminPlayer == undefined ) {
-    room.sendAnnouncement("Không có người chơi để cấp Admin!", null, RED);
+    room.sendAnnouncement("Không có người chơi để cấp Admin!", null, RED, 0);
     return;
   }
   room.setPlayerAdmin(nonAdminPlayer.id, true);
@@ -360,6 +361,7 @@ function reset() {
 
 room.onPlayerJoin = function(player) {
   validatePlayer(player);
+  room.sendAnnouncement("Nhập !help để xem các câu lệnh", player.id, GREEN, 0);
   room.sendChat(`Chào mừng ${getTag(player.name)} đến với băng ghế dự bị cùng Cristiano Ronaldo`, player.id);
   updateAdmins();
   updateTeamPlayers();
@@ -368,6 +370,11 @@ room.onPlayerJoin = function(player) {
 room.onPlayerLeave = function(player) {
   updateAdmins();
   (player.team != 0) && updateTeamPlayers();
+}
+
+room.onPlayerAdminChange = function(changedPlayer, byPlayer) {
+  if ( changedPlayer.admin ) return;
+  updateAdmins();
 }
 
 room.onPlayerBallKick = function(player) {
