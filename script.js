@@ -305,15 +305,16 @@ function updateStats(team) {
 function reportStats(scores) {
   room.sendAnnouncement(` RED ${scores.red}-${scores.blue} BLUE`, null, STATS_COLOR, "bold", 0);
   // Possession stats
-  let totalKicks = game.red.kicks + game.blue.kicks;
-  let redPossession = ~~(game.red.kicks / totalKicks * 100);
+  let redPossessedKicks = game.red.wallKicks + game.red.accuratePasses;
+  let totalPossessedKicks = redPossessedKicks + game.blue.wallKicks + game.blue.accuratePasses;
+  let redPossession = ~~(redPossessedKicks / totalPossessedKicks * 100);
   let bluePossession = 100 - redPossession;
   room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% | BLUE ${bluePossession}%`, null, STATS_COLOR, 0);
   // Pass accuracy stats
   let redPasses = game.red.kicks - game.red.wallKicks;
   let bluePasses = game.blue.kicks - game.blue.wallKicks;
-  let redAccuracy = redPasses != 0 ? ~~(game.red.accuratePasses / redPasses * 100): 0;
-  let blueAccuracy = bluePasses != 0 ? ~~(game.blue.accuratePasses / bluePasses * 100): 0;
+  let redAccuracy = ( redPasses != 0 ) ? ~~(game.red.accuratePasses / redPasses * 100): 0;
+  let blueAccuracy = ( bluePasses != 0 ) ? ~~(game.blue.accuratePasses / bluePasses * 100): 0;
   room.sendAnnouncement(`Tỉ lệ chuyền bóng chính xác: RED ${redAccuracy}% | BLUE ${blueAccuracy}%`, null, STATS_COLOR, 0);
   // Wall kicks stats
   room.sendAnnouncement(`Đập tường thành công: RED ${game.red.wallKicks} | BLUE ${game.blue.wallKicks}`, null, STATS_COLOR, 0);
