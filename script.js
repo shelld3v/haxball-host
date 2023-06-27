@@ -145,6 +145,7 @@ function celebrateGoal(team) {
   var comment = "một pha dứt điểm lạnh lùng";
   // Design a good comment :P
   if ( scores.time > scores.timeLimit ) { // Overtime goal
+    scream = "VÀOOOOOOOOOO";
     comment = "VÀ ĐÓ... LÀ BÀN THẮNG QUYẾT ĐỊNH";
   } else if ( scores.timeLimit - scores.time < 10 ) { // Last minute goal
     switch ( goalDiff ) {
