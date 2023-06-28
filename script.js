@@ -58,6 +58,7 @@ var config = {
   wait: false,
   autoPickDisabled: false,
 };
+var cache = {};
 var room = HBInit({
   roomName: "Phòng tự động của De Paul",
   maxPlayers: 30,
@@ -144,10 +145,13 @@ async function updateBallKick(player) {
   // Other cases are wall kicks and duels, not counting as a pass to eliminate the previous pass count
   team.possessedKicks++;
 
-  // Check for commentary
-  if ( room.getScores().time > room.getScores().timeLimit ) {
-    room.sendChat("Vậy là những phút thi đấu chính thức đã kết thúc, chúng ta đang tiến đến khoảng thời gian bù giờ");
-  };
+  // Overtime commentary
+  if (
+    (room.getScores().time <= room.getScores().timeLimit) || // Not overtime
+    (cache.overtimeCommentary != undefined) // Already made this comment
+  ) return;
+  room.sendChat("Vậy là những phút thi đấu chính thức đã kết thúc, chúng ta đang tiến đến khoảng thời gian bù giờ");
+  cache.overtimeCommentary = 1;
 }
 
 function varFunc(value, player) {
@@ -297,23 +301,23 @@ function reportStats(scores) {
   let blueStats = [];
   for (const [player, stats] of Object.entries(game.players)) {
     let report = ( stats.forTeam == 1 ) ? redStats : blueStats;
-    (report.length != 0) && report.push(" | ");
-    report.push(player);
+    (report.length != 0) && report.push(", ");
+    report.push(`[${player}]`);
 
     if ( stats.goals == 1 ) {
       report.push("⚽");
     } else if ( stats.goals != 0 ) { // More than 1 goal
-      report.push(`${stats.goals} ⚽`);
+      report.push(`${stats.goals}⚽`);
     };
     if ( stats.assists == 1 ) {
       report.push("👟");
     } else if ( stats.assists != 0 ) { // More than 1 assist
-      report.push(`${stats.assists} 👟`);
+      report.push(`${stats.assists}👟`);
     };
     if ( stats.ownGoals == 1 ) {
       report.push("🥅");
     } else if ( stats.ownGoals != 0 ) { // More than 1 own goal
-      report.push(`${stats.ownGoals} 🥅`);
+      report.push(`${stats.ownGoals}🥅`);
     };
   };
 
@@ -400,6 +404,7 @@ async function monitorInactivity() {
 
 function reset() {
   game = JSON.parse(JSON.stringify(gameDefault));
+  cache = {};
   config.wait = false;
 }
 
