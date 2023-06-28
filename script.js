@@ -81,14 +81,6 @@ function getPlayers() {
   return room.getPlayerList().filter((player) => player.id != 0);
 }
 
-// If player's name has already existed, kick them
-async function validatePlayer(player) {
-  let players = room.getPlayerList();
-  let nameExists = players.some((_player) => (_player.name == player.name) && (_player.id != player.id));
-  if ( !nameExists ) return;
-  room.kickPlayer(player.id, "Tên người chơi đã tồn tại, vui lòng thay tên");
-}
-
 // If there are no admins left in the room give admin to one of the remaining players.
 function updateAdmins() {
   // Get all players
@@ -278,7 +270,11 @@ function updateStats(team) {
     (assister.team == team) // Assisted by teammate
   ) {
     updatePlayerStats(assister, 2);
-    comment = comment.concat(", ", `kiến tạo thuộc về ${getTag(assister.name)}`);
+    if ( game.players[scorer.name].assists != 1 ) { // Multiple assists O_O
+      comment = comment.concat(", ", `lại là ${getTag(assister.name)} kiến tạo`);
+    } else {
+      comment = comment.concat(", ", `kiến tạo thuộc về ${getTag(assister.name)}`);
+    };
   };
 
   room.sendChat(comment);
@@ -301,7 +297,7 @@ function reportStats(scores) {
   let blueStats = [];
   for (const [player, stats] of Object.entries(game.players)) {
     let report = ( stats.forTeam == 1 ) ? redStats : blueStats;
-    (report.length != 0) && report.push(", ");
+    (report.length != 0) && report.push("⁃");
     report.push(`[${player}]`);
 
     if ( stats.goals == 1 ) {
@@ -409,7 +405,6 @@ function reset() {
 }
 
 room.onPlayerJoin = function(player) {
-  validatePlayer(player);
   room.sendAnnouncement("Nhập !help để xem các câu lệnh", player.id, GREEN, 0);
   room.sendChat(`Chào mừng ${getTag(player.name)} đến với băng ghế dự bị cùng Cristiano Ronaldo`, player.id);
   updateAdmins();
