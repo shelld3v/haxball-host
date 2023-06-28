@@ -15,7 +15,7 @@ const commands = { // Format: "alias: [function, requiresAdmin]"
 }
 const replies = {
   "tin chuẩn chưa a": "Chuẩn em nhé",
-  "ngu": "Toxic nên anh sẽ block em nhé",
+  "ngu ": "Toxic nên anh sẽ block em nhé",
   "memaybeo": "Mẹ tao béo, nhưng ít nhất tao có mẹ",
 };
 const goalComments = {
