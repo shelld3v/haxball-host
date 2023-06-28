@@ -35,16 +35,22 @@ const scorerComments = {
   "3": "Hattrick của",
   "4": "Thật không thể tin được, một cú poker đến từ",
 };
+const playerStats = {
+  goals: 0,
+  assists: 0,
+  ownGoals: 0,
+  forTeam: 0,
+}
 const teamStats = {
   passes: 0,
   accuratePasses: 0,
   possessedKicks: 0,
-  goals: [],
 };
 const gameDefault = {
   lastKicked: [null, null], // 2 last players who kicked the ball
-  red: JSON.parse(JSON.stringify(teamStats)),
-  blue: JSON.parse(JSON.stringify(teamStats)),
+  players: {}, // Store players' stats
+  red: { ...teamStats },
+  blue: { ...teamStats },
 };
 
 var game = JSON.parse(JSON.stringify(gameDefault));
@@ -67,17 +73,6 @@ room.setCustomStadium('{"name":"HaxViet 5v5 from HaxMaps","width":900,"height":4
 // Get a chat-pingable tag from player's name
 function getTag(name) {
   return "@" + name.replace(/ /g, "_");
-}
-
-function formatTime(time) {
-  let minutes = ~~(time / 60);
-  let seconds = ~~(time - minutes * 60);
-  return ( minutes != 0 ) ? `${minutes}'${seconds}''` : `${seconds}''`;
-}
-
-// Return a random boolean, with an optional probability of getting true
-function randomBoolean(probability = 50) {
-  return Math.random() < (probability / 100);
 }
 
 // Exclude host player from players list
@@ -161,7 +156,7 @@ function varFunc(value, player) {
 }
 
 function penaltyFunc(penalty, player) {
-  room.sendAnnouncement("Trọng tài quyết định chỉ trao penalty cho những đội tên Real Madrid", null, RED, 0);
+  room.sendAnnouncement("Trọng tài quyết định chỉ trao penalty cho Argentina", null, RED, 0);
   return true;
 }
 
@@ -238,6 +233,98 @@ function processMessage(player, message) {
   return true;
 }
 
+function updatePlayerStats(player, type) {
+  // If player hasn't had stats yet, initialize an object
+  (game.players[player.name] != undefined) || (game.players[player.name] = { ...playerStats });
+  game.players[player.name].forTeam = player.team;
+
+  switch ( type ) {
+    case 1: // Goal
+      game.players[player.name].goals++;
+      break;
+    case 2: // Assist
+      game.players[player.name].assists++;
+      break;
+    default: // Own goal
+      game.players[player.name].ownGoals++;
+  };
+}
+
+// Update stats about goals, assists and own goals
+function updateStats(team) {
+  let [scorer, assister] = game.lastKicked;
+  if ( scorer.team != team ) { // Own goal
+    updatePlayerStats(scorer, 0);
+    room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
+    return;
+  };
+
+  updatePlayerStats(scorer, 1);
+  let comment = `${getTag(scorer.name)} là người đã ghi bàn`;
+  // Better comment if player has scored more than once
+  let hasScored = game.players[scorer.name].goals;
+  if ( hasScored != 1 ) {
+    comment = scorerComments[hasScored] || `Đây đã là bàn thắng thứ ${hasScored} trong trận đấu này của`;
+    comment = comment.concat(" ", getTag(scorer.name));
+  }
+
+  if (
+    (assister != null) &&
+    (assister.id != scorer.id) && // Not a solo goal
+    (assister.team == team) // Assisted by teammate
+  ) {
+    updatePlayerStats(assister, 2);
+    comment = comment.concat(", ", `kiến tạo thuộc về ${getTag(assister.name)}`);
+  };
+
+  room.sendChat(comment);
+}
+
+function reportStats(scores) {
+  room.sendAnnouncement(` RED ${scores.red}-${scores.blue} BLUE`, null, STATS_COLOR, "bold", 0);
+  // Possession stats
+  let totalPossessedKicks = game.red.possessedKicks + game.blue.possessedKicks;
+  let redPossession = ~~(game.red.possessedKicks / totalPossessedKicks * 100);
+  let bluePossession = 100 - redPossession;
+  room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% • ${bluePossession}% BLUE`, null, STATS_COLOR, 0);
+  // Passing stats
+  room.sendAnnouncement(`Lượt chuyền bóng: RED ${game.red.accuratePasses} • ${game.blue.accuratePasses} BLUE`, null, STATS_COLOR, 0);
+  let redAccuracy = ( game.red.passes != 0 ) ? ~~(game.red.accuratePasses / game.red.passes * 100): 0;
+  let blueAccuracy = ( game.blue.passes != 0 ) ? ~~(game.blue.accuratePasses / game.blue.passes * 100): 0;
+  room.sendAnnouncement(`Tỉ lệ chuyền bóng chính xác: RED ${redAccuracy}% • ${blueAccuracy}% BLUE`, null, STATS_COLOR, 0);
+  // Player stats information
+  let redStats = [];
+  let blueStats = [];
+  for (const [player, stats] of Object.entries(game.players)) {
+    let report = ( stats.forTeam == 1 ) ? redStats : blueStats;
+    (report.length != 0) && report.push(" | ");
+    report.push(player);
+
+    if ( stats.goals == 1 ) {
+      report.push("⚽");
+    } else if ( stats.goals != 0 ) { // More than 1 goal
+      report.push(`${stats.goals} ⚽`);
+    };
+    if ( stats.assists == 1 ) {
+      report.push("👟");
+    } else if ( stats.assists != 0 ) { // More than 1 assist
+      report.push(`${stats.assists} 👟`);
+    };
+    if ( stats.ownGoals == 1 ) {
+      report.push("🥅");
+    } else if ( stats.ownGoals != 0 ) { // More than 1 own goal
+      report.push(`${stats.ownGoals} 🥅`);
+    };
+  };
+
+  if ( redStats.length != 0 ) {
+    room.sendAnnouncement(`RED: ${redStats.join(" ")}`, null, STATS_COLOR, 0);
+  };
+  if ( blueStats.length != 0 ) {
+    room.sendAnnouncement(`BLUE: ${blueStats.join(" ")}`, null, STATS_COLOR, 0);
+  };
+}
+
 function celebrateGoal(team) {
   // Get ScoresObject
   let scores = room.getScores();
@@ -281,61 +368,6 @@ function celebrateGoal(team) {
   };
 
   room.sendChat(`${scream} ${scoreline}, ${comment}`);
-}
-
-// Update stat about scorers and assisters
-function updateStats(team) {
-  let goals = team == 1 ? game.red.goals : game.blue.goals;
-  let time = formatTime(room.getScores().time);
-  let scorer = game.lastKicked[0];
-  if ( scorer.team != team ) { // Own goal
-    goals.push(`${scorer.name} ${time} (OG)`);
-    room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
-    return;
-  };
-
-  goals.push(`${scorer.name} ${time}`);
-  let comment = `${getTag(scorer.name)} là người đã ghi bàn`;
-  let hasScored = goals.filter((goal) => goal.startsWith(scorer.name) && !goal.endsWith("OG)")).length;
-  // Better comment if player has scored more than once
-  if ( hasScored != 1 ) {
-    comment = scorerComments[hasScored] || `Đây đã là bàn thắng thứ ${hasScored} trong trận đấu này của`;
-    comment = comment.concat(" ", getTag(scorer.name));
-  }
-
-  let assister = game.lastKicked[1];
-  if (
-    (assister == null) || // Kick-off goal
-    (assister.id == scorer.id) // Solo goal
-  ) {} else if ( assister.team != team ) { // Assisted by the opponent team
-    if ( randomBoolean(30) ) { // Only comment about it sometimes
-      comment = comment.concat(", ", `${getTag(assister.name)} đã làm không tốt`);
-    };
-  } else { // A valid assist
-    comment = comment.concat(", ", `kiến tạo thuộc về ${getTag(assister.name)}`);
-  };
-
-  room.sendChat(comment);
-}
-
-function reportStats(scores) {
-  room.sendAnnouncement(` RED ${scores.red}-${scores.blue} BLUE`, null, STATS_COLOR, "bold", 0);
-  // Possession stats
-  let totalPossessedKicks = game.red.possessedKicks + game.blue.possessedKicks;
-  let redPossession = ~~(game.red.possessedKicks / totalPossessedKicks * 100);
-  let bluePossession = 100 - redPossession;
-  room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% | BLUE ${bluePossession}%`, null, STATS_COLOR, 0);
-  // Pass accuracy stats
-  let redAccuracy = ( game.red.passes != 0 ) ? ~~(game.red.accuratePasses / game.red.passes * 100): 0;
-  let blueAccuracy = ( game.blue.passes != 0 ) ? ~~(game.blue.accuratePasses / game.blue.passes * 100): 0;
-  room.sendAnnouncement(`Tỉ lệ chuyền bóng chính xác: RED ${redAccuracy}% | BLUE ${blueAccuracy}%`, null, STATS_COLOR, 0);
-  // Goals information
-  if ( game.red.goals.length != 0 ) {
-    room.sendAnnouncement(`Bàn thắng của RED: ${game.red.goals.join(", ")}`, null, STATS_COLOR, 0);
-  };
-  if ( game.blue.goals.length != 0 ) {
-    room.sendAnnouncement(`Bàn thắng của BLUE: ${game.blue.goals.join(", ")}`, null, STATS_COLOR, 0);
-  };
 }
 
 // Give another player admin if current admins seem to be unresponsive
@@ -387,7 +419,7 @@ room.onPlayerLeave = function(player) {
 room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
   // Move host player back to Spectators if it was moved to a team
   if ( changedPlayer.id != 0 ) return;
-  room.setTeamPlayer(0, 0);
+  room.setPlayerTeam(0, 0);
 }
 
 room.onPlayerAdminChange = function(changedPlayer, byPlayer) {
