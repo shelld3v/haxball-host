@@ -43,8 +43,8 @@ const playerStats = {
   forTeam: 0,
 }
 const teamStats = {
+  kicks: 0,
   passes: 0,
-  accuratePasses: 0,
   possessedKicks: 0,
 };
 const gameDefault = {
@@ -125,17 +125,12 @@ async function updateBallKick(player) {
   // Update accurate kicks
   if ( 
     (game.lastKicked[1] == null) || // Kick-off pass
-    (player.team != game.lastKicked[1].team) // Received the ball from an opponent player, not a kick from possession
-  ) {
-    team.passes++; // Still a pass
-    return;
-  };
+    (player.team != game.lastKicked[1].team) // Received the ball from an opponent player
+  ) return;
 
-  if (player.id != game.lastKicked[1].id) { // Received the ball from a teammate, an accurate pass must have been made
-    team.accuratePasses++;
-    team.passes++;
-  };
-  // Other cases are wall kicks and duels, not counting as a pass to eliminate the previous pass count
+  // Received the ball from a teammate, so the previous kick was a pass
+  if (player.id != game.lastKicked[1].id) team.passes++; 
+  // Received the ball from a teammate or from yourself, so the previous kick kept the possession
   team.possessedKicks++;
 
   // Overtime commentary
@@ -289,10 +284,10 @@ function reportStats(scores) {
   let bluePossession = 100 - redPossession;
   room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% • ${bluePossession}% BLUE`, null, STATS_COLOR, 0);
   // Passing stats
-  room.sendAnnouncement(`Lượt chuyền bóng: RED ${game.red.accuratePasses} • ${game.blue.accuratePasses} BLUE`, null, STATS_COLOR, 0);
-  let redAccuracy = ( game.red.passes != 0 ) ? ~~(game.red.accuratePasses / game.red.passes * 100): 0;
-  let blueAccuracy = ( game.blue.passes != 0 ) ? ~~(game.blue.accuratePasses / game.blue.passes * 100): 0;
-  room.sendAnnouncement(`Tỉ lệ chuyền bóng chính xác: RED ${redAccuracy}% • ${blueAccuracy}% BLUE`, null, STATS_COLOR, 0);
+  room.sendAnnouncement(`Lượt chuyền bóng: RED ${game.red.passes} • ${game.blue.passes} BLUE`, null, STATS_COLOR, 0);
+  let redSuccessRate = ~~(game.red.possessedKicks / game.red.kicks * 100);
+  let blueSuccessRate = ~~(game.blue.possessedKicks / game.blue.kicks * 100);
+  room.sendAnnouncement(`Tỉ lệ xử lý bóng thành công: RED ${redSuccessRate}% • ${blueSuccessRate}% BLUE`, null, STATS_COLOR, 0);
   // Player stats information
   let redStats = [];
   let blueStats = [];
