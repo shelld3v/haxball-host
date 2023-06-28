@@ -1,6 +1,6 @@
 const ADMIN_PASSWORD = "nyc";
 const START_GAME_COMMENT = `Chào mừng đến với SVĐ De Paul, tôi là Trông Anh Ngược, BLV của các bạn ngày hôm nay`;
-const STATS_COLOR = 0x990099;
+const STATS_COLOR = 0xFFEA00;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
 
@@ -50,8 +50,10 @@ const teamStats = {
 const gameDefault = {
   lastKicked: [null, null], // 2 last players who kicked the ball
   players: {}, // Store players' stats
-  red: { ...teamStats },
-  blue: { ...teamStats },
+  teams: { // Store teams' stats
+    1: { ...teamStats }, // RED team's stats
+    2: { ...teamStats }, // BLUE team's stats
+  },
 };
 
 var game = JSON.parse(JSON.stringify(gameDefault));
@@ -119,9 +121,8 @@ async function updateBallKick(player) {
   game.lastKicked.length = 1;
   game.lastKicked.unshift(player);
 
-  team = ( player.team == 1 ) ? game.red : game.blue;
   // Update total kicks
-  team.kicks++;
+  game.teams[player.team].kicks++;
   // Update accurate kicks
   if ( 
     (game.lastKicked[1] == null) || // Kick-off pass
@@ -129,9 +130,9 @@ async function updateBallKick(player) {
   ) return;
 
   // Received the ball from a teammate, so the previous kick was a pass
-  if (player.id != game.lastKicked[1].id) team.passes++; 
+  if (player.id != game.lastKicked[1].id) game.teams[player.team].passes++; 
   // Received the ball from a teammate or from yourself, so the previous kick kept the possession
-  team.possessedKicks++;
+  game.teams[player.team].possessedKicks++;
 
   // Overtime commentary
   if (
@@ -143,23 +144,23 @@ async function updateBallKick(player) {
 }
 
 function varFunc(value, player) {
-  room.sendAnnouncement("Phòng VAR thông báo không có lỗi, vui lòng mua gói VAR để cải thiện chất lượng", null, GREEN, 0);
+  room.sendAnnouncement("Phòng VAR thông báo không có lỗi, vui lòng mua gói VAR để cải thiện chất lượng", null, GREEN, "normal", 0);
   return true;
 }
 
 function penaltyFunc(penalty, player) {
-  room.sendAnnouncement("Trọng tài quyết định chỉ trao penalty cho Argentina", null, RED, 0);
+  room.sendAnnouncement("Trọng tài quyết định chỉ trao penalty cho Argentina", null, RED, "normal", 0);
   return true;
 }
 
 function loginFunc(password, player) {
   switch ( password ) {
     case "":
-      room.sendAnnouncement("Vui lòng đính kèm mật khẩu: !login <mật khẩu>", player.id, RED, 0);
+      room.sendAnnouncement("Vui lòng đính kèm mật khẩu: !login <mật khẩu>", player.id, RED);
       break;
     case ADMIN_PASSWORD:
       room.setPlayerAdmin(player.id, true);
-      room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN, 0);
+      room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN);
       break;
     default:
       room.kickPlayer(player.id, "Bạn đã nhập sai mật khẩu, vui lòng thử lại");
@@ -169,26 +170,26 @@ function loginFunc(password, player) {
 
 function waitFunc(value, player) {
   config.wait = true;
-  room.sendAnnouncement("Đã dừng tự động cấp Admin", null, GREEN, 0);
+  room.sendAnnouncement("Đã dừng tự động cấp Admin", null, GREEN);
   return false;
 }
 
 function disableAutoPickFunc(value, player) {
   config.autoPickDisabled = true;
-  room.sendAnnouncement("Đã tắt tự động thay người, bật lại bằng lệnh !autopick", player.id, GREEN, 0);
+  room.sendAnnouncement("Đã tắt tự động thay người, bật lại bằng lệnh !autopick", player.id, GREEN);
   return false;
 }
 
 function enableAutoPickFunc(value, player) {
   config.autoPickDisabled = false;
-  room.sendAnnouncement("Đã bật tự động thay người", player.id, GREEN, 0);
+  room.sendAnnouncement("Đã bật tự động thay người", player.id, GREEN);
   return false;
 }
 
 function helpFunc(value, player) {
   let allAlias = Object.keys(commands).filter((command) => !commands[command][1] || player.admin);
   allAlias = allAlias.map((alias) => "!" + alias)
-  room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, GREEN, 0);
+  room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, GREEN);
   return false;
 }
 
@@ -202,7 +203,7 @@ function processCommand(player, command) {
 
   let [func, requiresAdmin] = found;
   if ( requiresAdmin && !player.admin ) {
-    room.sendAnnouncement("Bạn cần phải là Admin để thực hiện lệnh này", player.id, RED, 0);
+    room.sendAnnouncement("Bạn cần phải là Admin để thực hiện lệnh này", player.id, RED);
     return false;
   }
   return func(value, player);
@@ -252,8 +253,10 @@ function updateStats(team) {
   };
 
   updatePlayerStats(scorer, 1);
+  // Counting this shot as a "possessed kick"
+  game.teams[player.team].possessedKicks++;
+  // Design celebrating comment
   let comment = `${getTag(scorer.name)} là người đã ghi bàn`;
-  // Better comment if player has scored more than once
   let hasScored = game.players[scorer.name].goals;
   if ( hasScored != 1 ) {
     comment = scorerComments[hasScored] || `Đây đã là bàn thắng thứ ${hasScored} trong trận đấu này của`;
@@ -277,47 +280,47 @@ function updateStats(team) {
 }
 
 function reportStats(scores) {
-  room.sendAnnouncement(` RED ${scores.red}-${scores.blue} BLUE`, null, STATS_COLOR, "bold", 0);
+  room.sendAnnouncement(` RED ${scores.red} - ${scores.blue} BLUE`, null, STATS_COLOR, "bold");
   // Possession stats
-  let totalPossessedKicks = game.red.possessedKicks + game.blue.possessedKicks;
-  let redPossession = ~~(game.red.possessedKicks / totalPossessedKicks * 100);
+  let totalPossessedKicks = game.teams[1].possessedKicks + game.teams[2].possessedKicks;
+  let redPossession = ~~(game.teams[1].possessedKicks / totalPossessedKicks * 100);
   let bluePossession = 100 - redPossession;
-  room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% • ${bluePossession}% BLUE`, null, STATS_COLOR, 0);
+  room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% - ${bluePossession}% BLUE`, null, STATS_COLOR, "small-bold", 0);
   // Passing stats
-  room.sendAnnouncement(`Lượt chuyền bóng: RED ${game.red.passes} • ${game.blue.passes} BLUE`, null, STATS_COLOR, 0);
-  let redSuccessRate = ~~(game.red.possessedKicks / game.red.kicks * 100);
-  let blueSuccessRate = ~~(game.blue.possessedKicks / game.blue.kicks * 100);
-  room.sendAnnouncement(`Tỉ lệ xử lý bóng thành công: RED ${redSuccessRate}% • ${blueSuccessRate}% BLUE`, null, STATS_COLOR, 0);
+  room.sendAnnouncement(`Lượt chuyền bóng: RED ${game.teams[1].passes} - ${game.teams[2].passes} BLUE`, null, STATS_COLOR, "small-bold", 0);
+  let redSuccessRate = ~~(game.teams[1].possessedKicks / game.teams[1].kicks * 100);
+  let blueSuccessRate = ~~(game.teams[2].possessedKicks / game.teams[2].kicks * 100);
+  room.sendAnnouncement(`Tỉ lệ xử lý bóng thành công: RED ${redSuccessRate}% - ${blueSuccessRate}% BLUE`, null, STATS_COLOR, "small-bold", 0);
   // Player stats information
-  let redStats = [];
-  let blueStats = [];
+  let redPlayerStats = [];
+  let bluePlayerStats = [];
   for (const [player, stats] of Object.entries(game.players)) {
-    let report = ( stats.forTeam == 1 ) ? redStats : blueStats;
-    (report.length != 0) && report.push("⁃");
-    report.push(`[${player}]`);
+    let msg = ( stats.forTeam == 1 ) ? redPlayerStats : bluePlayerStats;
+    (msg.length != 0) && msg.push(" • ");
+    msg.push(`[${player}]`);
 
     if ( stats.goals == 1 ) {
-      report.push("⚽");
+      msg.push("⚽");
     } else if ( stats.goals != 0 ) { // More than 1 goal
-      report.push(`${stats.goals}⚽`);
+      msg.push(`${stats.goals}⚽`);
     };
     if ( stats.assists == 1 ) {
-      report.push("👟");
+      msg.push("👟");
     } else if ( stats.assists != 0 ) { // More than 1 assist
-      report.push(`${stats.assists}👟`);
+      msg.push(`${stats.assists}👟`);
     };
     if ( stats.ownGoals == 1 ) {
-      report.push("🥅");
+      msg.push("🥅");
     } else if ( stats.ownGoals != 0 ) { // More than 1 own goal
-      report.push(`${stats.ownGoals}🥅`);
+      msg.push(`${stats.ownGoals}🥅`);
     };
   };
 
-  if ( redStats.length != 0 ) {
-    room.sendAnnouncement(`RED: ${redStats.join(" ")}`, null, STATS_COLOR, 0);
+  if ( redPlayerStats.length != 0 ) {
+    room.sendAnnouncement(`RED: ${redPlayerStats.join(" ")}`, null, STATS_COLOR, "small-bold", 0);
   };
-  if ( blueStats.length != 0 ) {
-    room.sendAnnouncement(`BLUE: ${blueStats.join(" ")}`, null, STATS_COLOR, 0);
+  if ( bluePlayerStats.length != 0 ) {
+    room.sendAnnouncement(`BLUE: ${bluePlayerStats.join(" ")}`, null, STATS_COLOR, "small-bold", 0);
   };
 }
 
@@ -386,7 +389,7 @@ async function monitorInactivity() {
 
   let nonAdminPlayer = players.find((player) => !player.admin)
   if ( nonAdminPlayer == undefined ) {
-    room.sendAnnouncement("Không có người chơi để cấp Admin!", null, RED, 0);
+    room.sendAnnouncement("Không có người chơi để cấp Admin!", null, RED);
     return;
   }
   room.setPlayerAdmin(nonAdminPlayer.id, true);
@@ -401,7 +404,7 @@ function reset() {
 }
 
 room.onPlayerJoin = function(player) {
-  room.sendAnnouncement("Nhập !help để xem các câu lệnh", player.id, GREEN, 0);
+  room.sendAnnouncement("Nhập !help để xem các câu lệnh", player.id, GREEN, "normal", 0);
   room.sendChat(`Chào mừng ${getTag(player.name)} đến với băng ghế dự bị cùng Cristiano Ronaldo`, player.id);
   updateAdmins();
   updateTeamPlayers();
