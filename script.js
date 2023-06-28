@@ -371,7 +371,7 @@ function celebrateGoal(team) {
 
 // Give another player admin if current admins seem to be unresponsive
 async function monitorInactivity() {
-  await new Promise(r => setTimeout(r, 10000));// Wait 10 seconds
+  await new Promise(r => setTimeout(r, 15000));// Wait 15 seconds
   if ( room.getScores() != null ) return; // Game has started
 
   // Room is inactive, are admins AFK?
@@ -383,8 +383,8 @@ async function monitorInactivity() {
   ) return;
   // Notify admins about inactivity, give random admin if no action is made from current admins
   let mentionAdmins = admins.map((admin) => getTag(admin.name)).join(" "); // Tag all admins
-  room.sendChat(`${mentionAdmins} vui lòng khởi động trận đấu hoặc chat !wait trong 15 giây trước khi room cấp Admin ngẫu nhiên`)
-  await new Promise(r => setTimeout(r, 15000));
+  room.sendChat(`${mentionAdmins} vui lòng khởi động trận đấu hoặc chat !wait trong 10 giây trước khi room cấp Admin ngẫu nhiên`)
+  await new Promise(r => setTimeout(r, 10000));
   if ( config.wait || room.getScores() != null ) return; // Admins are up :D
 
   let nonAdminPlayer = players.find((player) => !player.admin)
