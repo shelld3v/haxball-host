@@ -34,6 +34,7 @@ const scorerComments = {
   "2": "Cú đúp cho",
   "3": "Hattrick của",
   "4": "Thật không thể tin được, một cú poker đến từ",
+  "5": "Vâng, không ai khác, một cú repocker cho",
 };
 const playerStats = {
   goals: 0,
