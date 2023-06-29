@@ -102,14 +102,14 @@ function updateAdmins() {
   room.setPlayerAdmin(players[0].id, true); // Give admin to the first non-admin player in the list
 }
 
-// Move players to teams until it's enough
-async function updateTeamPlayers() {
+// Move a player to missing teams
+async function updateTeamPlayers(excludingId) {
   if ( config.autoPickDisabled ) return;
 
   let players = getPlayers();
 
   // Get a bench player (like Penaldo) that aren't admins cause admins can do it themself
-  let specPlayer = players.find(player => (player.team == 0) && !player.admin);
+  let specPlayer = players.find((player) => (player.team == 0) && !player.admin && (player.id !== excludingId));
   if ( !specPlayer ) return; // No players left in the Spectators
 
   // Count players from 2 teams
@@ -195,6 +195,7 @@ function afkFunc(value, player) {
 
 function specFunc(value, player) {
   room.setPlayerTeam(player.id, 0);
+  updateTeamPlayers(player.id);
   room.sendAnnouncement("Bạn đã được di chuyển ra Spectators", player.id, GREEN);
 }
 
