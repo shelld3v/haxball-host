@@ -8,6 +8,7 @@ const AFK_DEADLINE = 6;
 const commands = { // Format: "alias: [function, requiresAdmin]"
   help: [helpFunc, false],
   discord: [discordFunc, false],
+  bb: [byeFunc, false],
   var: [varFunc, false],
   penalty: [penaltyFunc, false],
   afk: [afkFunc, false],
@@ -161,6 +162,11 @@ function helpFunc(value, player) {
 function discordFunc(value, player) {
   room.sendAnnouncement("Kết bạn với De Paul trên Discord: shelld3v#7847", null, GREEN, "normal", 0);
   return true;
+}
+
+function byeFunc(value, player) {
+  room.kickPlayer(player.id, "Bye 👋🏻🥺");
+  return false;
 }
 
 function varFunc(value, player) {
