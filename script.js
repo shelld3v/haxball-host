@@ -491,7 +491,10 @@ room.onPlayerBallKick = function(player) {
 room.onTeamGoal = function(team) {
   celebrateGoal(team);
   updateStats(team);
-  game.lastKicked = [null, null]
+}
+
+room.onPositionsReset = function() {
+  game.lastKicked = [null, null];
 }
 
 room.onPlayerChat = function(player, message) {
