@@ -1,6 +1,6 @@
 const ADMIN_PASSWORD = "nyc";
 const START_GAME_COMMENT = `Chào mừng đến với SVĐ De Paul, tôi là Trông Anh Ngược, BLV của các bạn ngày hôm nay`;
-const STATS_COLOR = 0xFFEA00;
+const YELLOW = 0xFFEA00;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
 const AFK_DEADLINE = 6;
@@ -14,6 +14,7 @@ const commands = { // Format: "alias: [function, requiresAdmin]"
   afk: [afkFunc, false],
   spec: [specFunc, false],
   login: [loginFunc, false],
+  yellow: [yellowCardFunc, true],
   wait: [waitFunc, true],
   noautopick: [disableAutoPickFunc, true],
   autopick: [enableAutoPickFunc, true],
@@ -65,6 +66,7 @@ var monitorAfk = {
   deadline: null,
   players: [],
 };
+var yellowCards = [];
 var game = JSON.parse(JSON.stringify(gameDefault));
 var config = {
   wait: false,
@@ -125,7 +127,7 @@ async function updateTeamPlayers(excludingId) {
 }
 
 // Update information to monitor last kickers, possession and passing accuracy
-async function updateBallKick(player) {
+function updateBallKick(player) {
   // Update information about 2 last players who kicked the ball
   game.lastKicked.length = 1;
   game.lastKicked.unshift(player);
@@ -211,6 +213,35 @@ function loginFunc(password, player) {
     default:
       room.kickPlayer(player.id, "Bạn đã nhập sai mật khẩu, vui lòng thử lại");
   };
+  return false;
+}
+
+function yellowCardFunc(id, player) {
+  if ( id == "#0" ) {
+    room.sendAnnouncement("Không thể phạt thẻ vàng bot", player.id, RED);
+    return false;
+  }
+  if ( !id.startsWith("#") ) {
+    room.sendAnnouncement("Vui lòng cung cấp một ID người chơi hợp lệ: !yellow #<id>", player.id, RED);
+    return false;
+  }
+
+  id = id.slice(1);
+  let targetPlayer = getPlayers().find((player) => player.id == id);
+  if ( !targetPlayer ) {
+    room.sendAnnouncement(`Không thể tìm thấy người chơi với ID: ${id}`, player.id, RED);
+    return false;
+  };
+
+  let index = yellowCards.indexOf(targetPlayer.auth);
+  if ( index != -1 ) { // Player has already received a yellow card
+    yellowCards.splice(index, 1); // Clear the card
+    room.kickPlayer(id, "Bạn đã nhận 2 thẻ vàng", true);
+    room.sendAnnouncement(`🟨🟨 ${targetPlayer.name} đã nhận thẻ vàng thứ 2 từ ${player.name} (BAN)`, null, RED);
+    return false;
+  };
+  yellowCards.push(targetPlayer.auth);
+  room.sendAnnouncement(`🟨 ${targetPlayer.name} đã nhận một thẻ vàng từ ${player.name}, nhận 2 thẻ vàng người chơi sẽ bị ban`, null, YELLOW);
   return false;
 }
 
@@ -320,17 +351,17 @@ function updateStats(team) {
 }
 
 function reportStats(scores) {
-  room.sendAnnouncement(` RED ${scores.red} - ${scores.blue} BLUE`, null, STATS_COLOR, "bold");
+  room.sendAnnouncement(` RED ${scores.red} - ${scores.blue} BLUE`, null, YELLOW, "bold");
   // Possession stats
   let totalPossessedKicks = game.teams[1].possessedKicks + game.teams[2].possessedKicks;
   let redPossession = ~~(game.teams[1].possessedKicks / totalPossessedKicks * 100);
   let bluePossession = 100 - redPossession;
-  room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% - ${bluePossession}% BLUE`, null, STATS_COLOR, "small-bold", 0);
+  room.sendAnnouncement(`Kiểm soát bóng: RED ${redPossession}% - ${bluePossession}% BLUE`, null, YELLOW, "small-bold", 0);
   // Passing stats
-  room.sendAnnouncement(`Lượt chuyền bóng: RED ${game.teams[1].passes} - ${game.teams[2].passes} BLUE`, null, STATS_COLOR, "small-bold", 0);
+  room.sendAnnouncement(`Lượt chuyền bóng: RED ${game.teams[1].passes} - ${game.teams[2].passes} BLUE`, null, YELLOW, "small-bold", 0);
   let redSuccessRate = ~~(game.teams[1].possessedKicks / game.teams[1].kicks * 100);
   let blueSuccessRate = ~~(game.teams[2].possessedKicks / game.teams[2].kicks * 100);
-  room.sendAnnouncement(`Tỉ lệ xử lý bóng thành công: RED ${redSuccessRate}% - ${blueSuccessRate}% BLUE`, null, STATS_COLOR, "small-bold", 0);
+  room.sendAnnouncement(`Tỉ lệ xử lý bóng thành công: RED ${redSuccessRate}% - ${blueSuccessRate}% BLUE`, null, YELLOW, "small-bold", 0);
   // Player stats information
   let redPlayerStats = [];
   let bluePlayerStats = [];
@@ -357,10 +388,10 @@ function reportStats(scores) {
   };
 
   if ( redPlayerStats.length != 0 ) {
-    room.sendAnnouncement(`RED: ${redPlayerStats.join(" ")}`, null, STATS_COLOR, "small-bold", 0);
+    room.sendAnnouncement(`RED: ${redPlayerStats.join(" ")}`, null, YELLOW, "small-bold", 0);
   };
   if ( bluePlayerStats.length != 0 ) {
-    room.sendAnnouncement(`BLUE: ${bluePlayerStats.join(" ")}`, null, STATS_COLOR, "small-bold", 0);
+    room.sendAnnouncement(`BLUE: ${bluePlayerStats.join(" ")}`, null, YELLOW, "small-bold", 0);
   };
 }
 
