@@ -183,7 +183,7 @@ function afkFunc(value, player) {
     monitorAfk.deadline = new Date().getTime() / 1000 + AFK_DEADLINE; // Deadline for players to do something
     monitorAfk.players.push(...getPlayers().filter((player) => player.team != 0).map((player) => player.id));
   };
-  room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick", player.id, GREEN);
+  room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick", null, GREEN);
   return true;
 }
 
@@ -301,10 +301,11 @@ function updateStats(team) {
     (assister.team == team) // Assisted by teammate
   ) {
     updatePlayerStats(assister, 2);
-    if ( game.players[scorer.name].assists != 1 ) { // Multiple assists O_O
-      comment = comment.concat(", ", `lại là ${getTag(assister.name)} kiến tạo`);
+    let hasAssisted = game.players[assister.name].assists;
+    if ( hasAssisted != 1 ) { // Multiple assists O_O
+      comment = comment.concat(", ", `lần kiến tạo thứ ${hasAssisted} của ${getTag(assister.name)}`);
     } else {
-      comment = comment.concat(", ", `kiến tạo thuộc về ${getTag(assister.name)}`);
+      comment = comment.concat(", ", `${getTag(assister.name)} là người đã kiến tạo`);
     };
   };
 
