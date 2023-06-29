@@ -3,11 +3,15 @@ const START_GAME_COMMENT = `Chào mừng đến với SVĐ De Paul, tôi là Tr�
 const STATS_COLOR = 0xFFEA00;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
+const AFK_DEADLINE = 6;
 
 const commands = { // Format: "alias: [function, requiresAdmin]"
   help: [helpFunc, false],
+  discord: [discordFunc, false],
   var: [varFunc, false],
   penalty: [penaltyFunc, false],
+  afk: [afkFunc, false],
+  spec: [specFunc, false],
   login: [loginFunc, false],
   wait: [waitFunc, true],
   noautopick: [disableAutoPickFunc, true],
@@ -56,6 +60,10 @@ const gameDefault = {
   },
 };
 
+var monitorAfk = {
+  deadline: null,
+  players: [],
+};
 var game = JSON.parse(JSON.stringify(gameDefault));
 var config = {
   wait: false,
@@ -63,7 +71,7 @@ var config = {
 };
 var cache = {};
 var room = HBInit({
-  roomName: "Phòng tự động của De Paul",
+  roomName: "💥 Phòng tự động của De Paul (futsal) 💥",
   maxPlayers: 30,
   playerName: "BLV Trông Anh Ngược",
   public: false,
@@ -101,7 +109,7 @@ async function updateTeamPlayers() {
 
   // Get a bench player (like Penaldo) that aren't admins cause admins can do it themself
   let specPlayer = players.find(player => (player.team == 0) && !player.admin);
-  if ( specPlayer == undefined ) return; // No players left in the Spectators
+  if ( !specPlayer ) return; // No players left in the Spectators
 
   // Count players from 2 teams
   let redPlayersCount = players.filter(player => player.team == 1).length;
@@ -137,20 +145,51 @@ async function updateBallKick(player) {
   // Overtime commentary
   if (
     (room.getScores().time <= room.getScores().timeLimit) || // Not overtime
-    (cache.overtimeCommentary != undefined) // Already made this comment
+    (cache.overtimeCommentary) // Already made this comment
   ) return;
   room.sendChat("Vậy là những phút thi đấu chính thức đã kết thúc, chúng ta đang tiến đến khoảng thời gian bù giờ");
   cache.overtimeCommentary = 1;
 }
 
+function helpFunc(value, player) {
+  let allAlias = Object.keys(commands).filter((command) => !commands[command][1] || player.admin);
+  allAlias = allAlias.map((alias) => "!" + alias)
+  room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, GREEN);
+  return false;
+}
+
+function discordFunc(value, player) {
+  room.sendAnnouncement("Kết bạn với De Paul trên Discord: shelld3v#7847", null, GREEN, "normal", 0);
+  return true;
+}
+
 function varFunc(value, player) {
-  room.sendAnnouncement("Phòng VAR thông báo không có lỗi, vui lòng mua gói VAR để cải thiện chất lượng", null, GREEN, "normal", 0);
+  room.sendAnnouncement("Tổ VAR đang bận chơi fifai, vui lòng gọi lại sau", null, GREEN, "normal", 0);
   return true;
 }
 
 function penaltyFunc(penalty, player) {
   room.sendAnnouncement("Trọng tài quyết định chỉ trao penalty cho Argentina", null, RED, "normal", 0);
   return true;
+}
+
+function afkFunc(value, player) {
+  if ( room.getScores() == null ) {
+    room.sendAnnouncement("Không thể báo cáo AFK khi trận đấu chưa bắt đầu", player.id, RED);
+    return false;
+  };
+
+  if ( monitorAfk.players.length == 0 ) {
+    monitorAfk.deadline = new Date().getTime() / 1000 + AFK_DEADLINE; // Deadline for players to do something
+    monitorAfk.players.push(...getPlayers().filter((player) => player.team != 0).map((player) => player.id));
+  };
+  room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick", player.id, GREEN);
+  return true;
+}
+
+function specFunc(value, player) {
+  room.setPlayerTeam(player.id, 0);
+  room.sendAnnouncement("Bạn đã được di chuyển ra Spectators", player.id, GREEN);
 }
 
 function loginFunc(password, player) {
@@ -186,20 +225,13 @@ function enableAutoPickFunc(value, player) {
   return false;
 }
 
-function helpFunc(value, player) {
-  let allAlias = Object.keys(commands).filter((command) => !commands[command][1] || player.admin);
-  allAlias = allAlias.map((alias) => "!" + alias)
-  room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, GREEN);
-  return false;
-}
-
 function processCommand(player, command) {
   // Get alias and value from command
   let splitIndex = command.indexOf(" ");
   splitIndex = ( splitIndex != -1 ) ? splitIndex : command.length;
   let [alias, value] = [command.slice(0, splitIndex), command.slice(splitIndex + 1)];
   let found = commands[alias];
-  if ( found == undefined ) return true;
+  if ( !found ) return true;
 
   let [func, requiresAdmin] = found;
   if ( requiresAdmin && !player.admin ) {
@@ -228,7 +260,7 @@ function processMessage(player, message) {
 
 function updatePlayerStats(player, type) {
   // If player hasn't had stats yet, initialize an object
-  (game.players[player.name] != undefined) || (game.players[player.name] = { ...playerStats });
+  game.players[player.name] || (game.players[player.name] = { ...playerStats });
   game.players[player.name].forTeam = player.team;
 
   switch ( type ) {
@@ -254,7 +286,7 @@ function updateStats(team) {
 
   updatePlayerStats(scorer, 1);
   // Counting this shot as a "possessed kick"
-  game.teams[player.team].possessedKicks++;
+  game.teams[scorer.team].possessedKicks++;
   // Design celebrating comment
   let comment = `${getTag(scorer.name)} là người đã ghi bàn`;
   let hasScored = game.players[scorer.name].goals;
@@ -388,13 +420,30 @@ async function monitorInactivity() {
   if ( config.wait || room.getScores() != null ) return; // Admins are up :D
 
   let nonAdminPlayer = players.find((player) => !player.admin)
-  if ( nonAdminPlayer == undefined ) {
+  if ( !nonAdminPlayer ) {
     room.sendAnnouncement("Không có người chơi để cấp Admin!", null, RED);
     return;
   }
   room.setPlayerAdmin(nonAdminPlayer.id, true);
   // Monitor again, make sure the new admin isn't AFK too
   monitorInactivity();
+}
+
+function checkAfk(player) {
+  if ( monitorAfk.players.length == 0 ) return; // No AFK monitor is ongoing
+
+  let index = monitorAfk.players.indexOf(player.id);
+  if ( index != -1 ) { // Player is monitored
+    monitorAfk.players.splice(index, 1); // Remove player from AFK checklist
+    return;
+  };
+  let time = new Date().getTime() / 1000;
+  if ( monitorAfk.deadline < time ) {
+    monitorAfk.players.forEach(function(id) {
+      room.kickPlayer(id, "AFK");
+    });
+    monitorAfk.players.length = 0;
+  };
 }
 
 function reset() {
@@ -438,6 +487,10 @@ room.onTeamGoal = function(team) {
 
 room.onPlayerChat = function(player, message) {
   return processMessage(player, message);
+}
+
+room.onPlayerActivity = function(player) {
+  checkAfk(player);
 }
 
 room.onTeamVictory = function(scores) {
