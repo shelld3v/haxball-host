@@ -438,6 +438,7 @@ async function monitorInactivity() {
 
 function checkAfk(player) {
   if ( monitorAfk.players.length == 0 ) return; // No AFK monitor is ongoing
+  (room.getScores() == null) && (monitorAfk.players.length = 0); // If the game is over, stop monitoring AFK
 
   let index = monitorAfk.players.indexOf(player.id);
   if ( index != -1 ) { // Player is monitored
