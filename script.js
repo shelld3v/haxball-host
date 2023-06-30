@@ -91,27 +91,26 @@ function getTag(name) {
 }
 
 // Exclude host player from players list
-function getPlayers() {
+function getNonHostPlayers() {
   return room.getPlayerList().filter((player) => player.id != 0);
 }
 
 // If there are no admins left in the room give admin to one of the remaining players.
 function updateAdmins() {
-  // Get all players
-  let players = getPlayers();
+  let players = getNonHostPlayers();
   if ( players.length == 0 ) return; // No player left
   if ( players.some((player) => player.admin) ) return; // There's an admin left
   room.setPlayerAdmin(players[0].id, true); // Give admin to the first non-admin player in the list
 }
 
 // Move a player to missing teams
-async function updateTeamPlayers(excludingId) {
+async function updateTeamPlayers() {
   if ( config.autoPickDisabled ) return;
 
-  let players = getPlayers();
+  let players = room.getPlayerList();
 
   // Get a bench player (like Penaldo) that aren't admins cause admins can do it themself
-  let specPlayer = players.find((player) => (player.team == 0) && !player.admin && (player.id !== excludingId));
+  let specPlayer = players.find((player) => (player.team == 0) && !player.admin);
   if ( !specPlayer ) return; // No players left in the Spectators
 
   // Count players from 2 teams
@@ -189,7 +188,7 @@ function afkFunc(value, player) {
 
   if ( monitorAfk.players.length == 0 ) {
     monitorAfk.deadline = new Date().getTime() / 1000 + AFK_DEADLINE; // Deadline for players to do something
-    monitorAfk.players.push(...getPlayers().filter((player) => player.team != 0).map((player) => player.id));
+    monitorAfk.players.push(...room.getPlayerList().filter((player) => player.team != 0).map((player) => player.id));
   };
   room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick", null, GREEN);
   return true;
@@ -201,9 +200,12 @@ function specFunc(value, player) {
     return true;
   };
 
-  await room.setPlayerTeam(player.id, 0);
-  updateTeamPlayers(player.id);
+  room.setPlayerTeam(player.id, 0);
   room.sendAnnouncement("Bạn đã được di chuyển ra Spectators", player.id, GREEN);
+  // Replace with another player
+  let newPlayer = room.getPlayerList().find((_player) => (_player.team == 0) && !_player.admin)
+  if ( !newPlayer ) return;
+  room.setPlayerTeam(newPlayer.id, player.team);
   return true;
 }
 
@@ -223,17 +225,13 @@ function loginFunc(password, player) {
 }
 
 function yellowCardFunc(id, player) {
-  if ( id == "#0" ) {
-    room.sendAnnouncement("Không thể phạt thẻ vàng bot", player.id, RED);
-    return false;
-  }
   if ( !id.startsWith("#") ) {
     room.sendAnnouncement("Vui lòng cung cấp một ID người chơi hợp lệ: !yellow #<id>", player.id, RED);
     return false;
   }
 
   id = id.slice(1);
-  let targetPlayer = getPlayers().find((player) => player.id == id);
+  let targetPlayer = getNonHostPlayers().find((player) => player.id == id);
   if ( !targetPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi với ID: ${id}`, player.id, RED);
     return false;
@@ -455,7 +453,7 @@ async function monitorInactivity() {
   if ( room.getScores() != null ) return; // Game has started
 
   // Room is inactive, are admins AFK?
-  let players = getPlayers()
+  let players = getNonHostPlayers()
   let admins = players.filter((player) => player.admin);
   if (
     (admins.length == 0) || // No one else in the room:((
