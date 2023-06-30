@@ -243,7 +243,7 @@ function yellowCardFunc(id, player) {
   if ( index != -1 ) { // Player has already received a yellow card
     yellowCards.splice(index, 1); // Clear the card
     room.kickPlayer(id, "Bạn đã nhận 2 thẻ vàng", true);
-    room.sendAnnouncement(`🟨🟨 ${targetPlayer.name} đã nhận thẻ vàng thứ 2 từ ${player.name} (BAN)`, null, RED);
+    room.sendAnnouncement(`🟨🟨 ${targetPlayer.name} đã nhận thẻ vàng thứ 2 từ ${player.name} (BAN)`, null, YELLOW);
     return false;
   };
   yellowCards.push(targetPlayer.auth);
@@ -275,7 +275,10 @@ function processCommand(player, command) {
   splitIndex = ( splitIndex != -1 ) ? splitIndex : command.length;
   let [alias, value] = [command.slice(0, splitIndex), command.slice(splitIndex + 1)];
   let found = commands[alias];
-  if ( !found ) return true;
+  if ( !found ) {
+    room.sendAnnouncement(`Không thể xác định lệnh !${alias}, dùng !help để xem các lệnh`, player.id, RED);
+    return false;
+  };
 
   let [func, requiresAdmin] = found;
   if ( requiresAdmin && !player.admin ) {
