@@ -177,7 +177,7 @@ function varFunc(value, player) {
 }
 
 function penaltyFunc(penalty, player) {
-  room.sendAnnouncement("Trọng tài quyết định chỉ trao penalty cho Argentina", null, RED, "normal", 0);
+  room.sendAnnouncement("Ngã không đẹp, trọng tài quyết định không có penalty", null, RED, "normal", 0);
   return true;
 }
 
@@ -196,9 +196,15 @@ function afkFunc(value, player) {
 }
 
 function specFunc(value, player) {
-  room.setPlayerTeam(player.id, 0);
+  if ( player.team == 0 ) {
+    room.sendAnnouncement("Bạn đã ở Spectators", player.id, RED);
+    return true;
+  };
+
+  await room.setPlayerTeam(player.id, 0);
   updateTeamPlayers(player.id);
   room.sendAnnouncement("Bạn đã được di chuyển ra Spectators", player.id, GREEN);
+  return true;
 }
 
 function loginFunc(password, player) {
