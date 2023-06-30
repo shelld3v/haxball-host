@@ -145,8 +145,10 @@ function updateBallKick(player) {
   game.teams[player.team].possessedKicks++;
 
   // Overtime commentary
+  let scores = room.getScores();
   if (
-    (room.getScores().time <= room.getScores().timeLimit) || // Not overtime
+    (scores.time < scores.timeLimit) || // Not overtime
+    (scores.red != scores.blue) || // The game is over
     (cache.overtimeCommentary) // Already made this comment
   ) return;
   room.sendChat("Vậy là những phút thi đấu chính thức đã kết thúc, chúng ta đang tiến đến khoảng thời gian bù giờ");
