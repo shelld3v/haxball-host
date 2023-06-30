@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "nyc";
+const ADMIN_PASSWORD = "vit";
 const START_GAME_COMMENT = `Chào mừng đến với SVĐ De Paul, tôi là Trông Anh Ngược, BLV của các bạn ngày hôm nay`;
 const YELLOW = 0xFFEA00;
 const RED = 0xFF0000;
@@ -328,6 +328,10 @@ function updateStats(team) {
   if ( scorer.team != team ) { // Own goal
     updatePlayerStats(scorer, 0);
     room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
+    if ( assister == null ) {
+      yellowCardFunc("#" + scorer.id, room.getPlayer(0));
+    };
+
     return;
   };
 
