@@ -493,7 +493,7 @@ async function checkSpam(player, message) {
     return;
   };
 
-  lastMessages.shift(message);
+  lastMessages.unshift(message);
   lastMessages.length = 3;
 }
 
