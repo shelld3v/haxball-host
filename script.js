@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "vit";
+const ADMIN_PASSWORD = "depao";
 const START_GAME_COMMENT = `Chào mừng đến với Cà Khịa TV, tôi là Trông Anh Ngược, BLV của các bạn ngày hôm nay`;
 const YELLOW = 0xFFEA00;
 const RED = 0xFF0000;
@@ -69,11 +69,12 @@ const gameDefault = {
   },
 };
 
+var lastMessages = [null, null, null];
+var yellowCards = [];
 var monitorAfk = {
   deadline: null,
   players: [],
 };
-var yellowCards = [];
 var game = JSON.parse(JSON.stringify(gameDefault));
 var cache = {};
 var room = HBInit({
@@ -164,7 +165,7 @@ function helpFunc(value, player) {
 }
 
 function discordFunc(value, player) {
-  room.sendAnnouncement("Kết bạn với De Paul trên Discord: shelld3v#7847", null, GREEN, "normal", 0);
+  room.sendAnnouncement("Vào server của De Paul 🥰: https://discord.gg/DYWZFFsSYu", null, GREEN, "normal", 0);
   return true;
 }
 
@@ -486,6 +487,16 @@ async function monitorInactivity() {
   monitorInactivity();
 }
 
+async function checkSpam(player, message) {
+  if ( lastMessages.every((msg) => msg == message) ) {
+    room.kickPlayer(player.id, "Spam");
+    return;
+  };
+
+  lastMessages.shift(message);
+  lastMessages.length = 3;
+}
+
 function checkAfk(player) {
   if ( monitorAfk.players.length == 0 ) return; // No AFK monitor is ongoing
   (room.getScores() === null) && (monitorAfk.players.length = 0); // If the game is over, stop monitoring AFK
@@ -546,6 +557,9 @@ room.onPositionsReset = function() {
 }
 
 room.onPlayerChat = function(player, message) {
+  if ( player.id != 0 ) {
+     checkSpam(player, message);
+  };
   return processMessage(player, message);
 }
 
