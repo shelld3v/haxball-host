@@ -69,7 +69,8 @@ const gameDefault = {
   },
 };
 
-var lastMessages = [null, null, null];
+var lastMessage = null;
+var duplicateMessagesCount = 0;
 var yellowCards = [];
 var monitorAfk = {
   deadline: null,
@@ -488,13 +489,16 @@ async function monitorInactivity() {
 }
 
 async function checkSpam(player, message) {
-  if ( lastMessages.every((msg) => msg == message) ) {
-    room.kickPlayer(player.id, "Spam");
+  if ( message != lastMessage ) { // The message is unique, not spammy
+    lastMessage = message;
+    duplicateMessagesCount = 0;
     return;
   };
 
-  lastMessages.unshift(message);
-  lastMessages.length = 3;
+  duplicateMessagesCount++;
+  if ( duplicateMessagesCount >= 3 ) {
+    room.kickPlayer(player.id, "Spam");
+  };
 }
 
 function checkAfk(player) {
