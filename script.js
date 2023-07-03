@@ -48,7 +48,7 @@ const goalComments = {
   "5": "hết cứu thật rồi",
 };
 const scorerComments = {
-  "2": "Cú đúp cho",
+  "2": "Cú đúp dành cho",
   "3": "Hattrick của",
   "4": "Thật không thể tin được, một cú poker đến từ",
   "5": "Vâng, không ai khác, một cú repocker cho",
