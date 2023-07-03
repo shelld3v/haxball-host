@@ -29,9 +29,9 @@ const commands = { // Format: "alias: [function, requiresAdmin]"
   clearbans: [clearBansFunc, true],
 }
 const replies = {
-  "tin chuẩn chưa a": "Chuẩn em nhé",
-  "ngu ": "Toxic nên anh sẽ block em nhé",
-  "memaybeo": "Mẹ tao béo, nhưng ít nhất tao có mẹ",
+  "tin chuẩn chưa a": "Muốn biết tin chuẩn chưa anh thì hãy so sánh xem xét các nguồn tin khác. Cứ nhai đi nhai lại như một con bò.",
+  "ngu ": "Toxic nên anh sẽ block em nhé.",
+  "memaybeo": "Mẹ tao béo, nhưng ít nhất tao có mẹ.",
 };
 const goalComments = {
   "-4": "liệu còn hy vọng nào không",
