@@ -48,10 +48,11 @@ const goalComments = {
   "5": "hết cứu thật rồi",
 };
 const scorerComments = {
+  "1": "Pha lập công do công của",
   "2": "Cú đúp dành cho",
   "3": "Hattrick của",
   "4": "Thật không thể tin được, một cú poker đến từ",
-  "5": "Vâng, không ai khác, một cú repocker cho",
+  "5": "Vâng, không ai khác, một cú repoker cho",
 };
 const playerStats = {
   goals: 0,
@@ -79,7 +80,7 @@ var yellowCards = [];
 var votesToKick = {};
 var monitorAfk = {
   deadline: null,
-  players: [],
+  players: new Set(),
 };
 var game = JSON.parse(JSON.stringify(gameDefault));
 var cache = {};
@@ -155,12 +156,13 @@ function updateBallKick(player) {
   // Overtime commentary
   let scores = room.getScores();
   if (
-    (scores.time < scores.timeLimit) || // Not overtime
-    (scores.red != scores.blue) || // The game is over
-    (cache.overtimeCommentary) // Already made this comment
-  ) return;
-  room.sendChat("Vậy là những phút thi đấu chính thức đã kết thúc, chúng ta đang tiến đến khoảng thời gian bù giờ");
-  cache.overtimeCommentary = 1;
+    (scores.time > scores.timeLimit) && // Overtime
+    (scores.red == scores.blue) && // The game is not over
+    (!cache.overtimeCommentary) // Haven't made this comment
+  ) {
+    room.sendChat("Vậy là những phút thi đấu chính thức đã kết thúc, chúng ta đang tiến đến khoảng thời gian bù giờ");
+    cache.overtimeCommentary = 1;
+  };
 }
 
 function helpFunc(value, player) {
@@ -196,9 +198,9 @@ function kickAfkFunc(value, player) {
     return false;
   };
 
-  if ( monitorAfk.players.length == 0 ) {
+  if ( monitorAfk.players.size == 0 ) {
     monitorAfk.deadline = new Date().getTime() / 1000 + AFK_DEADLINE; // Deadline for players to do something
-    monitorAfk.players.push(...room.getPlayerList().filter((player) => player.team != 0).map((player) => player.id));
+    monitorAfk.players = new Set(room.getPlayerList().filter((player) => player.team != 0).map((player) => player.id));
   };
   room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick", null, GREEN);
   return true;
@@ -383,12 +385,9 @@ function updateStats(team) {
   // Counting this shot as a "possessed kick"
   game.teams[scorer.team].possessedKicks++;
   // Design celebrating comment
-  let comment = `${getTag(scorer.name)} là người đã ghi bàn`;
   let hasScored = game.players[scorer.name].goals;
-  if ( hasScored != 1 ) {
-    comment = scorerComments[hasScored] || `Đây đã là bàn thắng thứ ${hasScored} trong trận đấu này của`;
-    comment = comment.concat(" ", getTag(scorer.name));
-  }
+  let comment = scorerComments[hasScored] || `Thật điên rồ, bàn thắng thứ ${hasScored} trong trận đấu này của`;
+  comment = comment.concat(" ", getTag(scorer.name));
 
   if (
     (assister !== null) &&
@@ -398,9 +397,9 @@ function updateStats(team) {
     updatePlayerStats(assister, 2);
     let hasAssisted = game.players[assister.name].assists;
     if ( hasAssisted != 1 ) { // Multiple assists O_O
-      comment = comment.concat(", ", `lần kiến tạo thứ ${hasAssisted} của ${getTag(assister.name)}`);
+      comment = comment.concat(", ", `${getTag(assister.name)} đã có cho mình kiến tạo thứ ${hasAssisted} trong trận đấu`);
     } else {
-      comment = comment.concat(", ", `${getTag(assister.name)} là người đã kiến tạo`);
+      comment = comment.concat(", ", `đường kiến tạo của ${getTag(assister.name)}`);
     };
   };
 
@@ -539,21 +538,23 @@ async function checkSpam(player, message) {
 }
 
 function checkAfk(player) {
-  if ( monitorAfk.players.length == 0 ) return; // No AFK monitor is ongoing
-  (room.getScores() === null) && (monitorAfk.players.length = 0); // If the game is over, stop monitoring AFK
+  if ( monitorAfk.players.size == 0 ) return; // No AFK monitor is ongoing
+  (room.getScores() === null) && (monitorAfk.players.clear()); // If the game is over, stop monitoring AFK
 
-  let index = monitorAfk.players.indexOf(player.id);
-  if ( index != -1 ) { // Player is monitored
-    monitorAfk.players.splice(index, 1); // Remove player from AFK checklist
-    return;
-  };
+  if ( monitorAfk.players.delete(player.id) ) return; // Remove player from AFK checklist, if exists
 
   let time = new Date().getTime() / 1000;
   if ( monitorAfk.deadline > time ) return; // There is still time for players to make action
   monitorAfk.players.forEach(function(id) {
     room.kickPlayer(id, "AFK");
   });
-  monitorAfk.players.length = 0;
+  monitorAfk.players.clear();
+}
+
+function welcomePlayer(player) {
+  room.sendAnnouncement("Nhập !help để xem các câu lệnh", player.id, GREEN, "normal", 0);
+  room.sendAnnouncement("Discord: https://discord.gg/DYWZFFsSYu", player.id, GREEN, "normal", 0);
+  room.sendChat(`Chào mừng ${getTag(player.name)} đến với băng ghế dự bị cùng Cristiano Ronaldo`, player.id);
 }
 
 function reset() {
@@ -562,9 +563,7 @@ function reset() {
 }
 
 room.onPlayerJoin = function(player) {
-  room.sendAnnouncement("Nhập !help để xem các câu lệnh", player.id, GREEN, "normal", 0);
-  room.sendAnnouncement("Discord: https://discord.gg/DYWZFFsSYu", player.id, GREEN, "normal", 0);
-  room.sendChat(`Chào mừng ${getTag(player.name)} đến với băng ghế dự bị cùng Cristiano Ronaldo`, player.id);
+  welcomePlayer(player);
   updateAdmins();
   updateTeamPlayers();
 }
@@ -576,9 +575,11 @@ room.onPlayerLeave = async function(player) {
 }
 
 room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
-  // Move host player back to Spectators if it was moved to a team
-  if ( changedPlayer.id != 0 ) return;
-  room.setPlayerTeam(0, 0);
+  if ( changedPlayer.id == 0 ) { // Move host player back to Spectators
+    room.setPlayerTeam(0, 0);
+  } else if ( changedPlayer.team == 0 ) { // Remove player from AFK tracklist
+    monitorAfk.players.delete(changedPlayer.id);
+  };
 }
 
 room.onPlayerAdminChange = function(changedPlayer, byPlayer) {
