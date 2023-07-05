@@ -137,19 +137,21 @@ async function updateTeamPlayers() {
 // Update information to monitor last kickers, possession and passing accuracy
 function updateBallKick(player) {
   // Update information about 2 last players who kicked the ball
-  game.lastKicked.unshift(player);
-  game.lastKicked.length = 2;
+  game.lastKicked.push(player);
+  game.lastKicked.shift();
+  // Get the previous kicker
+  let previousKicker = game.lastKicked[0];
 
   // Update total kicks
   game.teams[player.team].kicks++;
   // Update accurate kicks
   if ( 
-    (game.lastKicked[1] === null) || // Kick-off pass
-    (player.team != game.lastKicked[1].team) // Received the ball from an opponent player
+    (previousKicker === null) || // Kick-off pass
+    (player.team != previousKicker.team) // Received the ball from an opponent player
   ) return;
 
   // Received the ball from a teammate, so the previous kick was a pass
-  if (player.id != game.lastKicked[1].id) game.teams[player.team].passes++; 
+  if (player.id != previousKicker.id) game.teams[player.team].passes++; 
   // Received the ball from a teammate or from yourself, so the previous kick kept the possession
   game.teams[player.team].possessedKicks++;
 
@@ -370,7 +372,7 @@ function updatePlayerStats(player, type) {
 
 // Update stats about goals, assists and own goals
 function updateStats(team) {
-  let [scorer, assister] = game.lastKicked;
+  let [assister, scorer] = game.lastKicked;
   if ( scorer.team != team ) { // Own goal
     updatePlayerStats(scorer, 0);
     room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
@@ -568,7 +570,7 @@ room.onPlayerJoin = function(player) {
   updateTeamPlayers();
 }
 
-room.onPlayerLeave = async function(player) {
+room.onPlayerLeave = function(player) {
   delete votesToKick[player.id];
   updateAdmins();
   (player.team != 0) && updateTeamPlayers();
@@ -611,7 +613,7 @@ room.onPlayerActivity = function(player) {
   checkAfk(player);
 }
 
-room.onPlayerKicked = async function(kickedPlayer, reason, ban, byPlayer) {
+room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
   // Log this for admin to monitor kicking activity
   action = ban ? "banned" : "kicked";
   console.log(`${kickedPlayer.name} was ${action} by ${byPlayer.name} (reason: ${reason})`);
