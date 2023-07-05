@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "ngu";
+const ADMIN_PASSWORD = "ocdepaul";
 const START_GAME_COMMENT = `Chào mừng đến với Cà Khịa TV, tôi là Trông Anh Ngược, BLV của các bạn ngày hôm nay`;
 const YELLOW = 0xFFEA00;
 const RED = 0xFF0000;
