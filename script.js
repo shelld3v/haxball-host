@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "ocdepaul";
+const ADMIN_PASSWORD = "conca";
 const START_GAME_COMMENT = `Chào mừng đến với Cà Khịa TV, tôi là Trông Anh Ngược, BLV của các bạn ngày hôm nay`;
 const YELLOW = 0xFFEA00;
 const RED = 0xFF0000;
@@ -195,8 +195,8 @@ function penaltyFunc(penalty, player) {
 }
 
 function kickAfkFunc(value, player) {
-  if ( room.getScores() === null ) {
-    room.sendAnnouncement("Không thể báo cáo AFK khi trận đấu chưa bắt đầu", player.id, RED);
+  if ( (room.getScores() === null) || cache.paused ) {
+    room.sendAnnouncement("Chỉ có thể báo cáo AFK khi trận đấu đang diễn ra", player.id, RED);
     return false;
   };
 
@@ -512,15 +512,15 @@ async function monitorInactivity() {
   ) return;
   // Notify admins about inactivity, give random admin if no action is made from current admins
   let mentionAdmins = admins.map((admin) => getTag(admin.name)).join(" "); // Tag all admins
-  room.sendChat(`${mentionAdmins} vui lòng khởi động trận đấu hoặc chat !wait trong 15 giây trước khi room cấp Admin ngẫu nhiên`)
+  room.sendChat(`${mentionAdmins} vui lòng khởi động trận đấu hoặc chat !wait trong 15 giây trước khi room cấp Admin ngẫu nhiên`);
   await new Promise(r => setTimeout(r, 15000));
   if ( cache.wait || room.getScores() !== null ) return; // Admins are up :D
 
-  let nonAdminPlayer = players.find((player) => !player.admin)
+  let nonAdminPlayer = players.find((player) => !player.admin);
   if ( !nonAdminPlayer ) {
     room.sendAnnouncement("Không có người chơi để cấp Admin!", null, RED);
     return;
-  }
+  };
   room.setPlayerAdmin(nonAdminPlayer.id, true);
   // Monitor again, make sure the new admin isn't AFK too
   monitorInactivity();
@@ -632,15 +632,19 @@ room.onGameStart = function(byPlayer) {
 }
 
 room.onGameStop = function(byPlayer) {
+  delete cache.paused;
   (byPlayer !== null) && room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
   monitorInactivity();
 }
 
 room.onGamePause = function(byPlayer) {
+  cache.paused = 1;
+  monitorAfk.players.length = 0; // Stop monitoring AFK when the game is paused
   room.sendChat("Trận đấu đang được tạm dừng để check VAR");
 }
 
 room.onGameUnpause = function(byPlayer) {
+  delete cache.paused;
   room.sendChat("Trọng tài đã check VAR và trận đấu được TIẾP TỤC");
 }
 
