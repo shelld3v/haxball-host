@@ -4,7 +4,7 @@ const YELLOW = 0xFFEA00;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
 const AFK_DEADLINE = 6.5;
-const VOTES_COUNT_TO_KICK = 6;
+const VOTES_COUNT_TO_KICK = 5;
 const MAX_DUPE_MESSAGES = 2;
 
 const maps = {
@@ -36,7 +36,7 @@ const replies = {
   "memaybeo": "Mẹ tao béo, nhưng ít nhất tao có mẹ.",
 };
 const goalComments = {
-  "-4": "liệu còn hy vọng nào không",
+  "-4": "liệu còn chút hy vọng nào không",
   "-3": "tỉ số đã được rút ngắn",
   "-2": "liệu sẽ có một cuộc lội ngược dòng xảy ra?",
   "-1": "cách biệt chỉ còn là 1 bàn mong manh",
@@ -115,12 +115,14 @@ function updateAdmins() {
 }
 
 // Move a player to missing teams
-async function updateTeamPlayers() {
+async function updateTeamPlayers(specPlayer) {
   let players = room.getPlayerList();
 
-  // Get a bench player (like Penaldo) that aren't admins cause admins can do it themself
-  let specPlayer = players.find((player) => (player.team == 0) && !player.admin);
-  if ( !specPlayer ) return; // No players left in the Spectators
+  if ( !specPlayer ) {
+    // Get a bench player (like Penaldo) that isn't admin cause admins can do it themself
+    specPlayer = players.find((player) => (player.team == 0) && !player.admin);
+    if ( !specPlayer ) return; // No players left in the Spectators
+  }
 
   // Count players from 2 teams
   let redPlayersCount = players.filter(player => player.team == 1).length;
@@ -129,9 +131,7 @@ async function updateTeamPlayers() {
 
   // Find the team that needs new players the most
   let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
-
-  // API functions that modify the game's state execute asynchronously, so we have to wait before rechecking everything
-  await room.setPlayerTeam(specPlayer.id, missingTeam);
+  room.setPlayerTeam(specPlayer.id, missingTeam);
 }
 
 // Update information to monitor last kickers, possession and passing accuracy
@@ -175,7 +175,7 @@ function helpFunc(value, player) {
 }
 
 function discordFunc(value, player) {
-  room.sendAnnouncement("Vào server của De Paul 🥰: https://discord.gg/DYWZFFsSYu", null, GREEN, "normal", 0);
+  room.sendAnnouncement("Vào server Discord của De Paul 🥰: https://discord.gg/DYWZFFsSYu", null, GREEN, "normal", 0);
   return true;
 }
 
@@ -185,7 +185,7 @@ function byeFunc(value, player) {
 }
 
 function varFunc(value, player) {
-  room.sendAnnouncement("Tổ VAR đang bận xem sex, vui lòng gọi lại sau", null, GREEN, "normal", 0);
+  room.sendAnnouncement("Tổ VAR đang bận xem sex, vui lòng gọi lại sau", null, RED, "normal", 0);
   return true;
 }
 
@@ -401,7 +401,7 @@ function updateStats(team) {
     if ( hasAssisted != 1 ) { // Multiple assists O_O
       comment = comment.concat(", ", `${getTag(assister.name)} đã có cho mình kiến tạo thứ ${hasAssisted} trong trận đấu`);
     } else {
-      comment = comment.concat(", ", `đường kiến tạo của ${getTag(assister.name)}`);
+      comment = comment.concat(", ", `đường kiến tạo từ ${getTag(assister.name)}`);
     };
   };
 
@@ -567,7 +567,7 @@ function reset() {
 room.onPlayerJoin = function(player) {
   welcomePlayer(player);
   updateAdmins();
-  updateTeamPlayers();
+  updateTeamPlayers(player);
 }
 
 room.onPlayerLeave = function(player) {
@@ -581,6 +581,9 @@ room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
     room.setPlayerTeam(0, 0);
   } else if ( changedPlayer.team == 0 ) { // Remove player from AFK tracklist
     monitorAfk.players.delete(changedPlayer.id);
+  } else if ( room.getPlayerList().filter(player => player.team == changedPlayer.team).length > 5 ) { // Each team can only has 5 players
+    room.setPlayerTeam(changedPlayer.id, 0);
+    room.sendAnnouncement("Mỗi đội chỉ có thể có tối đa 5 người chơi", byPlayer.id, RED);
   };
 }
 
