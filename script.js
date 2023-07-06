@@ -116,22 +116,24 @@ function updateAdmins() {
 
 // Move a player to missing teams
 async function updateTeamPlayers(specPlayer) {
-  let players = room.getPlayerList();
+  await navigator.locks.request("update_team_players", async lock => {
+    let players = room.getPlayerList();
 
-  if ( !specPlayer ) {
-    // Get a bench player (like Penaldo) that isn't admin cause admins can do it themself
-    specPlayer = players.find((player) => (player.team == 0) && !player.admin);
-    if ( !specPlayer ) return; // No players left in the Spectators
-  }
+    if ( !specPlayer ) {
+      // Get a bench player (like Penaldo) that isn't admin cause admins can do it themself
+      specPlayer = players.find((player) => (player.team == 0) && !player.admin);
+      if ( !specPlayer ) return; // No players left in the Spectators
+    }
 
-  // Count players from 2 teams
-  let redPlayersCount = players.filter(player => player.team == 1).length;
-  let bluePlayersCount = players.filter(player => player.team == 2).length;
-  if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) return; // There are enough players
+    // Count players from 2 teams
+    let redPlayersCount = players.filter(player => player.team == 1).length;
+    let bluePlayersCount = players.filter(player => player.team == 2).length;
+    if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) return; // There are enough players
 
-  // Find the team that needs new players the most
-  let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
-  room.setPlayerTeam(specPlayer.id, missingTeam);
+    // Find the team that needs new players the most
+    let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
+    await room.setPlayerTeam(specPlayer.id, missingTeam);
+  });
 }
 
 // Update information to monitor last kickers, possession and passing accuracy
@@ -500,6 +502,7 @@ function celebrateGoal(team) {
 
 // Give another player admin if current admins seem to be unresponsive
 async function monitorInactivity() {
+  if ( cache.wait ) return;
   await new Promise(r => setTimeout(r, 15000));// Wait 15 seconds
   if ( room.getScores() !== null ) return; // Game has started
 
@@ -541,7 +544,6 @@ async function checkSpam(player, message) {
 
 function checkAfk(player) {
   if ( monitorAfk.players.size == 0 ) return; // No AFK monitor is ongoing
-  (room.getScores() === null) && (monitorAfk.players.clear()); // If the game is over, stop monitoring AFK
 
   if ( monitorAfk.players.delete(player.id) ) return; // Remove player from AFK checklist, if exists
 
@@ -633,13 +635,14 @@ room.onGameStart = function(byPlayer) {
 
 room.onGameStop = function(byPlayer) {
   delete cache.paused;
+  monitorAfk.players.clear(); // Stop monitoring AFK when the game is stopped
   (byPlayer !== null) && room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
   monitorInactivity();
 }
 
 room.onGamePause = function(byPlayer) {
   cache.paused = 1;
-  monitorAfk.players.length = 0; // Stop monitoring AFK when the game is paused
+  monitorAfk.players.clear(); // Stop monitoring AFK when the game is paused
   room.sendChat("Trận đấu đang được tạm dừng để check VAR");
 }
 
