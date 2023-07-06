@@ -4,7 +4,6 @@ const YELLOW = 0xFFEA00;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
 const AFK_DEADLINE = 6.5;
-const VOTES_COUNT_TO_KICK = 5;
 const MAX_DUPE_MESSAGES = 2;
 
 const maps = {
@@ -22,7 +21,6 @@ const commands = { // Format: "alias: [function, requiresAdmin]"
   penalty: [penaltyFunc, false],
   kickafk: [kickAfkFunc, false],
   spec: [specFunc, false],
-  votekick: [voteKickFunc, false],
   login: [loginFunc, false],
   yellow: [yellowCardFunc, true],
   maplist: [listMapsFunc, true],
@@ -77,7 +75,6 @@ const gameDefault = {
 var lastMessage = [null, null]; // Last message and the player ID of the sender
 var duplicateMessagesCount = 0;
 var yellowCards = [];
-var votesToKick = {};
 var monitorAfk = {
   deadline: null,
   players: new Set(),
@@ -223,32 +220,6 @@ function specFunc(value, player) {
   if ( !newPlayer ) return;
   room.setPlayerTeam(newPlayer.id, player.team);
   return true;
-}
-
-function voteKickFunc(id, player) {
-  if ( !id.startsWith("#") ) {
-    room.sendAnnouncement("Vui lòng cung cấp một ID người chơi hợp lệ: !votekick #<id>", player.id, RED);
-    return false;
-  }
-
-  id = id.slice(1);
-  if ( player.id > id ) { // You can't vote kick someone who comes before you, to prevent spammy votes
-    room.sendAnnouncement("Bạn chỉ có thế vote kick người chơi vào sau bạn", player.id, RED);
-    return false;
-  } else if ( !votesToKick[id] ) {
-    votesToKick[id] = [];
-  } else if ( votesToKick[id].includes(player.id) ) {
-    room.sendAnnouncement("Bạn đã vote kick người này", player.id, RED);
-    return false;
-  }
-
-  votesToKick[id].push(player.id);
-  room.sendAnnouncement(`Vote kick thành công người chơi ID ${id} (${votesToKick[id].length}/${VOTES_COUNT_TO_KICK})`, player.id, GREEN);
-  if ( votesToKick[id].length >= VOTES_COUNT_TO_KICK ) {
-    room.kickPlayer(id, "Bạn đã bị những người chơi khác vote kick");
-    delete votesToKick[id];
-  }
-  return false;
 }
 
 function loginFunc(password, player) {
@@ -573,7 +544,6 @@ room.onPlayerJoin = function(player) {
 }
 
 room.onPlayerLeave = function(player) {
-  delete votesToKick[player.id];
   updateAdmins();
   (player.team != 0) && updateTeamPlayers();
 }
