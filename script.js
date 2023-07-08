@@ -172,7 +172,7 @@ function Pick() {
   // Get picker (player object) from ID (if exists)
   this.getPicker = function(id) {
     for (let i = 1; i <= 2; i++) {
-      this.pickers[i] && (id == this.pickers[i].id) && return this.pickers[i];
+      if ( this.pickers[i] && (id == this.pickers[i].id) ) return this.pickers[i];
     };
   };
   // Pick a player
