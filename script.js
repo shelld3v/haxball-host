@@ -129,7 +129,7 @@ function Pick() {
   };
   // Check if team can YET pick
   this.canPick = function(teamId) {
-    return this.locked != teamId;
+    return this.locked == teamId;
   };
   // Lock picking to wait for this team to pick
   this.lock = function(teamId) {
@@ -294,17 +294,6 @@ function updateBallKick(player) {
   if (player.id != previousKicker.id) game.teams[player.team].passes++; 
   // Received the ball from a teammate or from yourself, so the previous kick kept the possession
   game.teams[player.team].possessedKicks++;
-
-  // Overtime commentary
-  let scores = room.getScores();
-  if (
-    isOvertime() && // Overtime
-    (scores.red == scores.blue) && // The game is not over
-    !cache.overtimeCommentary // Haven't made this comment
-  ) {
-    room.sendChat("Vậy là những phút thi đấu chính thức đã kết thúc, chúng ta đang tiến đến khoảng thời gian bù giờ");
-    cache.overtimeCommentary = 1;
-  };
 }
 
 function helpFunc(value, player) {
@@ -706,7 +695,7 @@ room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
   } else if ( changedPlayer.team == 0 ) {
     // Remove player from AFK tracklist
     monitorAfk.players.delete(changedPlayer.id);
-    let picker = pick.isPicker(changedPlayer.id);
+    let picker = pick.getPicker(changedPlayer.id);
     // Picker moved to Spectators, let's update picker
     if ( picker != null ) {
       pick.updatePicker(picker.team);
