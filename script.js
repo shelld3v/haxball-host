@@ -167,14 +167,13 @@ function Pick() {
       room.setPlayerTeam(newPicker.id, teamId);
     };
     this.pickers[teamId] = newPicker;
-    room.sendChat(`${getTag(newPicker.name)} đã được chọn làm đội trưởng (người pick) cho ${teamNames[teamId]}`);
+    room.sendChat(`${getTag(newPicker.name)} đã được chọn làm đội trưởng (người pick) của ${teamNames[teamId]}`);
   };
-  // Check if player is a picker
-  this.isPicker = function(id) {
+  // Get picker (player object) from ID (if exists)
+  this.getPicker = function(id) {
     for (let i = 1; i <= 2; i++) {
-      if ( this.pickers[i] && (id == this.pickers[i].id) ) return true;
+      this.pickers[i] && (id == this.pickers[i].id) && return this.pickers[i];
     };
-    return false;
   };
   // Pick a player
   this.pick = function(id, teamId) {
@@ -365,7 +364,7 @@ function specFunc(value, player) {
 }
 
 function pickFunc(id, player) {
-  if ( !pick.isPicker(player.id) ) {
+  if ( pick.getPicker(player.id) === null ) {
     room.sendAnnouncement("Bạn không phải đội trưởng", player.id, RED);
     return false;
   } else if ( !id.startsWith("#") ) {
@@ -387,7 +386,7 @@ function pickFunc(id, player) {
       !pick.forcePick(missingTeam) // Can't pick anymore
     ) room.startGame();
     // If the game hasn't started yet, let teams pick one-by-one
-    if ( !room.getScores() ) pick.lock(player.team);
+    if ( !room.getScores() ) pick.lock(missingTeam);
   } catch(error) {
     room.sendAnnouncement(error, player.id, RED);
   };
@@ -395,7 +394,7 @@ function pickFunc(id, player) {
 }
 
 function autoPickFunc(value, player) {
-  if ( !pick.isPicker(player.id) ) {
+  if ( !pick.getPicker(player.id) === null ) {
     room.sendAnnouncement("Bạn không phải đội trưởng", player.id, RED);
     return false;
   };
@@ -675,9 +674,9 @@ function reset() {
   cache = {};
 }
 
-room.onPlayerJoin = function(player) {
+room.onPlayerJoin = async function(player) {
   welcomePlayer(player);
-  updateTeamPlayers(player);
+  await updateTeamPlayers(player);
   if ( MODE == "pick" ) {
     pick.updatePickers();
   }
@@ -687,7 +686,8 @@ room.onPlayerLeave = async function(player) {
   if ( player.team != 0 ) {
     await updateTeamPlayers();
     if ( MODE == "pick" ) {
-      pick.isPicker(player.id) && pick.updatePicker(player.team); // A picker left the game, update with a new one
+      // A picker left the game, update with a new one
+      (pick.getPicker(player.id) !== null) && pick.updatePicker(player.team);
       room.sendAnnouncement(`Một cầu thủ của ${teamNames[player.team]} vừa rời đi`, null, RED);
       pick.forcePick(player.team);
     };
@@ -700,16 +700,17 @@ room.onPlayerLeave = async function(player) {
 }
 
 room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
-  if ( changedPlayer.id == 0 ) { // Move host player back to Spectators
+  // Move host player back to Spectators
+  if ( changedPlayer.id == 0 ) {
     room.setPlayerTeam(0, 0);
   } else if ( changedPlayer.team == 0 ) {
-    monitorAfk.players.delete(changedPlayer.id); // Remove player from AFK tracklist
-    // Picker moved to Spectators, let's update with another one
-    if ( pick.isPicker(changedPlayer.id) ) {
-      // Dirty code, basically find the team of the picker before being moved to Spectators
-      let oldPickerTeam = ( changedPlayer.id == pick.pickers[1].id ) ? pick.pickers[1].team : pick.pickers[2].team;
-      pick.updatePicker(oldPickerTeam);
-    }
+    // Remove player from AFK tracklist
+    monitorAfk.players.delete(changedPlayer.id);
+    let picker = pick.isPicker(changedPlayer.id);
+    // Picker moved to Spectators, let's update picker
+    if ( picker != null ) {
+      pick.updatePicker(picker.team);
+    };
   } else if ( room.getPlayerList().filter(player => player.team == changedPlayer.team).length > 5 ) { // Each team can only has 5 players
     room.setPlayerTeam(changedPlayer.id, 0);
     room.sendAnnouncement("Mỗi đội chỉ có thể có tối đa 5 người chơi", byPlayer.id, RED);
