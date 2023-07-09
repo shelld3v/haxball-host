@@ -1,26 +1,20 @@
 const ADMIN_PASSWORD = "vapcohoipen";
-const MODE = "pick"; // can be "rand" or "pick"
+const MODE = "rand"; // can be "rand" or "pick"
 const AFK_DEADLINE = 6.5;
 const PICK_DEADLINE = 12;
-const AFTER_GAME_REST = 2.5;
+const AFTER_GAME_REST = 2;
 const MAX_DUPE_MESSAGES = 2;
 const YELLOW = 0xFFEA00;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
-const START_GAME_COMMENT = `Phò xin đọc phần quảng cáo: FB69, nhà cái uy tín đến từ Châu Âu, thưởng nạp tài khoản lần đâu chơi`;
+const START_GAME_COMMENT = `Chào mừng nọi người đến với Cà Khịa TV, mình là Giàng A Phò`;
 
-const maps = [
-  '{"name":"vsc","width":900,"height":404,"spawnDistance":310,"bg":{"type":"grass","width":793,"height":346,"kickOffRadius":95,"cornerRadius":0,"color":"718B5B"},"vertexes":[/*0*/{"x":-793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*1*/{"x":-793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*2*/{"x":-793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*3*/{"x":-793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*4*/{"x":793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*5*/{"x":793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*6*/{"x":793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*7*/{"x":793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*8*/{"x":0,"y":404,"trait":"kickOffBarrier"},/*9*/{"x":0,"y":95,"trait":"line"},/*10*/{"x":0,"y":-95,"trait":"line"},/*11*/{"x":0,"y":-404,"trait":"kickOffBarrier"},/*12*/{"x":-821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0,"color":"FFFFFF","curve":-29.0508329},/*13*/{"x":821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0,"curve":-29.0508329,"color":"FFFFFF"},/*14*/{"x":-821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0,"color":"FFFFFF","curve":-29.0508329},/*15*/{"x":821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0,"color":"FFFFFF"},/*16*/{"x":-793,"y":-271,"trait":"line"},/*17*/{"x":-572,"y":-50,"trait":"line"},/*18*/{"x":793,"y":-271,"trait":"line"},/*19*/{"x":572,"y":-50,"trait":"line"},/*20*/{"x":-793,"y":271,"trait":"line"},/*21*/{"x":-572,"y":50,"trait":"line"},/*22*/{"x":793,"y":271,"trait":"line"},/*23*/{"x":572,"y":50,"trait":"line"},/*24*/{"x":0,"y":95,"trait":"kickOffBarrier","curve":180},/*25*/{"x":0,"y":-95,"trait":"kickOffBarrier","curve":180},/*26*/{"x":802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},/*27*/{"x":802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*28*/{"x":-802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},/*29*/{"x":-802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*30*/{"x":-802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},/*31*/{"x":-802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*32*/{"x":802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},/*33*/{"x":802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},/*34*/{"x":0,"y":346,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},/*35*/{"x":0,"y":-346,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},/*36*/{"x":821.6000061035156,"y":88.99999994039536,"curve":-29.0508329},/*37*/{"x":-85.5,"y":-19,"trait":"line","color":"FFFFFF"},/*38*/{"x":-73,"y":-19.5,"trait":"line","color":"FFFFFF"},/*39*/{"x":-61,"y":33.5,"trait":"line","color":"FFFFFF"},/*40*/{"x":-51,"y":33.5,"trait":"line","color":"FFFFFF","radius":1},/*41*/{"x":-56.5,"y":29,"trait":"line","color":"FFFFFF","radius":1},/*42*/{"x":-47.5,"y":26,"trait":"line","color":"FFFFFF","radius":1},/*43*/{"x":-42,"y":15,"trait":"line","color":"FFFFFF","radius":1},/*44*/{"x":-36,"y":3.5,"trait":"line","color":"FFFFFF","radius":1},/*45*/{"x":-27,"y":-21,"trait":"line","color":"FFFFFF","radius":1},/*46*/{"x":-39.5,"y":-21.5,"trait":"line","color":"FFFFFF","radius":1},/*47*/{"x":-83.5,"y":-19,"trait":"line","color":"FFFFFF"},/*48*/{"x":-59,"y":33.5,"trait":"line","color":"FFFFFF","radius":1},/*49*/{"x":-81.5,"y":-19,"trait":"line","color":"FFFFFF"},/*50*/{"x":-57,"y":33.5,"trait":"line","color":"FFFFFF","radius":1},/*51*/{"x":-79.5,"y":-19,"trait":"line","color":"FFFFFF"},/*52*/{"x":-55,"y":33.5,"trait":"line","color":"FFFFFF","radius":1},/*53*/{"x":-75,"y":-19.5,"trait":"line","color":"FFFFFF"},/*54*/{"x":-53,"y":33.5,"trait":"line","color":"FFFFFF","radius":1},/*55*/{"x":-77,"y":-19.5,"trait":"line","color":"FFFFFF"},/*56*/{"x":-55,"y":33.5,"trait":"line","color":"FFFFFF","radius":1},/*57*/{"x":-54.5,"y":30,"trait":"line","color":"FFFFFF","radius":1},/*58*/{"x":-37.5,"y":-21.5,"trait":"line","color":"FFFFFF","radius":1},/*59*/{"x":-49.5,"y":18,"trait":"line","color":"FFFFFF","radius":1},/*60*/{"x":-35.5,"y":-21.5,"trait":"line","color":"FFFFFF","radius":1},/*61*/{"x":-47.5,"y":20,"trait":"line","color":"FFFFFF","radius":1},/*62*/{"x":-33.5,"y":-21.5,"trait":"line","color":"FFFFFF","radius":1},/*63*/{"x":-38,"y":3.5,"trait":"line","color":"FFFFFF","radius":1},/*64*/{"x":-29,"y":-21,"trait":"line","color":"FFFFFF","radius":1},/*65*/{"x":-40,"y":3.5,"trait":"line","color":"FFFFFF","radius":1},/*66*/{"x":-31,"y":-21,"trait":"line","color":"FFFFFF","radius":1},/*67*/{"x":-56.5,"y":27,"trait":"line","color":"FFFFFF","radius":1},/*68*/{"x":-47.5,"y":22,"trait":"line","color":"FFFFFF","radius":1},/*69*/{"x":-54.5,"y":25,"trait":"line","color":"FFFFFF","radius":1},/*70*/{"x":-51.5,"y":30,"trait":"line","color":"FFFFFF","radius":1},/*71*/{"x":-49.5,"y":35,"trait":"line","color":"FFFFFF","radius":1},/*72*/{"x":-40,"y":10,"trait":"line","color":"FFFFFF","radius":1},/*73*/{"x":-42,"y":13,"trait":"line","color":"FFFFFF","radius":1},/*74*/{"x":-42,"y":11,"trait":"line","color":"FFFFFF","radius":1},/*75*/{"x":-42,"y":9,"trait":"line","color":"FFFFFF","radius":1},/*76*/{"x":-41,"y":6,"trait":"line","color":"FFFFFF","radius":1},/*77*/{"x":-41,"y":8,"trait":"line","color":"FFFFFF","radius":1},/*78*/{"x":-46,"y":4.5,"trait":"line","color":"FFFFFF","radius":1},/*79*/{"x":-19.5,"y":-18,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*80*/{"x":-13,"y":-13.5,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*81*/{"x":-13.5,"y":-12,"trait":"line","color":"FFFFFF","radius":1},/*82*/{"x":-17,"y":-0.5,"trait":"line","color":"FFFFFF","radius":1},/*83*/{"x":17,"y":1.5,"trait":"line","color":"FFFFFF"},/*84*/{"x":16,"y":10.5,"trait":"line","color":"FFFFFF"},/*85*/{"x":-22.5,"y":11.5,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*86*/{"x":-28.5,"y":0,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*87*/{"x":29,"y":-23,"trait":"line","color":"FFFFFF"},/*88*/{"x":26,"y":-14.5,"trait":"line","color":"FFFFFF"},/*89*/{"x":3,"y":-23,"trait":"line","color":"FFFFFF"},/*90*/{"x":-9,"y":-14.5,"trait":"line","color":"FFFFFF","radius":1},/*91*/{"x":-12,"y":-16,"trait":"line","color":"FFFFFF","radius":1},/*92*/{"x":-19.5,"y":-16,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*93*/{"x":-19.5,"y":-14,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*94*/{"x":-13.5,"y":-14,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*95*/{"x":-15.5,"y":-13,"trait":"line","color":"FFFFFF","radius":1},/*96*/{"x":-25,"y":7.5,"trait":"line","color":"FFFFFF","radius":1},/*97*/{"x":-15.5,"y":-16,"trait":"line","color":"FFFFFF","radius":1},/*98*/{"x":-27,"y":7,"trait":"line","color":"FFFFFF","radius":1},/*99*/{"x":-13.5,"y":-15,"trait":"line","color":"FFFFFF","radius":1},/*100*/{"x":-29,"y":6,"trait":"line","color":"FFFFFF","radius":1},/*101*/{"x":-11.5,"y":-21,"trait":"line","color":"FFFFFF","radius":1},/*102*/{"x":-27.5,"y":1,"trait":"line","color":"FFFFFF","radius":1},/*103*/{"x":-25.5,"y":-5,"trait":"line","color":"FFFFFF","radius":1},/*104*/{"x":-24.5,"y":-10.5,"trait":"line","color":"FFFFFF","radius":1},/*105*/{"x":-21,"y":-15,"trait":"line","color":"FFFFFF","radius":1},/*106*/{"x":16,"y":8.5,"trait":"line","color":"FFFFFF"},/*107*/{"x":-24.5,"y":9.5,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*108*/{"x":16,"y":8.5,"trait":"line","color":"FFFFFF"},/*109*/{"x":-28.5,"y":7.5,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*110*/{"x":13,"y":6,"trait":"line","color":"FFFFFF"},/*111*/{"x":-28.5,"y":5,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*112*/{"x":15,"y":4,"trait":"line","color":"FFFFFF"},/*113*/{"x":-28.5,"y":3,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*114*/{"x":15,"y":2,"trait":"line","color":"FFFFFF"},/*115*/{"x":-28.5,"y":1,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*116*/{"x":-13,"y":8,"trait":"line","color":"FFFFFF","radius":1},/*117*/{"x":26,"y":-16.5,"trait":"line","color":"FFFFFF"},/*118*/{"x":-9,"y":-16.5,"trait":"line","color":"FFFFFF","radius":1},/*119*/{"x":28,"y":-18.5,"trait":"line","color":"FFFFFF"},/*120*/{"x":-10,"y":-18.5,"trait":"line","color":"FFFFFF","radius":1},/*121*/{"x":30,"y":-20.5,"trait":"line","color":"FFFFFF"},/*122*/{"x":-12,"y":-20.5,"trait":"line","color":"FFFFFF","radius":1},/*123*/{"x":30,"y":-22.5,"trait":"line","color":"FFFFFF"},/*124*/{"x":-12,"y":-22.5,"trait":"line","color":"FFFFFF","radius":1},/*125*/{"x":10.584891419591912,"y":21.057034696200162,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*126*/{"x":12.06078035221779,"y":29.53480950210306,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*127*/{"x":2.575266374183599,"y":27.02806637948801,"trait":"line","color":"FFFFFF","radius":1},/*128*/{"x":11.118681577056947,"y":10.552240809593457,"trait":"line","color":"FFFFFF","radius":1},/*129*/{"x":-27.87931327864237,"y":10.475018676767391,"trait":"line","color":"FFFFFF"},/*130*/{"x":-21.858087861281007,"y":-0.5133772240600649,"trait":"line","color":"FFFFFF"},/*131*/{"x":11.641838526134109,"y":0.5628814724203011,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*132*/{"x":22.619625445500333,"y":10.074443640373616,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*133*/{"x":-43.947817894113484,"y":33.94213232013625,"trait":"line","color":"FFFFFF"},/*134*/{"x":-37.92948837661845,"y":24.453733623894188,"trait":"line","color":"FFFFFF"},/*135*/{"x":-6.947871938796084,"y":33.9981197175522,"trait":"line","color":"FFFFFF"},/*136*/{"x":4.07044826065021,"y":24.519374020864618,"trait":"line","color":"FFFFFF","radius":1},/*137*/{"x":8.055961306879539,"y":32.02708244343512,"trait":"line","color":"FFFFFF","radius":1},/*138*/{"x":12.588752619413697,"y":28.057038423419655,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*139*/{"x":12.59261381923551,"y":26.057042150639134,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*140*/{"x":10.584891419591912,"y":21.057034696200162,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*141*/{"x":5.5733320470532135,"y":21.031925715700055,"trait":"line","color":"FFFFFF","radius":1},/*142*/{"x":14.134111467466141,"y":4.567700517758567,"trait":"line","color":"FFFFFF","radius":1},/*143*/{"x":10.56754024732055,"y":26.031920124870823,"trait":"line","color":"FFFFFF","radius":1},/*144*/{"x":16.13314244029121,"y":5.071560785775489,"trait":"line","color":"FFFFFF","radius":1},/*145*/{"x":12.563675320279259,"y":28.03577759747313,"trait":"line","color":"FFFFFF","radius":1},/*146*/{"x":18.131208113160824,"y":6.075420121987534,"trait":"line","color":"FFFFFF","radius":1},/*147*/{"x":14.565602192970658,"y":27.039640660904666,"trait":"line","color":"FFFFFF","radius":1},/*148*/{"x":21.621557909020964,"y":9.07251490407247,"trait":"line","color":"FFFFFF","radius":1},/*149*/{"x":20.60997803677509,"y":17.068642522592206,"trait":"line","color":"FFFFFF","radius":1},/*150*/{"x":11.578141774342754,"y":26.54930577392247,"trait":"line","color":"FFFFFF","radius":1},/*151*/{"x":12.090680423909987,"y":30.05993618689574,"trait":"line","color":"FFFFFF","radius":1},/*152*/{"x":-21.86194906110279,"y":1.4866190487204562,"trait":"line","color":"FFFFFF"},/*153*/{"x":13.637973599092817,"y":2.566738945022607,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*154*/{"x":-23.865806533705097,"y":3.4827541216791786,"trait":"line","color":"FFFFFF"},/*155*/{"x":19.634104944832046,"y":16.574457617446697,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*156*/{"x":-23.870633033482335,"y":5.982749462654823,"trait":"line","color":"FFFFFF"},/*157*/{"x":18.62927844505481,"y":5.0744529584223415,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*158*/{"x":-25.87449050608464,"y":7.978884535613545,"trait":"line","color":"FFFFFF"},/*159*/{"x":12.625417245233024,"y":9.074449231202863,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*160*/{"x":-25.878351705906425,"y":9.97888080839406,"trait":"line","color":"FFFFFF"},/*161*/{"x":19.62155604541124,"y":5.07444550398337,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*162*/{"x":6.135099130738524,"y":1.044534250632708,"trait":"line","color":"FFFFFF","radius":1},/*163*/{"x":-37.933349576440264,"y":26.4537298966747,"trait":"line","color":"FFFFFF"},/*164*/{"x":4.066587060828425,"y":26.519370293645125,"trait":"line","color":"FFFFFF","radius":1},/*165*/{"x":-39.93720704904257,"y":28.449864969633424,"trait":"line","color":"FFFFFF"},/*166*/{"x":5.062723997396887,"y":28.521297166336538,"trait":"line","color":"FFFFFF","radius":1},/*167*/{"x":-41.94106452164485,"y":30.446000042592146,"trait":"line","color":"FFFFFF"},/*168*/{"x":7.0588590703556235,"y":30.525154638938844,"trait":"line","color":"FFFFFF","radius":1},/*169*/{"x":-41.94492572146663,"y":32.44599631537265,"trait":"line","color":"FFFFFF"},/*170*/{"x":4.055003461363071,"y":32.51935911198666,"trait":"line","color":"FFFFFF","radius":1},/*171*/{"x":30.5,"y":4,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*172*/{"x":40,"y":-19.5,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*173*/{"x":43.5,"y":-12,"trait":"line","color":"FFFFFF","radius":1},/*174*/{"x":27,"y":25.5,"trait":"line","color":"FFFFFF","radius":1},/*175*/{"x":73,"y":22.5,"trait":"line","color":"FFFFFF"},/*176*/{"x":67,"y":33.5,"trait":"line","color":"FFFFFF"},/*177*/{"x":26.5,"y":33.5,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*178*/{"x":20.5,"y":22,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*179*/{"x":86,"y":-24,"trait":"line","color":"FFFFFF"},/*180*/{"x":80,"y":-14.5,"trait":"line","color":"FFFFFF"},/*181*/{"x":59,"y":-24,"trait":"line","color":"FFFFFF"},/*182*/{"x":48,"y":-14.5,"trait":"line","color":"FFFFFF","radius":1},/*183*/{"x":44,"y":-22,"trait":"line","color":"FFFFFF","radius":1},/*184*/{"x":28.5,"y":4,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*185*/{"x":28.5,"y":6,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*186*/{"x":33.5,"y":2,"trait":"line","curve":40,"color":"FFFFFF","radius":1},/*187*/{"x":41.5,"y":-13,"trait":"line","color":"FFFFFF","radius":1},/*188*/{"x":24,"y":29.5,"trait":"line","color":"FFFFFF","radius":1},/*189*/{"x":41.5,"y":-16,"trait":"line","color":"FFFFFF","radius":1},/*190*/{"x":22,"y":29,"trait":"line","color":"FFFFFF","radius":1},/*191*/{"x":39.5,"y":-18,"trait":"line","color":"FFFFFF","radius":1},/*192*/{"x":20,"y":28,"trait":"line","color":"FFFFFF","radius":1},/*193*/{"x":37.5,"y":-17,"trait":"line","color":"FFFFFF","radius":1},/*194*/{"x":21.5,"y":23,"trait":"line","color":"FFFFFF","radius":1},/*195*/{"x":23.5,"y":17,"trait":"line","color":"FFFFFF","radius":1},/*196*/{"x":32.5,"y":-1.5,"trait":"line","color":"FFFFFF","radius":1},/*197*/{"x":33,"y":7,"trait":"line","color":"FFFFFF","radius":1},/*198*/{"x":67,"y":31.5,"trait":"line","color":"FFFFFF"},/*199*/{"x":24.5,"y":31.5,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*200*/{"x":69,"y":29.5,"trait":"line","color":"FFFFFF"},/*201*/{"x":20.5,"y":29.5,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*202*/{"x":69,"y":27,"trait":"line","color":"FFFFFF"},/*203*/{"x":20.5,"y":27,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*204*/{"x":71,"y":25,"trait":"line","color":"FFFFFF"},/*205*/{"x":20.5,"y":25,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*206*/{"x":71,"y":23,"trait":"line","color":"FFFFFF"},/*207*/{"x":20.5,"y":23,"trait":"line","curve":110,"color":"FFFFFF","radius":1},/*208*/{"x":36,"y":30,"trait":"line","color":"FFFFFF","radius":1},/*209*/{"x":80,"y":-16.5,"trait":"line","color":"FFFFFF"},/*210*/{"x":48,"y":-16.5,"trait":"line","color":"FFFFFF","radius":1},/*211*/{"x":82,"y":-18.5,"trait":"line","color":"FFFFFF"},/*212*/{"x":47,"y":-18.5,"trait":"line","color":"FFFFFF","radius":1},/*213*/{"x":84,"y":-20.5,"trait":"line","color":"FFFFFF"},/*214*/{"x":45,"y":-20.5,"trait":"line","color":"FFFFFF","radius":1},/*215*/{"x":84,"y":-22.5,"trait":"line","color":"FFFFFF"},/*216*/{"x":48,"y":-22.5,"trait":"line","color":"FFFFFF","radius":1},/*217*/{"bCoef":0,"trait":"line","x":-34.399993896484375,"y":-2.4000003933906555,"color":"FFFFFF"},/*218*/{"bCoef":0,"trait":"line","x":-35.399993896484375,"y":-7.4000003933906555,"color":"FFFFFF"},/*219*/{"bCoef":0,"trait":"line","x":-45.399993896484375,"y":4.5999996066093445,"color":"FFFFFF"},/*220*/{"bCoef":0,"trait":"line","x":-20,"y":-6.600000381469727},/*221*/{"bCoef":0,"trait":"line","x":-46,"y":5.200000762939453},/*222*/{"bCoef":0,"trait":"line","x":-56,"y":27.200000762939453},/*223*/{"bCoef":0,"trait":"line","x":-45,"y":0.20000076293945312},/*224*/{"bCoef":0,"trait":"line","x":-61,"y":24.200000762939453},/*225*/{"x":-821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0,"color":"FFFFFF","curve":-29.0508329},/*226*/{"x":-821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0,"color":"FFFFFF","curve":-29.0508329},/*227*/{"bCoef":0,"trait":"line","x":-62,"y":13.999999225139618}],"segments":[{"v0":0,"v1":1,"trait":"ballArea"},{"v0":2,"v1":3,"trait":"ballArea"},{"v0":4,"v1":5,"trait":"ballArea"},{"v0":6,"v1":7,"trait":"ballArea"},{"v0":8,"v1":9,"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":180,"cGroup":["blueKO"],"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":-180,"cGroup":["redKO"],"trait":"kickOffBarrier"},{"v0":10,"v1":11,"trait":"kickOffBarrier"},{"v0":2,"v1":12,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":6,"v1":13,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":1,"v1":14,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":5,"v1":15,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":16,"v1":17,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":18,"v1":19,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":20,"v1":21,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":22,"v1":23,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":17,"v1":21,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":-600},{"v0":19,"v1":23,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":572},{"v0":1,"v1":0,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":5,"v1":4,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":2,"v1":3,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":6,"v1":7,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":10,"v1":9,"curve":-180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":25,"v1":24,"curve":178.6277516593836,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":2,"v1":1,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":6,"v1":5,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":26,"v1":27,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614},{"v0":28,"v1":29,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":30,"v1":31,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":32,"v1":33,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614},{"v0":25,"v1":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"v0":24,"v1":34,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"v0":7,"v1":3,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"v0":0,"v1":4,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"vis":true,"trait":"line","v0":12,"v1":14,"curve":-29.0508329,"color":"FFFFFF"},{"v0":37,"v1":39,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":39,"v1":40,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":40,"v1":38,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":38,"v1":37,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":41,"v1":42,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":42,"v1":43,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":44,"v1":45,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":45,"v1":46,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":46,"v1":41,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":47,"v1":48,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":49,"v1":50,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":51,"v1":52,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":54,"v1":53,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":56,"v1":55,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":58,"v1":57,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":60,"v1":59,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":62,"v1":61,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":63,"v1":64,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":65,"v1":66,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":67,"v1":68,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":69,"v1":70,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":71,"v1":72,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":89,"v1":87,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":87,"v1":88,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":81,"v1":82,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":82,"v1":83,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":83,"v1":84,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":84,"v1":85,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":79,"v1":80,"curve":40,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":80,"v1":81,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":90,"v1":91,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":91,"v1":89,"curve":20,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":90,"v1":88,"vis":true,"color":"FFFFFF","trait":"line","curve":4.259035399201421},{"v0":85,"v1":86,"curve":110,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":95,"v1":96,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":97,"v1":98,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":99,"v1":100,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":101,"v1":102,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":103,"v1":104,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":106,"v1":107,"vis":true,"color":"FFFFFF","trait":"line","y":22.5},{"v0":108,"v1":109,"vis":true,"color":"FFFFFF","trait":"line","y":20.5},{"v0":110,"v1":111,"vis":true,"color":"FFFFFF","trait":"line","y":18},{"v0":112,"v1":113,"vis":true,"color":"FFFFFF","trait":"line","y":16},{"v0":114,"v1":115,"vis":true,"color":"FFFFFF","trait":"line","y":14},{"v0":118,"v1":117,"vis":true,"color":"FFFFFF","trait":"line","y":-14.5},{"v0":120,"v1":119,"vis":true,"color":"FFFFFF","trait":"line","y":-16.5},{"v0":122,"v1":121,"vis":true,"color":"FFFFFF","trait":"line","y":-18.5},{"v0":124,"v1":123,"vis":true,"color":"FFFFFF","trait":"line","y":-20.5},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":101,"v1":115},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":104,"v1":115},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":101,"v1":115},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":71},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":70},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":64,"v1":70},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":64,"v1":70},{"v0":135,"v1":133,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":133,"v1":134,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":127,"v1":128,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":128,"v1":129,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":129,"v1":130,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":130,"v1":131,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":125,"v1":126,"curve":40,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":126,"v1":127,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":136,"v1":137,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":137,"v1":135,"curve":20,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":136,"v1":134,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":131,"v1":132,"curve":110,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":141,"v1":142,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":143,"v1":144,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":145,"v1":146,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":147,"v1":148,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":149,"v1":150,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":152,"v1":153,"vis":true,"color":"FFFFFF","trait":"line","y":22.5},{"v0":154,"v1":155,"vis":true,"color":"FFFFFF","trait":"line","y":20.5},{"v0":156,"v1":157,"vis":true,"color":"FFFFFF","trait":"line","y":18},{"v0":158,"v1":159,"vis":true,"color":"FFFFFF","trait":"line","y":16},{"v0":160,"v1":161,"vis":true,"color":"FFFFFF","trait":"line","y":14,"curve":-24.6475302919288},{"v0":164,"v1":163,"vis":true,"color":"FFFFFF","trait":"line","y":-14.5},{"v0":166,"v1":165,"vis":true,"color":"FFFFFF","trait":"line","y":-16.5},{"v0":168,"v1":167,"vis":true,"color":"FFFFFF","trait":"line","y":-18.5},{"v0":170,"v1":169,"vis":true,"color":"FFFFFF","trait":"line","y":-20.5},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":147,"v1":161},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":150,"v1":161},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":147,"v1":161},{"v0":181,"v1":179,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":179,"v1":180,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":173,"v1":174,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":174,"v1":175,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":175,"v1":176,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":176,"v1":177,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":171,"v1":172,"curve":40,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":172,"v1":173,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":182,"v1":183,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":183,"v1":181,"curve":20,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":182,"v1":180,"vis":true,"color":"FFFFFF","trait":"line"},{"v0":177,"v1":178,"curve":110,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":187,"v1":188,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":189,"v1":190,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":191,"v1":192,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":193,"v1":194,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":195,"v1":196,"vis":true,"color":"FFFFFF","trait":"line","radius":1},{"v0":198,"v1":199,"vis":true,"color":"FFFFFF","trait":"line","y":22.5},{"v0":200,"v1":201,"vis":true,"color":"FFFFFF","trait":"line","y":20.5},{"v0":202,"v1":203,"vis":true,"color":"FFFFFF","trait":"line","y":18},{"v0":204,"v1":205,"vis":true,"color":"FFFFFF","trait":"line","y":16},{"v0":206,"v1":207,"vis":true,"color":"FFFFFF","trait":"line","y":14},{"v0":210,"v1":209,"vis":true,"color":"FFFFFF","trait":"line","y":-14.5},{"v0":212,"v1":211,"vis":true,"color":"FFFFFF","trait":"line","y":-16.5},{"v0":214,"v1":213,"vis":true,"color":"FFFFFF","trait":"line","y":-18.5},{"v0":216,"v1":215,"vis":true,"color":"FFFFFF","trait":"line","y":-20.5},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":193,"v1":207},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":196,"v1":207},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":193,"v1":207},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":162,"v1":170},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":153,"v1":170},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":161,"v1":135},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":149,"v1":170},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":71},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":45,"v1":71},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":217,"v1":71},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":217,"v1":71},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":218,"v1":71},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":218,"v1":70},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":218,"v1":42},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":219,"v1":70},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":219,"v1":70},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":110,"v1":150},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":153,"v1":168},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":101,"v1":160},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":97,"v1":156},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":124,"v1":152},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":122,"v1":130},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":124,"v1":130},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":122,"v1":104},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":124,"v1":160},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":105,"v1":160},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":124,"v1":152},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":124,"v1":111},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":122,"v1":160},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":123,"v1":91},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":87,"v1":101},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":128,"v1":166},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":161,"v1":168},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":162,"v1":168},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":124,"v1":156},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":91,"v1":158},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":122,"v1":130},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":71},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":71},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":71},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":42},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":71},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":42},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":70},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":45,"v1":42},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":118,"v1":220},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":120,"v1":220},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":124,"v1":105},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":124,"v1":105},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":124,"v1":105},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":149,"v1":170},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":151,"v1":170},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":151,"v1":135},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":94,"v1":123},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":99,"v1":123},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":221,"v1":222},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":221,"v1":222},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":219,"v1":56},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":221,"v1":56},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":223,"v1":222},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":223,"v1":222},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":223,"v1":224,"curve":59.95357268715172},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":78,"v1":56},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":78,"v1":54},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":75,"v1":56},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":219,"v1":54},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":78,"v1":56},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":78,"v1":56},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":219,"v1":54},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":66,"v1":54},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":187,"v1":174},{"vis":true,"trait":"line","v0":225,"v1":226,"curve":-26.877326994949126,"color":"FFFFFF"},{"curve":26.004024327597246,"vis":true,"bCoef":0,"cMask":["ball"],"v0":13,"v1":15,"color":"FFFFFF"},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":187,"v1":174},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":177,"v1":187},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":187,"v1":177},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":157,"v1":140},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":157,"v1":151},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":162,"v1":161},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":153,"v1":161},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":153,"v1":161},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":153,"v1":161},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":153,"v1":161},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":170,"v1":207},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":170,"v1":205},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":161,"v1":195},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":161,"v1":207},{"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":193,"v1":207},{"curve":-33.22022077011033,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":222,"v1":223},{"curve":-33.22022077011033,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","v0":227,"v1":61}],"goals":[{"p0":[-802,-95],"p1":[-802,95],"team":"red"},{"p0":[802,95],"p1":[802,-95],"team":"blue"}],"discs":[{"radius":5,"pos":[-793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[-793,-95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[793,-95],"color":"FFFFFF","trait":"goalPost"},{"radius":0,"invMass":0,"pos":[-821,95],"bCoef":0,"cMask":["ball"]},{"radius":0,"invMass":0,"pos":[821,95],"bCoef":0,"cMask":["ball"]},{"radius":0,"invMass":0,"pos":[-821,-95],"bCoef":0,"cMask":["ball"]},{"radius":0,"invMass":0,"pos":[821,-95],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-823.2,87.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-825.2,80.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-828.5,66.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-827,73.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-830,59.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-831.2,52.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-832.3,45.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-833.3,38.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-834,31.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-834.7,24.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.1,17.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-824.4,31.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.5,3.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.5,-3.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.4,-10.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.2,-17.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-834.7,-24.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-834.1,-31.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-833.2,-38.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[831.2,-52.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-832.3,-45.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-839,3.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-828.5,-66.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-827,-73.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-825.2,-80.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-823.2,-87.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[823.2,-87.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[825.2,-80.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[827,-73.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[828.5,-66.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[830,-59.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-831.2,-52.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[832.3,-45.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[833.2,-38.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[834.1,-31.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[834.7,-24.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.2,-17.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.4,-10.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.5,-3.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.5,3.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.4,10.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.1,17.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[834.7,24.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[834,31.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[833.3,38.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[832.3,45.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[831.2,52.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[830,59.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[828.5,66.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[827,73.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[825.2,80.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[823.2,87.5],"bCoef":0,"cMask":["ball"]}],"planes":[{"normal":[0,1],"dist":-346,"trait":"ballArea"},{"normal":[0,-1],"dist":-346,"trait":"ballArea"},{"normal":[0,1],"dist":-404,"bCoef":0.2,"cMask":["all"]},{"normal":[0,-1],"dist":-404,"bCoef":0.2,"cMask":["all"]},{"normal":[1,0],"dist":-900,"bCoef":0.2,"cMask":["all"]},{"normal":[-1,0],"dist":-900,"bCoef":0.2,"cMask":["all"]}],"traits":{"ballArea":{"vis":false,"bCoef":1,"cMask":["ball"]},"goalPost":{"radius":8,"invMass":0,"bCoef":1},"goalNet":{"vis":true,"bCoef":0.1,"cMask":["all"]},"kickOffBarrier":{"vis":false,"bCoef":0.1,"cGroup":["redKO","blueKO"],"cMask":["red","blue"]},"line":{"vis":true,"bCoef":0,"cMask":[""]},"arco":{"radius":2,"cMask":["n/d"],"color":"cccccc"}},"playerPhysics":{"acceleration":0.11,"kickingAcceleration":0.083,"kickStrength":4.6,"radius":15,"bCoef":0.35,"invMass":0.5,"damping":0.96,"cGroup":["red","blue"],"gravity":[0,0],"kickingDamping":0.96,"kickback":0},"ballPhysics":{"radius":6.5,"color":"FFFFFF","bCoef":0.465,"invMass":1.4,"cMask":["all"],"damping":0.99,"gravity":[0,0],"cGroup":["ball"]},"joints":[{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}],"canBeStored":false,"redSpawnPoints":[[-310,0],[-310,50],[-310,-50],[-310,100],[-310,-100],[-310,380]],"blueSpawnPoints":[[310,0],[310,50],[310,-50],[310,100],[310,-100],[310,380]],"kickOffReset":"partial","cameraWidth":0,"cameraHeight":0,"maxViewWidth":0,"cameraFollow":"ball"}',
-  '{"name":"haxviet","width":900,"height":404,"spawnDistance":310,"bg":{"type":"grass","width":793,"height":346,"kickOffRadius":95,"cornerRadius":0,"color":"718B5B"},"vertexes":[{"x":-793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":0,"y":404,"trait":"kickOffBarrier"},{"x":0,"y":95,"trait":"line"},{"x":0,"y":-95,"trait":"line"},{"x":0,"y":-404,"trait":"kickOffBarrier"},{"x":-821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0},{"x":821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0},{"x":-821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0},{"x":821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0},{"x":-793,"y":-271,"trait":"line"},{"x":-572,"y":-50,"trait":"line"},{"x":793,"y":-271,"trait":"line"},{"x":572,"y":-50,"trait":"line"},{"x":-793,"y":271,"trait":"line"},{"x":-572,"y":50,"trait":"line"},{"x":793,"y":271,"trait":"line"},{"x":572,"y":50,"trait":"line"},{"x":0,"y":95,"trait":"kickOffBarrier","curve":180},{"x":0,"y":-95,"trait":"kickOffBarrier","curve":180},{"x":802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":-802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":-802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-55,"y":28,"trait":"line"},{"x":-43,"y":-27,"bCoef":0,"trait":"line"},{"x":-52,"y":28,"bCoef":0,"trait":"line"},{"x":-40,"y":-27,"bCoef":0,"trait":"line"},{"x":-50,"y":0,"bCoef":0,"trait":"line"},{"x":-47.5,"y":3,"bCoef":0,"trait":"line"},{"x":-21,"y":3,"bCoef":0,"trait":"line"},{"x":-22,"y":0,"bCoef":0,"trait":"line"},{"x":-16,"y":-27,"bCoef":0,"trait":"line"},{"x":-13,"y":-27,"bCoef":0,"trait":"line"},{"x":-27,"y":28,"bCoef":0,"trait":"line"},{"x":-24,"y":28,"bCoef":0,"trait":"line"},{"x":-8,"y":-27,"bCoef":0,"trait":"line"},{"x":1,"y":28,"bCoef":0,"trait":"line"},{"x":-5,"y":-27,"bCoef":0,"trait":"line"},{"x":3,"y":22,"bCoef":0,"trait":"line"},{"x":25,"y":-27,"bCoef":0,"trait":"line"},{"x":28,"y":-27,"bCoef":0,"trait":"line"},{"x":4,"y":28,"bCoef":0,"trait":"line"},{"x":23,"y":28,"bCoef":0,"trait":"line"},{"x":32,"y":-27,"bCoef":0,"trait":"line"},{"x":35,"y":-27,"bCoef":0,"trait":"line"},{"x":26,"y":27,"bCoef":0,"trait":"line"},{"x":53,"y":28,"bCoef":0,"trait":"line"},{"x":50,"y":28,"bCoef":0,"trait":"line"},{"x":21.5,"y":28,"bCoef":0,"trait":"line"},{"x":35,"y":28,"bCoef":0,"trait":"line"},{"x":0,"y":346,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"x":0,"y":-346,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"}],"segments":[{"v0":0,"v1":1,"trait":"ballArea"},{"v0":2,"v1":3,"trait":"ballArea"},{"v0":4,"v1":5,"trait":"ballArea"},{"v0":6,"v1":7,"trait":"ballArea"},{"v0":8,"v1":9,"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":180,"cGroup":["blueKO"],"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":-180,"cGroup":["redKO"],"trait":"kickOffBarrier"},{"v0":10,"v1":11,"trait":"kickOffBarrier"},{"v0":2,"v1":12,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":6,"v1":13,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":1,"v1":14,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":5,"v1":15,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":16,"v1":17,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":18,"v1":19,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":20,"v1":21,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":22,"v1":23,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":17,"v1":21,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":-600},{"v0":19,"v1":23,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":572},{"v0":1,"v1":0,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":5,"v1":4,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":2,"v1":3,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":6,"v1":7,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":10,"v1":9,"curve":-180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":25,"v1":24,"curve":180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":2,"v1":1,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":6,"v1":5,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":26,"v1":27,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614},{"v0":28,"v1":29,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":30,"v1":31,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":32,"v1":33,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614},{"v0":35,"v1":34,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":37,"v1":36,"vis":true,"color":"454C5E","bCoef":0,"trait":"line"},{"v0":38,"v1":41,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":39,"v1":40,"vis":true,"color":"454C5E","bCoef":0,"trait":"line"},{"v0":44,"v1":42,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":43,"v1":45,"vis":true,"color":"454C5E","bCoef":0,"trait":"line"},{"v0":48,"v1":49,"vis":true,"color":"454C5E","bCoef":0,"trait":"line"},{"v0":51,"v1":52,"vis":true,"color":"454C5E","bCoef":0,"trait":"line"},{"v0":46,"v1":47,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":50,"v1":47,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":55,"v1":56,"vis":true,"color":"454C5E","bCoef":0,"trait":"line"},{"v0":53,"v1":54,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":60,"v1":57,"vis":true,"color":"454C5E","bCoef":0,"trait":"line"},{"v0":59,"v1":58,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":25,"v1":62,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"v0":24,"v1":61,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"v0":7,"v1":3,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"v0":0,"v1":4,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea"}],"goals":[{"p0":[-802,-95],"p1":[-802,95],"team":"red"},{"p0":[802,95],"p1":[802,-95],"team":"blue"}],"discs":[{"radius":5,"pos":[-793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[-793,-95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[793,-95],"color":"FFFFFF","trait":"goalPost"},{"radius":0,"invMass":0,"pos":[-821,95],"bCoef":0,"cMask":["ball"]},{"radius":0,"invMass":0,"pos":[821,95],"bCoef":0,"cMask":["ball"]},{"radius":0,"invMass":0,"pos":[-821,-95],"bCoef":0,"cMask":["ball"]},{"radius":0,"invMass":0,"pos":[821,-95],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-823.2,87.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-825.2,80.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-828.5,66.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-827,73.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-830,59.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-831.2,52.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-832.3,45.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-833.3,38.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-834,31.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-834.7,24.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.1,17.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.4,10.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.5,3.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.5,-3.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.4,-10.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-835.2,-17.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-834.7,-24.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-834.1,-31.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-833.2,-38.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[831.2,-52.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-832.3,-45.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-830,-59.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-828.5,-66.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-827,-73.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-825.2,-80.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-823.2,-87.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[823.2,-87.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[825.2,-80.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[827,-73.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[828.5,-66.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[830,-59.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[-831.2,-52.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[832.3,-45.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[833.2,-38.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[834.1,-31.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[834.7,-24.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.2,-17.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.4,-10.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.5,-3.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.5,3.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.4,10.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[835.1,17.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[834.7,24.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[834,31.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[833.3,38.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[832.3,45.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[831.2,52.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[830,59.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[828.5,66.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[827,73.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[825.2,80.5],"bCoef":0,"cMask":["ball"]},{"radius":0,"pos":[823.2,87.5],"bCoef":0,"cMask":["ball"]}],"planes":[{"normal":[0,1],"dist":-346,"trait":"ballArea","_data":{"extremes":{"normal":[0,1],"dist":-346,"canvas_rect":[-900,-404,900,404],"a":[-900,-346],"b":[900,-346]}}},{"normal":[0,-1],"dist":-346,"trait":"ballArea","_data":{"extremes":{"normal":[0,-1],"dist":-346,"canvas_rect":[-900,-404,900,404],"a":[-900,346],"b":[900,346]}}},{"normal":[0,1],"dist":-404,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,1],"dist":-404,"canvas_rect":[-900,-404,900,404],"a":[-900,-404],"b":[900,-404]}}},{"normal":[0,-1],"dist":-404,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,-1],"dist":-404,"canvas_rect":[-900,-404,900,404],"a":[-900,404],"b":[900,404]}}},{"normal":[1,0],"dist":-900,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[1,0],"dist":-900,"canvas_rect":[-900,-404,900,404],"a":[-900,-404],"b":[-900,404]}}},{"normal":[-1,0],"dist":-900,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[-1,0],"dist":-900,"canvas_rect":[-900,-404,900,404],"a":[900,-404],"b":[900,404]}}}],"traits":{"ballArea":{"vis":false,"bCoef":1,"cMask":["ball"]},"goalPost":{"radius":8,"invMass":0,"bCoef":1},"goalNet":{"vis":true,"bCoef":0.1,"cMask":["all"]},"kickOffBarrier":{"vis":false,"bCoef":0.1,"cGroup":["redKO","blueKO"],"cMask":["red","blue"]},"line":{"vis":true,"bCoef":0,"cMask":[""]},"arco":{"radius":2,"cMask":["n\/d"],"color":"cccccc"}},"playerPhysics":{"acceleration":0.11,"kickingAcceleration":0.1,"kickStrength":6.9},"ballPhysics":{"radius":7,"color":"EAFF00","bCoef":0.465,"invMass":1},"joints":[{"d0":5,"d1":9,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":9,"d1":10,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":10,"d1":12,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":11,"d1":12,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":11,"d1":13,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":13,"d1":14,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":14,"d1":15,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":15,"d1":16,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":16,"d1":17,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":17,"d1":18,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":18,"d1":19,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":19,"d1":20,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":20,"d1":21,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":21,"d1":22,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":22,"d1":23,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":23,"d1":24,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":24,"d1":25,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":25,"d1":26,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":26,"d1":27,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":27,"d1":29,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":29,"d1":40,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":30,"d1":40,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":30,"d1":31,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":31,"d1":32,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":32,"d1":33,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":33,"d1":34,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":7,"d1":34,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":7,"d1":33,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":31,"d1":33,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":31,"d1":40,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":27,"d1":40,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":25,"d1":27,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":23,"d1":25,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":21,"d1":23,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":19,"d1":21,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":17,"d1":19,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":15,"d1":17,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":13,"d1":15,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":12,"d1":13,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":9,"d1":12,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":5,"d1":10,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":10,"d1":11,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":11,"d1":14,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":14,"d1":16,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":16,"d1":18,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":18,"d1":20,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":20,"d1":22,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":22,"d1":24,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":24,"d1":26,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":26,"d1":29,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":29,"d1":30,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":30,"d1":32,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":32,"d1":34,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":7,"d1":34,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":5,"d1":9,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":6,"d1":60,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":59,"d1":60,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":58,"d1":59,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":57,"d1":58,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":56,"d1":57,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":55,"d1":56,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":54,"d1":55,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":53,"d1":54,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":52,"d1":53,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":51,"d1":52,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":50,"d1":51,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":49,"d1":50,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":48,"d1":49,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":47,"d1":48,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":46,"d1":47,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":45,"d1":46,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":44,"d1":45,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":43,"d1":44,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":42,"d1":43,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":41,"d1":42,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":28,"d1":41,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":28,"d1":39,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":38,"d1":39,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":37,"d1":38,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":36,"d1":37,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":35,"d1":36,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":8,"d1":35,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":8,"d1":36,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":36,"d1":38,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":28,"d1":38,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":28,"d1":42,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":42,"d1":44,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":44,"d1":46,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":46,"d1":48,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":48,"d1":50,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":50,"d1":52,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":52,"d1":54,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":54,"d1":56,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":56,"d1":58,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":58,"d1":60,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":6,"d1":60,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":6,"d1":59,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":57,"d1":59,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":55,"d1":57,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":53,"d1":55,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":51,"d1":53,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":49,"d1":51,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":47,"d1":49,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":45,"d1":47,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":43,"d1":45,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":41,"d1":43,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":39,"d1":41,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":37,"d1":39,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":35,"d1":37,"strength":"rigid","color":"ffffff","length":null,"radius":0},{"d0":8,"d1":35,"strength":"rigid","color":"ffffff","length":null,"radius":0}],"canBeStored":false,"redSpawnPoints":[[-310,0],[-310,50],[-310,-50],[-310,100],[-310,-100],[-310,380]],"blueSpawnPoints":[[310,0],[310,50],[310,-50],[310,100],[310,-100],[310,380]],"kickOffReset":"full"}',
-  '{"name":"haxvietpl","width":900,"height":404,"spawnDistance":310,"bg":{"type":"grass","width":793,"height":346,"kickOffRadius":95,"cornerRadius":0,"color":"718B5B"},"vertexes":[{"x":-793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":0,"y":404,"trait":"kickOffBarrier"},{"x":0,"y":95,"trait":"kickOffBarrier"},{"x":0,"y":-95,"trait":"line"},{"x":0,"y":-404,"trait":"kickOffBarrier"},{"x":-821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":-821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":-793,"y":-271,"trait":"line"},{"x":-572,"y":-50,"trait":"line"},{"x":793,"y":-271,"trait":"line"},{"x":572,"y":-50,"trait":"line"},{"x":-793,"y":271,"trait":"line"},{"x":-572,"y":50,"trait":"line"},{"x":793,"y":271,"trait":"line"},{"x":572,"y":50,"trait":"line"},{"x":793,"y":346,"bCoef":1,"trait":"ballArea"},{"x":793,"y":-346,"bCoef":1,"trait":"ballArea"},{"x":0,"y":346,"bCoef":0,"trait":"line"},{"x":0,"y":-346,"bCoef":0,"trait":"line"},{"x":0,"y":95,"trait":"kickOffBarrier","_picked":"segment","_data":{"mirror":{}}},{"x":0,"y":-95,"trait":"kickOffBarrier","_picked":"segment","_data":{"mirror":{}}},{"x":802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":-802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":-802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"}],"segments":[{"v0":0,"v1":1,"trait":"ballArea"},{"v0":2,"v1":3,"trait":"ballArea"},{"v0":4,"v1":5,"trait":"ballArea"},{"v0":6,"v1":7,"trait":"ballArea"},{"v0":8,"v1":9,"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":180,"cGroup":["blueKO"],"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":-180,"cGroup":["redKO"],"trait":"kickOffBarrier"},{"v0":10,"v1":11,"trait":"kickOffBarrier"},{"v0":2,"v1":12,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":6,"v1":13,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":1,"v1":14,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":5,"v1":15,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":12,"v1":14,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","x":-821},{"v0":13,"v1":15,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","x":585},{"v0":16,"v1":17,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":18,"v1":19,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":20,"v1":21,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":22,"v1":23,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":17,"v1":21,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":-600},{"v0":19,"v1":23,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":572},{"v0":1,"v1":0,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":5,"v1":4,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":2,"v1":3,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":6,"v1":7,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":0,"v1":24,"vis":true,"color":"FFFFFF","bCoef":1,"trait":"ballArea","y":290},{"v0":3,"v1":25,"vis":true,"color":"FFFFFF","bCoef":1,"trait":"ballArea","y":-290},{"v0":26,"v1":27,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":10,"v1":9,"curve":-180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":29,"v1":28,"curve":180.43079330521417,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","_picked":true,"_data":{"mirror":{},"arc":{"a":[0,-95],"b":[0,95],"curve":180.43079330521417,"radius":95.00067131878964,"center":[0.3571428571409862,0],"from":-1.574555707580645,"to":1.574555707580645}}},{"v0":2,"v1":1,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":6,"v1":5,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":30,"v1":31,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614},{"v0":32,"v1":33,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":34,"v1":35,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":36,"v1":37,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614}],"goals":[{"p0":[-802,-95],"p1":[-802,95],"team":"red"},{"p0":[802,95],"p1":[802,-95],"team":"blue"}],"discs":[{"radius":5,"pos":[-793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[-793,-95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[793,-95],"color":"FFFFFF","trait":"goalPost"}],"planes":[{"normal":[0,1],"dist":-346,"trait":"ballArea","_data":{"extremes":{"normal":[0,1],"dist":-346,"canvas_rect":[-900,-404,900,404],"a":[-900,-346],"b":[900,-346]}}},{"normal":[0,-1],"dist":-346,"trait":"ballArea","_data":{"extremes":{"normal":[0,-1],"dist":-346,"canvas_rect":[-900,-404,900,404],"a":[-900,346],"b":[900,346]}}},{"normal":[0,1],"dist":-404,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,1],"dist":-404,"canvas_rect":[-900,-404,900,404],"a":[-900,-404],"b":[900,-404]}}},{"normal":[0,-1],"dist":-404,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,-1],"dist":-404,"canvas_rect":[-900,-404,900,404],"a":[-900,404],"b":[900,404]}}},{"normal":[1,0],"dist":-900,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[1,0],"dist":-900,"canvas_rect":[-900,-404,900,404],"a":[-900,-404],"b":[-900,404]}}},{"normal":[-1,0],"dist":-900,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[-1,0],"dist":-900,"canvas_rect":[-900,-404,900,404],"a":[900,-404],"b":[900,404]}}}],"traits":{"ballArea":{"vis":false,"bCoef":1,"cMask":["ball"]},"goalPost":{"radius":8,"invMass":0,"bCoef":1},"goalNet":{"vis":true,"bCoef":0.1,"cMask":["all"]},"kickOffBarrier":{"vis":false,"bCoef":0.1,"cGroup":["redKO","blueKO"],"cMask":["red","blue"]},"line":{"vis":true,"bCoef":0,"cMask":[""]},"arco":{"radius":2,"cMask":["n\/d"],"color":"cccccc"}},"playerPhysics":{"acceleration":0.11,"kickingAcceleration":0.1,"kickStrength":7},"ballPhysics":{"radius":7,"color":"EAFF00"},"joints":[],"redSpawnPoints":[],"blueSpawnPoints":[],"canBeStored":false}',
-];
 const teamNames = {
   1: "RED",
   2: "BLUE",
 };
 const replies = {
-  "tin chuẩn chưa a": "Muốn biết tin chuẩn chưa anh thì hãy so sánh xem xét các nguồn tin khác. Cứ nhai đi nhai lại như một con bò.",
-  "ngu ": "Toxic nên anh sẽ block em nhé.",
+  "gánh ": "Ai hỏi?",
   "memaybeo": "Mẹ tao béo, nhưng ít nhất tao có mẹ.",
 };
 const goalComments = {
@@ -40,7 +34,7 @@ const winningGoalComments = [
   "DẤU CHẤM HẾT CHO NHỮNG NỖ LỰC PHÍA BÊN KIA",
   "ĐỘI BÓNG MẠNH HƠN ĐÃ LÊN TIẾNG",
   "MỘT CHIẾN THẮNG KHUẤT PHỤC",
-  "KẺ THẮNG VẬY LÀ ĐÃ RÕ, TRẬN ĐẤU KẾT THÚC TẠI ĐÂY"
+  "KẺ THẮNG ĐÃ RÕ, TRẬN ĐẤU KẾT THÚC TẠI ĐÂY",
 ];
 const scorerComments = {
   "1": "Pha lập công do công của",
@@ -83,21 +77,23 @@ var commands = { // Format: "alias: [function, requiresAdmin]"
 };
 var pickCommands = {
   pick: [pickFunc, false],
+  switch: [switchFunc, false],
   autopick: [autoPickFunc, false],
 };
-
-// For pick-only mode
-var pick = new Pick();
 
 var duplicateMessagesCount = 0;
 var lastMessage = [null, null]; // Last message and the player ID of the sender
 var yellowCards = [];
-var monitorAfk = {
-  deadline: null,
-  players: new Set(),
-};
 var game = JSON.parse(JSON.stringify(gameDefault));
-var cache = {};
+var pickConfig = {
+  isPicking: 0,
+  pickers: {},
+  autopick: {1: false, 2: false},
+};
+var timeouts = {
+  toPick: null,
+  toAct: [],
+};
 var room = HBInit({
   roomName: `💥 Auto room của De Paul (${MODE}) 💥`,
   maxPlayers: 17,
@@ -108,119 +104,12 @@ room.setScoreLimit(6);
 room.setTimeLimit(5);
 room.setTeamColors(1, 60, 0xFFFFFF, [0xD60419]);
 room.setTeamColors(2, 60, 0xFFFFFF, [0x0099FF]);
-room.setCustomStadium(maps[0]);
+room.setCustomStadium('{"name":"HaxViet Premier League from HaxMaps","width":900,"height":404,"spawnDistance":310,"bg":{"type":"grass","width":793,"height":346,"kickOffRadius":95,"cornerRadius":0,"color":"718B5B"},"vertexes":[{"x":-793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":0,"y":404,"trait":"kickOffBarrier"},{"x":0,"y":95,"trait":"kickOffBarrier"},{"x":0,"y":-95,"trait":"line"},{"x":0,"y":-404,"trait":"kickOffBarrier"},{"x":-821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":821,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":-821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":821,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":-793,"y":-271,"trait":"line"},{"x":-572,"y":-50,"trait":"line"},{"x":793,"y":-271,"trait":"line"},{"x":572,"y":-50,"trait":"line"},{"x":-793,"y":271,"trait":"line"},{"x":-572,"y":50,"trait":"line"},{"x":793,"y":271,"trait":"line"},{"x":572,"y":50,"trait":"line"},{"x":793,"y":346,"bCoef":1,"trait":"ballArea"},{"x":793,"y":-346,"bCoef":1,"trait":"ballArea"},{"x":0,"y":346,"bCoef":0,"trait":"line"},{"x":0,"y":-346,"bCoef":0,"trait":"line"},{"x":0,"y":95,"trait":"kickOffBarrier","_picked":"segment","_data":{"mirror":{}}},{"x":0,"y":-95,"trait":"kickOffBarrier","_picked":"segment","_data":{"mirror":{}}},{"x":802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":-802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":-802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"}],"segments":[{"v0":0,"v1":1,"trait":"ballArea"},{"v0":2,"v1":3,"trait":"ballArea"},{"v0":4,"v1":5,"trait":"ballArea"},{"v0":6,"v1":7,"trait":"ballArea"},{"v0":8,"v1":9,"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":180,"cGroup":["blueKO"],"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":-180,"cGroup":["redKO"],"trait":"kickOffBarrier"},{"v0":10,"v1":11,"trait":"kickOffBarrier"},{"v0":2,"v1":12,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":6,"v1":13,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":1,"v1":14,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":5,"v1":15,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":12,"v1":14,"curve":-35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","x":-821},{"v0":13,"v1":15,"curve":35,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","x":585},{"v0":16,"v1":17,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":18,"v1":19,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":20,"v1":21,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":22,"v1":23,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":17,"v1":21,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":-600},{"v0":19,"v1":23,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":572},{"v0":1,"v1":0,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":5,"v1":4,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":2,"v1":3,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":6,"v1":7,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":0,"v1":24,"vis":true,"color":"FFFFFF","bCoef":1,"trait":"ballArea","y":290},{"v0":3,"v1":25,"vis":true,"color":"FFFFFF","bCoef":1,"trait":"ballArea","y":-290},{"v0":26,"v1":27,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":10,"v1":9,"curve":-180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":29,"v1":28,"curve":180.43079330521417,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","_picked":true,"_data":{"mirror":{},"arc":{"a":[0,-95],"b":[0,95],"curve":180.43079330521417,"radius":95.00067131878964,"center":[0.3571428571409862,0],"from":-1.574555707580645,"to":1.574555707580645}}},{"v0":2,"v1":1,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":6,"v1":5,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":30,"v1":31,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614},{"v0":32,"v1":33,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":34,"v1":35,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":36,"v1":37,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614}],"goals":[{"p0":[-802,-95],"p1":[-802,95],"team":"red"},{"p0":[802,95],"p1":[802,-95],"team":"blue"}],"discs":[{"radius":5,"pos":[-793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[-793,-95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":5,"pos":[793,-95],"color":"FFFFFF","trait":"goalPost"}],"planes":[{"normal":[0,1],"dist":-346,"trait":"ballArea","_data":{"extremes":{"normal":[0,1],"dist":-346,"canvas_rect":[-900,-404,900,404],"a":[-900,-346],"b":[900,-346]}}},{"normal":[0,-1],"dist":-346,"trait":"ballArea","_data":{"extremes":{"normal":[0,-1],"dist":-346,"canvas_rect":[-900,-404,900,404],"a":[-900,346],"b":[900,346]}}},{"normal":[0,1],"dist":-404,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,1],"dist":-404,"canvas_rect":[-900,-404,900,404],"a":[-900,-404],"b":[900,-404]}}},{"normal":[0,-1],"dist":-404,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,-1],"dist":-404,"canvas_rect":[-900,-404,900,404],"a":[-900,404],"b":[900,404]}}},{"normal":[1,0],"dist":-900,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[1,0],"dist":-900,"canvas_rect":[-900,-404,900,404],"a":[-900,-404],"b":[-900,404]}}},{"normal":[-1,0],"dist":-900,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[-1,0],"dist":-900,"canvas_rect":[-900,-404,900,404],"a":[900,-404],"b":[900,404]}}}],"traits":{"ballArea":{"vis":false,"bCoef":1,"cMask":["ball"]},"goalPost":{"radius":8,"invMass":0,"bCoef":1},"goalNet":{"vis":true,"bCoef":0.1,"cMask":["all"]},"kickOffBarrier":{"vis":false,"bCoef":0.1,"cGroup":["redKO","blueKO"],"cMask":["red","blue"]},"line":{"vis":true,"bCoef":0,"cMask":[""]},"arco":{"radius":2,"cMask":["n\/d"],"color":"cccccc"}},"playerPhysics":{"acceleration":0.11,"kickingAcceleration":0.1,"kickStrength":7},"ballPhysics":{"radius":7,"color":"EAFF00"},"joints":[],"redSpawnPoints":[],"blueSpawnPoints":[],"canBeStored":false}',);
 room.startGame();
 
 if ( MODE == "pick" ) {
   commands = {...commands, ...pickCommands};
 };
-
-function Pick() {
-  this.pickers = {1: null, 2: null};
-  this.autopick = {1: false, 2: false};
-  this.timeout = null;
-  this.locked = 0;
-
-  this.enableAutoPick = function(teamId) {
-    this.autopick[teamId] = true;
-  };
-  this.disableAutoPick = function() {
-    this.autopick = {1: false, 2: false};
-  };
-  // Check if team can YET pick
-  this.canPick = function(teamId) {
-    return this.locked == teamId;
-  };
-  // Lock picking to wait for this team to pick
-  this.lock = function(teamId) {
-    this.locked = ( teamId == 1 ) ? 2 : 1;
-  };
-  // Release the other team from picking
-  this.unlock = function(teamId) {
-    this.locked = 0;
-  };
-  // Add pickers if missing
-  this.updatePickers = function() {
-    for (let i = 1; i <= 2; i++) {
-      // If picker is empty, add one
-      if ( !this.pickers[i] ) {
-        this.updatePicker(i);
-        return;
-      };
-    };
-  };
-  // Update (change) picker of a specific team
-  this.updatePicker = function(teamId) {
-    if ( this.pickers[teamId] ) {
-      // Move old picker back to Spectators (if still in the room)
-      room.setPlayerTeam(this.pickers[teamId].id, 0);
-      // Clear picker slot
-      this.pickers[teamId] = null;
-    };
-    // Prefer someone who has already been picked to avoid newbie
-    let newPicker = room.getPlayerList().find((player) => player.team == teamId);
-    // Choose a picker from Spectators, as plan B
-    if ( !newPicker ) {
-      newPicker = getNonHostPlayers().find((player) => player.team == 0);
-      if ( !newPicker ) return;
-      // Move new picker to team
-      room.setPlayerTeam(newPicker.id, teamId);
-    };
-    this.pickers[teamId] = newPicker;
-    room.sendChat(`${getTag(newPicker.name)} đã được chọn làm đội trưởng (người pick) của ${teamNames[teamId]}`);
-  };
-  // Get picker (player object) from ID (if exists)
-  this.getPicker = function(id) {
-    for (let i = 1; i <= 2; i++) {
-      if ( this.pickers[i] && (id == this.pickers[i].id) ) return this.pickers[i];
-    };
-  };
-  // Pick a player
-  this.pick = function(id, teamId) {
-    if ( !this.canPick(teamId) ) {
-      throw new Error("Bạn chưa thể chọn người chơi");
-    };
-    let pickedPlayer = room.getPlayer(id);
-    if ( !pickedPlayer ) {
-      throw new Error("Người chơi không tồn tại hoặc đã rời đi");
-    } else if ( pickedPlayer.team != 0 ) {
-      throw new Error("Không thể pick người chơi này vì người chơi không ở Spectators");
-    };
-
-    clearTimeout(this.timeout); // Stop changing picker if current picker is responsive
-    room.setPlayerTeam(id, teamId);
-    room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${teamNames[teamId]}`, player.id, GREEN);
-    // Release the lock
-    this.unlock();
-  };
-  // Force a specific team to pick in a limited time
-  this.forcePick = function(teamId) {
-    if (
-      !getNonHostPlayers().some((player) => player.team == 0) || // There is no player left to pick
-      (room.getPlayerList().filter((player) => player.team == teamId).length == 5) // Enough players
-    ) return false;
-
-    // Pick random player from Spectators
-    if ( this.autopick[teamId] ) {
-      let randomPlayer = getNonHostPlayers().find((player) => player.team == 0);
-      if ( !randomPlayer ) return false;
-      try {
-        this.pick(randomPlayer, teamId);
-        return true;
-      } catch(e) { // Somehow you can't pick the player?
-        return false;
-      };
-    };
-  
-    room.sendChat(`${getTag(this.picker().name)} Vui lòng pick bằng lệnh !pick trong vòng ${PICK_DEADLINE} giây, hoặc dùng !autopick`, this.picker.id);
-    // If picker doesn't pick in time, change picker 
-    this.timeout = room.setTimeout(function() {
-      updatePicker(this.team);
-      this.forcePick(teamId);
-    }, PICK_DEADLINE * 1000);
-    return true;
-  };
-}
 
 // Get a chat-pingable tag from player's name
 function getTag(name) {
@@ -237,10 +126,8 @@ function getNonHostPlayers() {
   return room.getPlayerList().filter((player) => player.id != 0);
 }
 
-function isOvertime() {
-  let scores = room.getScores();
-  if ( scores.timeLimit == 0 ) return false;
-  return scores.time > scores.timeLimit;
+function isPicker(id) {
+  return Object.values(pickConfig.pickers).includes(id);
 }
 
 // Find the team that needs new players the most
@@ -257,20 +144,18 @@ function getMissingTeam() {
 async function updateTeamPlayers(specPlayer) {
   await navigator.locks.request("update_team_players", async lock => {
     if ( !specPlayer ) {
-      // Get a bench player (like Penaldo) that isn't admin cause admins can do it themself
-      specPlayer = room.getPlayerList().find((player) => (player.team == 0) && !player.admin);
+      // Get a bench player (like Penaldo)
+      specPlayer = getNonHostPlayers().find((player) => player.team == 0);
       if ( !specPlayer ) return; // No players left in the Spectators
     }
-    // In "pick" mode, only auto-move players when there aren't enough players to pick
-    if ( MODE == "pick" ) {
-      if ( room.getPlayerList().length > 11 ) return;
-      room.sendAnnouncement("Tự động thay người chơi vì không đủ người chơi để pick", null, RED, "normal", 0);
-    };
     // Find team that needs new player the most
     let missingTeam = getMissingTeam();
     if ( missingTeam == 0 ) return;
 
     await room.setPlayerTeam(specPlayer.id, missingTeam);
+    if ( MODE == "pick" ) {
+      room.sendAnnouncement(`${specPlayer.name} đã được tự động thay vào đội, dùng !switch để thay người chơi khác`, pickConfig.pickers[missingTeam], YELLOW);
+    };
   });
 }
 
@@ -294,6 +179,67 @@ function updateBallKick(player) {
   if (player.id != previousKicker.id) game.teams[player.team].passes++; 
   // Received the ball from a teammate or from yourself, so the previous kick kept the possession
   game.teams[player.team].possessedKicks++;
+}
+
+// Assign pickers if missing
+function updatePickers() {
+  pickConfig.pickers[1] || updatePicker(1);
+  pickConfig.pickers[2] || updatePicker(2);
+};
+
+// Change picker of a specific team
+function updatePicker(teamId) {
+  if ( pickConfig.pickers[teamId] ) {
+    // Move old picker back to Spectators (if still in the room)
+    room.setPlayerTeam(pickConfig.pickers[teamId], 0);
+    // Clear picker slot
+    delete pickConfig.pickers[teamId];
+  };
+  let players = getNonHostPlayers();
+  // Prefer someone who has already been picked to avoid newbie
+  let newPicker = players.find((player) => player.team == teamId);
+  // Choose a picker from Spectators, as plan B
+  if ( !newPicker ) {
+    newPicker = players.find((player) => player.team == 0);
+    if ( !newPicker ) return;
+    // Move new picker to team
+    room.setPlayerTeam(newPicker.id, teamId);
+  };
+  pickConfig.pickers[teamId] = newPicker.id;
+  // Reset auto-pick setting
+  pickConfig.autopick[teamId] = false;
+  room.sendChat(`${getTag(newPicker.name)} đã được chọn làm đội trưởng (người pick) của ${teamNames[teamId]}`);
+};
+
+function pick(playerId, teamId) {
+  // Pick the player
+  room.setPlayerTeam(id, teamId);
+  room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${teamNames[teamId]}`, null, GREEN);
+  // Can't pick anymore
+  requestPick();
+}
+
+// Request a pick from the needed team
+function requestPick() {
+  pickConfig.turn = getMissingTeam();
+  // Enough players
+  (pickConfig.turn == 0) && startGame();
+
+  // Pick random player from Spectators
+  let randomPlayer = room.getPlayerList().find((player) => (player.team == 0) && (player.id != 0));
+  // There is no player left to pick
+  !randomPlayer && startGame();
+
+  // Auto-pick mode enabled
+  if ( pickConfig.autopick[teamId] ) pick(randomPlayer, pickConfig.turn);
+
+  room.sendChat(`Vui lòng pick bằng lệnh !pick trong vòng ${PICK_DEADLINE} giây, hoặc dùng !autopick`, pickConfig.pickers[teamId], YELLOW, "bold", 2);
+  callback = function(teamId) {
+    updatePicker(teamId);
+    requestPick();
+  };
+  // If picker doesn't pick in time, change picker
+  timeouts.toPick = room.setTimeout(callback(teamId), PICK_DEADLINE * 1000);
 }
 
 function helpFunc(value, player) {
@@ -329,10 +275,15 @@ function kickAfkFunc(value, player) {
     return false;
   };
 
-  if ( monitorAfk.players.size == 0 ) {
-    monitorAfk.deadline = new Date().getTime() / 1000 + AFK_DEADLINE; // Deadline for players to do something
-    monitorAfk.players = new Set(room.getPlayerList().filter((player) => player.team != 0).map((player) => player.id));
-  };
+  room.getPlayerList().filter((player) => player.team != 0).forEach(function(player) {
+    if ( timeouts.toAct[player.id] === undefined ) return; // Player is already monitored
+    // Timeout callback when player doesn't act in time
+    callback = function(id) {
+      room.kickPlayer(id, "AFK");
+      delete timeouts.toAct[player.id];
+    };
+    timeouts.toAct[player.id] = setTimeout(callback(player.id), AFK_DEADLINE * 1000);
+  });
   room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick", null, GREEN);
   return true;
 }
@@ -353,11 +304,17 @@ function specFunc(value, player) {
 }
 
 function pickFunc(id, player) {
-  if ( pick.getPicker(player.id) === null ) {
+  if ( !isPicker(player.id) ) {
     room.sendAnnouncement("Bạn không phải đội trưởng", player.id, RED);
     return false;
+  } else if ( pickConfig.turn != player.team) {
+    room.sendAnnouncement("Chưa đến lượt bạn chọn", player.id, RED);
+    return false;
+  } else if ( room.getScores() ) {
+    room.sendAnnouncement("Lệnh không khả dụng", player.id, RED);
+    return false;
   } else if ( !id.startsWith("#") ) {
-    room.sendAnnouncement("Vui lòng cung cấp một ID người chơi hợp lệ: !pick #<id>", player.id, RED);
+    room.sendAnnouncement("Vui lòng cung cấp một ID người chơi hợp lệ (VD: !pick #9)", player.id, RED);
     return false;
   } else if ( id == "#0") {
     room.sendAnnouncement("Không thế pick BLV vì BLV đang bận flexing ở Ý", player.id, RED);
@@ -365,37 +322,62 @@ function pickFunc(id, player) {
   };
 
   id = id.slice(1);
-  try {
-    // Pick the player
-    pick.pick(id, player.team);
-    // Find team that needs to pick more
-    let missingTeam = getMissingTeam();
-    if (
-      (missingTeam == 0) || // Enough players
-      !pick.forcePick(missingTeam) // Can't pick anymore
-    ) room.startGame();
-    // If the game hasn't started yet, let teams pick one-by-one
-    if ( !room.getScores() ) pick.lock(missingTeam);
-  } catch(error) {
-    room.sendAnnouncement(error, player.id, RED);
+  let pickedPlayer = room.getPlayer(id);
+  if ( !pickedPlayer ) {
+    room.sendAnnouncement("Người chơi không tồn tại hoặc đã rời đi", player.id, RED);
+    return false;
+  } else if ( pickedPlayer.team != 0 ) {
+    room.sendAnnouncement("Người chơi không ở Spectators", player.id, RED);
+    return false
   };
+  // Stop changing picker if current picker is responsive
+  clearTimeout(timeouts.toPick);
+  pick(id, player.team);
+  return false;
+}
+
+function switchFunc(value, player) {
+  let sub = value.split(" ", 2);
+  if ( sub.includes(undefined) || sub.some((id) => !id.startsWith("#")) ) {
+    room.sendAnnouncement("Đầu vào hợp lệ, hãy đặt ID cầu thủ muốn thay vào TRƯỚC cầu thủ muốn thay ra (VD: !switch #9 #8)", player.id, RED);
+    return false;
+  }
+
+  let [inPlayer, outPlayer] = sub.map((id) => room.getPlayer(id.slice(1)))
+  if ( inPlayer.team != 0 ) {
+    room.sendAnnouncement("Chỉ có thể thay vào người chơi từ Spectators", player.id, RED);
+    return false;
+  }
+  if ( outPlayer.team != player.team ) {
+    room.sendAnnouncement("Không thể thay ra cầu thủ không nằm trong đội bạn", player.id, RED);
+    return false;
+  }
+  room.setPlayerTeam(sub[1], 0);
+  room.setPlayerTeam(sub[0], player.team);
+  room.sendAnnouncement(`🔻 ${outPlayer.name} đã được thay ra ngoài`, null, RED);
+  room.sendAnnouncement(`🔺 ${inPlayer.name} đã được thay vào sân`, null, GREEN, "normal", 0);
   return false;
 }
 
 function autoPickFunc(value, player) {
-  if ( !pick.getPicker(player.id) === null ) {
+  if ( !isPicker(player.id) ) {
     room.sendAnnouncement("Bạn không phải đội trưởng", player.id, RED);
     return false;
   };
-  pick.enableAutoPick(player.team);
-  room.sendAnnouncement(`Đã bật chọn người chơi tự động cho ${teamNames[player.team]}, chế độ này sẽ được tắt sau khi trận đấu kết thúc`, null, GREEN);
+
+  pickConfig.autopick[player.team] = !pickConfig.autopick[player.team];
+  if ( pickConfig.autopick[player.team] ) {
+    room.sendAnnouncement(`Đã bật chọn người chơi tự động cho ${teamNames[player.team]}, dùng !autopick lần nữa để tắt`, null, GREEN);
+  } else {
+    room.sendAnnouncement(`Đã tắt chế độ chọn người chơi tự động cho ${teamNames[player.team]}`, null, GREEN);
+  };
   return true;
 }
 
 function loginFunc(password, player) {
   switch ( password ) {
     case "":
-      room.sendAnnouncement("Vui lòng đính kèm mật khẩu: !login <mật khẩu>", player.id, RED);
+      room.sendAnnouncement("Vui lòng đính kèm mật khẩu (VD: !login mk)", player.id, RED);
       break;
     case ADMIN_PASSWORD:
       room.setPlayerAdmin(player.id, true);
@@ -409,7 +391,7 @@ function loginFunc(password, player) {
 
 function yellowCardFunc(id, player) {
   if ( !id.startsWith("#") ) {
-    room.sendAnnouncement("Vui lòng cung cấp một ID người chơi hợp lệ: !yellow #<id>", player.id, RED);
+    room.sendAnnouncement("Vui lòng cung cấp một ID người chơi hợp lệ (VD: !yellow #9)", player.id, RED);
     return false;
   }
 
@@ -587,7 +569,7 @@ function celebrateGoal(team) {
   var scream = "VÀOOO"; // Goal screamer
   var comment = "một pha dứt điểm lạnh lùng";
   // Design a good comment :P
-  if ( isOvertime() ) { // Overtime goal
+  if ( (scores.timeLimit != 0) && (scores.time > scores.timeLimit) ) { // Overtime goal
     scream = "VÀOOOOOOOO";
     // Picker a random comment
     comment = randomChoice(winningGoalComments);
@@ -611,18 +593,9 @@ async function checkSpam(player, message) {
   };
 }
 
-function checkAfk(player) {
-  if (
-    (monitorAfk.players.size == 0) || // No AFK monitor is ongoing
-    monitorAfk.players.delete(player.id) // Remove player from AFK checklist, if exists
-  ) return;
-
-  let time = new Date().getTime() / 1000;
-  if ( monitorAfk.deadline > time ) return; // There is still time for players to make action
-  monitorAfk.players.forEach(function(id) {
-    room.kickPlayer(id, "AFK");
-  });
-  monitorAfk.players.clear();
+function clearAfkRecord(player) {
+  clearTimeout(timeouts.toAct[player.id]);
+  delete timeouts.toAct[player.id];
 }
 
 // Move players back to Spectators
@@ -645,11 +618,10 @@ async function randPlayers() {
 }
 
 async function pickPlayers() {
-  // Disable auto-pick configuration from the previous game
-  pick.disableAutoPick();
   // Start picking from RED
-  pick.forcePick(1);
-  pick.lock(1);
+  forcePick(1);
+  // Pick one-by-one
+  pickConfig.parallel = false;
 }
 
 function welcomePlayer(player) {
@@ -666,24 +638,17 @@ function reset() {
 room.onPlayerJoin = async function(player) {
   welcomePlayer(player);
   await updateTeamPlayers(player);
-  if ( MODE == "pick" ) {
-    pick.updatePickers();
-  }
+  ( MODE == "pick" ) && updatePickers();
 }
 
 room.onPlayerLeave = async function(player) {
   if ( player.team != 0 ) {
     await updateTeamPlayers();
-    if ( MODE == "pick" ) {
-      // A picker left the game, update with a new one
-      (pick.getPicker(player.id) !== null) && pick.updatePicker(player.team);
-      room.sendAnnouncement(`Một cầu thủ của ${teamNames[player.team]} vừa rời đi`, null, RED);
-      pick.forcePick(player.team);
-    };
   };
 
-  // There are no players left in Spectators, start the game
-  if ( !getNonHostPlayers().some((player) => player.team == 0) ) {
+  // There are no players left in Spectators
+  if ( (MODE == "pick") && !getNonHostPlayers().some((player) => player.team == 0) ) {
+    clearTimeout(timeouts.toPick); // Stop forcing picker to pick
     room.startGame();
   };
 }
@@ -694,11 +659,11 @@ room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
     room.setPlayerTeam(0, 0);
   } else if ( changedPlayer.team == 0 ) {
     // Remove player from AFK tracklist
-    monitorAfk.players.delete(changedPlayer.id);
-    let picker = pick.getPicker(changedPlayer.id);
+    clearAfkRecord(changedPlayer.id);
     // Picker moved to Spectators, let's update picker
-    if ( picker != null ) {
-      pick.updatePicker(picker.team);
+    if ( (MODE == "pick") && isPicker(changedPlayer.id) ) {
+      let team = (pickConfig.pickers[1] == changedPlayer.id) ? 1 : 2;
+      updatePicker(team);
     };
   } else if ( room.getPlayerList().filter(player => player.team == changedPlayer.team).length > 5 ) { // Each team can only has 5 players
     room.setPlayerTeam(changedPlayer.id, 0);
@@ -727,7 +692,7 @@ room.onPlayerChat = function(player, message) {
 }
 
 room.onPlayerActivity = function(player) {
-  checkAfk(player);
+  clearAfkRecord(player);
 }
 
 room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
@@ -742,7 +707,8 @@ room.onTeamVictory = function(scores) {
 
 room.onGameStart = function(byPlayer) {
   reset();
-  pick.unlock();
+  // Allow parallel picking
+  pickConfig.parallel = true;
   room.sendChat(START_GAME_COMMENT);
 }
 
@@ -751,7 +717,6 @@ room.onGameStop = async function(byPlayer) {
   monitorAfk.players.clear(); // Stop monitoring AFK when the game is stopped
   (byPlayer !== null) && room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
   resetPlayers();
-  room.setCustomStadium(randomChoice(maps)); // Pick a random map
   await new Promise(r => setTimeout(r, AFTER_GAME_REST * 1000)); // Have a little rest
   if ( MODE == "rand" ) {
     randPlayers();
@@ -761,12 +726,10 @@ room.onGameStop = async function(byPlayer) {
 }
 
 room.onGamePause = function(byPlayer) {
-  cache.paused = 1;
   monitorAfk.players.clear(); // Stop monitoring AFK when the game is paused
   room.sendChat("Trận đấu đang được tạm dừng để check VAR");
 }
 
 room.onGameUnpause = function(byPlayer) {
-  delete cache.paused;
   room.sendChat("Trọng tài đã check VAR và trận đấu được TIẾP TỤC");
 }
