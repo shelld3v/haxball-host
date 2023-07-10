@@ -223,7 +223,7 @@ async function updateCaptain(teamId) {
       await room.setPlayerTeam(newCaptain.id, teamId);
     };
     captains[teamId] = newCaptain.id;
-  };
+  });
   // Reset auto-pick setting
   autoPickConfig[teamId] = false;
   room.sendChat(`${getTag(newCaptain.name)} đã được chọn làm đội trưởng của ${teamNames[teamId]}`);
