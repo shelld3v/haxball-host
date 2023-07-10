@@ -124,7 +124,7 @@ function getPlayer(value) {
   };
 
   // Exclude host player
-  if (player.id == 0 ) return undefined;
+  if ( (player !== undefined) && (player.id == 0) ) return undefined;
   return player;
 }
 
