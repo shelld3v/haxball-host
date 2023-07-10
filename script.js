@@ -88,7 +88,7 @@ var timeouts = {
   toAct: [],
 };
 var room = HBInit({
-  roomName: `[De Paul's auto room] Futsal 5v5 (${MODE})💥`,
+  roomName: `[De Paul's auto room] Futsal 5v5 (${MODE})`,
   maxPlayers: 18,
   playerName: "BLV Giàng A Phò",
   public: false,
