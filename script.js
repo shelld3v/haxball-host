@@ -171,14 +171,14 @@ async function updateTeamPlayers(specPlayer) {
       if ( !specPlayer ) return; // No players left in the Spectators
     }
     // Find team that needs new player the most
-    var missingTeam = getMissingTeam();
+    let missingTeam = getMissingTeam();
     if ( missingTeam == 0 ) return;
 
     await room.setPlayerTeam(specPlayer.id, missingTeam);
+    if ( MODE == "pick" ) {
+      room.sendAnnouncement(`${specPlayer.name} đã được tự động thay vào đội, dùng !sub để thay người`, captains[missingTeam], YELLOW);
+    };
   });
-  if ( MODE == "pick" ) {
-    room.sendAnnouncement(`${specPlayer.name} đã được tự động thay vào đội, dùng !sub để thay người`, captains[missingTeam], YELLOW);
-  };
 }
 
 // Update information to monitor last kickers, possession and passing accuracy
@@ -223,10 +223,10 @@ async function updateCaptain(teamId) {
       await room.setPlayerTeam(newCaptain.id, teamId);
     };
     captains[teamId] = newCaptain.id;
+    // Reset auto-pick setting
+    autoPickConfig[teamId] = false;
+    room.sendChat(`${getTag(newCaptain.name)} đã được chọn làm đội trưởng của ${teamNames[teamId]}`);
   });
-  // Reset auto-pick setting
-  autoPickConfig[teamId] = false;
-  room.sendChat(`${getTag(newCaptain.name)} đã được chọn làm đội trưởng của ${teamNames[teamId]}`);
 }
 
 async function pick(pickedPlayer, teamId) {
