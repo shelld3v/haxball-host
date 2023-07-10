@@ -88,7 +88,7 @@ var timeouts = {
   toAct: [],
 };
 var room = HBInit({
-  roomName: `[Auto room của De Paul] Futsal 5v5 (${MODE}) 💥`,
+  roomName: `[De Paul's auto room] Futsal 5v5 (${MODE})💥`,
   maxPlayers: 18,
   playerName: "BLV Giàng A Phò",
   public: false,
@@ -171,7 +171,7 @@ async function updateTeamPlayers(specPlayer) {
       if ( !specPlayer ) return; // No players left in the Spectators
     }
     // Find team that needs new player the most
-    let missingTeam = getMissingTeam();
+    var missingTeam = getMissingTeam();
     if ( missingTeam == 0 ) return;
 
     await room.setPlayerTeam(specPlayer.id, missingTeam);
@@ -214,7 +214,7 @@ async function updateCaptain(teamId) {
     };
     let players = getNonHostPlayers();
     // Prefer someone who has already been picked to avoid newbie
-    let newCaptain = players.find((player) => player.team == teamId);
+    var newCaptain = players.find((player) => player.team == teamId);
     // Choose a captain from Spectators, as plan B
     if ( !newCaptain ) {
       newCaptain = players.find((player) => player.team == 0);
