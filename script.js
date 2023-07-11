@@ -271,7 +271,7 @@ function requestPick() {
     return;
   };
 
-  room.sendAnnouncement(`Vui lòng pick bằng lệnh !pick trong vòng ${PICK_DEADLINE} giây, hoặc dùng !autopick`, captains[pickTurn], YELLOW, "bold", 2);
+  room.sendAnnouncement(`Vui lòng pick bằng lệnh !pick <tên hoặc #id> trong vòng ${PICK_DEADLINE} giây, hoặc dùng !autopick`, captains[pickTurn], YELLOW, "bold", 2);
   // If captain doesn't pick in time, change captain
   timeouts.toPick = setTimeout(function() {
     updateCaptain(pickTurn);
