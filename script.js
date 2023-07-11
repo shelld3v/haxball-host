@@ -227,10 +227,14 @@ async function updateCaptain(teamId) {
     // Reset auto-pick setting
     autoPickConfig[teamId] = false;
     room.sendChat(`${getTag(newCaptain.name)} đã được chọn làm đội trưởng của ${teamNames[teamId]}`);
+    clearTimeout(timeouts.toPick);
+    requestPick();
   });
 }
 
 async function pick(pickedPlayer, teamId) {
+  // Clear previous pick timeout
+  clearTimeout(timeouts.toPick);
   // Pick the player
   await room.setPlayerTeam(pickedPlayer.id, teamId);
   room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${teamNames[teamId]}`, null, GREEN);
@@ -239,6 +243,7 @@ async function pick(pickedPlayer, teamId) {
 
 // Request a pick from the needed team
 function requestPick() {
+  if ( room.getScores() !== null ) return; // Game started, no pick
   pickTurn = getMissingTeam();
   // Enough players
   if ( pickTurn == 0 ) {
@@ -254,6 +259,7 @@ function requestPick() {
     return;
   };
 
+  room.sendAnnouncement(`Đã đến lượt ${teamNames[missingTeam]} pick`, null, YELLOW);
   if (
     autoPickConfig[pickTurn] || // Auto-pick mode enabled
     !players.some((player) => (player.team == 0) && (player.id != randomPlayer.id)) // Last player in the Spectators
@@ -303,12 +309,15 @@ function kickAfkFunc(value, player) {
     return false;
   };
 
-  room.getPlayerList().filter((_player) => _player.team != 0).forEach(function(_player) {
-    if ( timeouts.toAct[_player.id] !== undefined ) return; // Player is already monitored
+  // Track every player on the pitch
+  room.getPlayerList().forEach(function(_player) {
+    if ( _player.team == 0 ) return;
+    let id = _player.id;
+    if ( timeouts.toAct[id] !== undefined ) return; // Player is already monitored
     // Kick player if player doesn't act in time
-    timeouts.toAct[_player.id] = setTimeout(function() {
-      room.kickPlayer(_player.id, "AFK");
-      delete timeouts.toAct[_player.id];
+    timeouts.toAct[id] = setTimeout(function() {
+      room.kickPlayer(id, "AFK");
+      delete timeouts.toAct[id];
     }, AFK_DEADLINE * 1000);
   });
   room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick", null, GREEN);
@@ -358,8 +367,6 @@ function pickFunc(value, player) {
     room.sendAnnouncement("Người chơi không ở Spectators", player.id, RED);
     return false
   };
-  // Stop changing captain if current captain is responsive
-  clearTimeout(timeouts.toPick);
   pick(pickedPlayer, player.team);
   return false;
 }
@@ -621,6 +628,14 @@ async function checkSpam(player, message) {
   };
 }
 
+// Stop all AFK trackers
+function clearAfkRecords(player) {
+  for (id of Object.keys(timeouts.toAct)) {
+    clearTimeout(timeouts.toAct[id]);
+    delete timeouts.toAct[id];
+  };
+}
+
 function clearAfkRecord(player) {
   if ( !timeouts.toAct[player.id] ) return;
   clearTimeout(timeouts.toAct[player.id]);
@@ -657,7 +672,7 @@ async function pickPlayers() {
   // Move players who aren't captains to Spectators
   let players = room.getPlayerList()
   for (let player of players) {
-    if ((player.team == 0) || isCaptain(player.id) ) continue;
+    if ( (player.team == 0) || isCaptain(player.id) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
 
@@ -687,13 +702,15 @@ room.onPlayerJoin = async function(player) {
 room.onPlayerLeave = async function(player) {
   if ( player.team != 0 ) {
     await updateTeamPlayers();
+    if ( MODE == "pick" ) {
+      // A captain left, assign another one
+      isCaptain(player.id) && updateCaptain(player.team);
+    };
   };
 
-  if ( (MODE == "pick") ) {
+  if ( MODE == "pick" ) {
     // There are no players left in Spectators
     !room.getPlayerList().some((player) => (player.team == 0) && (player.id != 0)) && room.startGame();
-    // Captain left, assign another one
-    isCaptain(player.id) && updateCaptain(player.team);
   };
 }
 
@@ -755,7 +772,7 @@ room.onGameStart = function(byPlayer) {
 
 room.onGameStop = async function(byPlayer) {
   isPlaying = false;
-  timeouts.toAct = {}; // Stop monitoring AFK when the game is stopped
+  clearAfkRecords(); // Stop monitoring AFK when the game is stopped
   (byPlayer !== null) && room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
   await new Promise(r => setTimeout(r, AFTER_GAME_REST * 1000)); // Have a little rest
   if ( MODE == "rand" ) {
@@ -767,7 +784,7 @@ room.onGameStop = async function(byPlayer) {
 
 room.onGamePause = function(byPlayer) {
   isPlaying = false;
-  timeouts.toAct = {}; // Stop monitoring AFK when the game is paused
+  clearAfkRecords(); // Stop monitoring AFK when the game is paused
   room.sendChat("Trận đấu đang được tạm dừng để check VAR");
 }
 
