@@ -125,7 +125,7 @@ function getPlayer(value) {
   };
 
   // Exclude host player
-  if ( (player !== undefined) && (player.id == 0) ) return undefined;
+  if ( player && (player.id == 0) ) return undefined;
   return player;
 }
 
@@ -227,9 +227,12 @@ async function updateCaptain(teamId) {
     // Reset auto-pick setting
     autoPickConfig[teamId] = false;
     room.sendChat(`${getTag(newCaptain.name)} đã được chọn làm đội trưởng của ${teamNames[teamId]}`);
+  });
+  // Reset pick timeout for the new captain
+  if ( pickTurn == teamId ) {
     clearTimeout(timeouts.toPick);
     requestPick();
-  });
+  };
 }
 
 async function pick(pickedPlayer, teamId) {
@@ -259,7 +262,7 @@ function requestPick() {
     return;
   };
 
-  room.sendAnnouncement(`Đã đến lượt ${teamNames[missingTeam]} pick`, null, YELLOW);
+  room.sendAnnouncement(`Đã đến lượt ${teamNames[pickTurn]} pick`, null, YELLOW);
   if (
     autoPickConfig[pickTurn] || // Auto-pick mode enabled
     !players.some((player) => (player.team == 0) && (player.id != randomPlayer.id)) // Last player in the Spectators
