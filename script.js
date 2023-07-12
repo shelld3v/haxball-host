@@ -79,6 +79,7 @@ var pickCommands = {
   captains: [listCaptainsFunc, false],
   pick: [pickFunc, false],
   sub: [subFunc, false],
+  assigncaptain: [assignCaptainFunc, true],
 };
 var duplicateMessagesCount = 0;
 var isPlaying = false;
@@ -218,7 +219,7 @@ function updateBallKick(player) {
 }
 
 // Change captain of a specific team
-async function updateCaptain(teamId) {
+async function updateCaptain(teamId, newCaptain) {
   await navigator.locks.request("update_captain", async lock => {
     if ( captains[teamId] != 0 ) {
       // Move old captain back to Spectators (if is still in the room)
@@ -227,15 +228,17 @@ async function updateCaptain(teamId) {
       captains[teamId] = 0;
     };
     // Choose a random captain
-    let opponentTeam = (teamId == 1) ? 2 : 1;
-    let newCaptain = room.getPlayerList().find((player) => (player.team != opponentTeam) && (player.id != 0));
-    if ( !newCaptain ) return; // No player left to assign
+    if ( !newCaptain ) {
+      let opponentTeam = (teamId == 1) ? 2 : 1;
+      newCaptain = room.getPlayerList().find((player) => (player.team != opponentTeam) && (player.id != 0));
+      if ( !newCaptain ) return; // No player left to assign
+    }
     // Move new captain to team
     if ( newCaptain.team == 0 ) {
       await room.setPlayerTeam(newCaptain.id, teamId);
     };
     captains[teamId] = newCaptain.id;
-    room.sendAnnouncement(`Bạn đã được chọn làm đội trưởng của ${teamNames[teamId]}`, newCaptain.id, GREEN, "bold", 2);
+    room.sendAnnouncement(`${newCaptain.name} đã được chọn làm đội trưởng của ${teamNames[teamId]}`, null, GREEN, "bold");
   });
   // Reset pick timeout for the new captain
   if ( isPicking && (pickTurn == teamId) ) {
@@ -269,15 +272,15 @@ function requestPick() {
     return;
   };
 
-  room.sendAnnouncement(`${teamNames[pickTurn]} đang pick...`, null, YELLOW);
+  room.sendAnnouncement(`${teamNames[pickTurn]} đang chọn người chơi...`, null, YELLOW);
   // Last player in Spectators, pick that player
   if ( !players.some((player) => (player.team == 0) && (player.id != randomPlayer.id)) ) {
     pick(randomPlayer, pickTurn);
     return;
   };
 
-  room.sendAnnouncement(`Bạn có ${PICK_DEADLINE} giây để pick, hãy dùng !pick @<tag> (VD: !pick @De_Paul)
-Mẹo: nhập "!pick @", dùng phím mũi tên để tìm người chơi rồi bấm phím TAB để thanh chat tự động điền`, captains[pickTurn], YELLOW, "bold");
+  room.sendAnnouncement(`Đã đến lượt bạn chọn, vui lòng chọn người chơi bằng lệnh !pick @<tag> trong ${PICK_DEADLINE} giây (VD: !pick @De_Paul)
+Mẹo: nhập "!pick @", dùng phím mũi tên để tìm người chơi rồi bấm phím TAB để thanh chat tự động điền`, captains[pickTurn], YELLOW, "bold", 2);
   // If captain doesn't pick in time, change captain
   timeouts.toPick = setTimeout(updateCaptain.bind(pickTurn), PICK_DEADLINE * 1000);
 }
@@ -412,6 +415,27 @@ function subFunc(value, player) {
   room.setPlayerTeam(inPlayer.id, player.team);
   room.setPlayerTeam(outPlayer.id, 0);
   return false;
+}
+
+function assignCaptainFunc(value, player) {
+  if ( !value ) {
+    room.sendAnnouncement("Vui lòng cung cấp tên đội và một người chơi hợp lệ (VD: !assigncaptain red @De_Paul)", player.id, RED);
+    return false;
+  };
+
+  let teamIds = {"red": 1, "blue": 2};
+  let [team, tag] = value.split(" ", 2);
+  if ( teamIds[team] === undefined ) {
+    room.sendAnnouncement("Tên đội phải là \"red\" hoặc \"blue\" (VD: !assigncaptain blue @De_Paul)", player.id, RED);
+    return false;
+  };
+  let assignedPlayer = getPlayerByTag(tag);
+  if ( !assignedPlayer ) {
+    room.sendAnnouncement("Người chơi không tồn tại hoặc đã rời đi", player.id, RED);
+    return false;
+  };
+  updateCaptain(teamIds[team], assignedPlayer);
+  return true;
 }
 
 function loginFunc(password, player) {
