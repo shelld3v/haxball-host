@@ -69,12 +69,13 @@ var commands = { // Format: "alias: [function, requiresAdmin]"
   clearbans: [clearBansFunc, true],
 };
 var pickCommands = {
-  captains: [listCaptains, false],
+  captains: [listCaptainsFunc, false],
   pick: [pickFunc, false],
   sub: [subFunc, false],
 };
 var duplicateMessagesCount = 0;
 var isPlaying = false;
+var isPicking = false;
 var pickTurn = 0;
 var captains = {1: 0, 2: 0};
 var lastMessage = [null, null]; // Last message and the player ID of the sender
@@ -140,10 +141,6 @@ function isCaptain(id) {
   return Object.values(captains).includes(id);
 }
 
-function isPicking() {
-  return (MODE == "pick") && (room.getScores() === null);
-}
-
 // Find the team that needs new players the most
 function getMissingTeam() {
   // Count players from 2 teams
@@ -167,7 +164,7 @@ function getMissingTeam() {
 // Move a player to a team (if needed)
 async function updateTeamPlayers(specPlayer) {
   // 2 teams are picking
-  if ( isPicking() ) return;
+  if ( isPicking ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
     if ( !specPlayer ) {
@@ -211,7 +208,7 @@ function updateBallKick(player) {
 // Change captain of a specific team
 async function updateCaptain(teamId) {
   await navigator.locks.request("update_captain", async lock => {
-    if ( captains[teamId] ) {
+    if ( captains[teamId] != 0 ) {
       // Move old captain back to Spectators (if is still in the room)
       room.setPlayerTeam(captains[teamId], 0);
       // Clear captain slot
@@ -226,18 +223,16 @@ async function updateCaptain(teamId) {
       await room.setPlayerTeam(newCaptain.id, teamId);
     };
     captains[teamId] = newCaptain.id;
-    room.sendChat(`${getTag(newCaptain.name)} đã được chọn làm đội trưởng của ${teamNames[teamId]}`);
+    room.sendAnnouncement(`Bạn đã được chọn làm đội trưởng của ${teamNames[teamId]}`, newCaptain.id, GREEN, "bold", 2);
   });
   // Reset pick timeout for the new captain
-  if ( isPicking() && (pickTurn == teamId) ) {
+  if ( isPicking && (pickTurn == teamId) ) {
     clearTimeout(timeouts.toPick);
     requestPick();
   };
 }
 
 async function pick(pickedPlayer, teamId) {
-  // Clear previous pick timeout
-  clearTimeout(timeouts.toPick);
   // Pick the player
   await room.setPlayerTeam(pickedPlayer.id, teamId);
   room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${teamNames[teamId]}`, null, GREEN);
@@ -270,11 +265,10 @@ function requestPick() {
   };
 
   room.sendAnnouncement(`Bạn có ${PICK_DEADLINE} giây để pick, dùng !pick @<tag> (VD: !pick @De_Paul)
-Lưu ý: để tìm tag, nhập "@", tìm người chơi, rồi bấm TAB để thanh chat tự động điền`, captains[pickTurn], YELLOW, "bold", 2);
+Lưu ý: để tìm tag, nhập "@", tìm người chơi, rồi bấm TAB để thanh chat tự động điền`, captains[pickTurn], YELLOW, "bold");
   // If captain doesn't pick in time, change captain
   timeouts.toPick = setTimeout(function() {
     updateCaptain(pickTurn);
-    requestPick();
   }, PICK_DEADLINE * 1000);
 }
 
@@ -338,10 +332,14 @@ function specFunc(value, player) {
   let newPlayer = room.getPlayerList().find((_player) => (_player.team == 0) && !_player.admin);
   if ( !newPlayer ) return;
   room.setPlayerTeam(newPlayer.id, player.team);
+  // Captain moved to Spectators, let's assign another one
+  if ( isCaptain(player.id) ) {
+    updateCaptain(player.team);
+  };
   return true;
 }
 
-function listCaptains(value, player) {
+function listCaptainsFunc(value, player) {
   (captains[1] != 0) && room.sendAnnouncement(`Đội trưởng của RED: ${room.getPlayer(captains[1]).name}`, null, GREEN, "normal", 0);
   (captains[2] != 0) && room.sendAnnouncement(`Đội trưởng của BLUE: ${room.getPlayer(captains[2]).name}`, null, GREEN, "normal", 0);
 }
@@ -356,7 +354,7 @@ function pickFunc(tag, player) {
   } else if ( room.getScores() !== null ) {
     room.sendAnnouncement("Lệnh không khả dụng ngay lúc này", player.id, RED);
     return false;
-  } else if ( pickTurn != player.team ) {
+  } else if ( player.team != pickTurn ) {
     room.sendAnnouncement("Chưa đến lượt bạn chọn", player.id, RED);
     return false;
   };
@@ -472,7 +470,7 @@ function processCommand(player, command) {
 
 function processMessage(player, message) {
   // Disallow unpicked player from messaging when 2 teams are picking
-  if ( isPicking() && (player.team == 0) && !player.admin ) {
+  if ( isPicking && (player.team == 0) && !player.admin ) {
     room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
     return false;
   }
@@ -659,14 +657,18 @@ async function randPlayers() {
 }
 
 async function pickPlayers() {
+  isPicking = true;
+  pickTurn = 0;
   // Move players to Spectators
-  // Don't worry about captains, when they are moved to Spectators, new captains will be automatically be selected
-  let players = room.getPlayerList()
+  let players = room.getPlayerList();
   for (let player of players) {
     if ( player.team == 0 ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
 
+  // Assign captains
+  await updateCaptain(1);
+  await updateCaptain(2);
   room.sendAnnouncement("Đội trưởng 2 đội đang bắt đầu pick...", null, YELLOW);
   requestPick();
 }
@@ -700,9 +702,9 @@ room.onPlayerLeave = async function(player) {
     };
   };
 
-  if ( MODE == "pick" ) {
-    // There are no players left in Spectators
-    !room.getPlayerList().some((player) => (player.team == 0) && (player.id != 0)) && room.startGame();
+  // There are no players left in Spectators
+  if ( (MODE == "pick") && !room.getPlayerList().some((player) => (player.team == 0) && (player.id != 0)) ) {
+    room.startGame();
   };
 }
 
@@ -712,10 +714,15 @@ room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
   } else if ( changedPlayer.team == 0 ) {
     // Remove player from AFK tracklist
     clearAfkRecord(changedPlayer.id);
-    // Captain moved to Spectators, let's update captain
-    if ( (MODE == "pick") && isCaptain(changedPlayer.id) ) {
-      let team = (captains[1] == changedPlayer.id) ? 1 : 2;
-      updateCaptain(team);
+    if ( MODE == "pick" ) {
+      // Captain was moved to Spectators, empty the slot
+      switch ( changedPlayer.id ) {
+        case captains[1]:
+          captains[1] = 0;
+          break;
+        case captains[2]:
+          captains[2] = 0;
+      };
     };
   };
 }
@@ -756,6 +763,7 @@ room.onTeamVictory = function(scores) {
 
 room.onGameStart = function(byPlayer) {
   isPlaying = true;
+  isPicking = false;
   reset();
   // Stop forcing captain to pick
   clearTimeout(timeouts.toPick);
