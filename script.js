@@ -122,7 +122,7 @@ function getTag(name) {
   return "@" + name.replace(/ /g, "_");
 }
 
-// Get a random index from the array length
+// Get a random element from an array
 function randomChoice(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
