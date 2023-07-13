@@ -13,7 +13,7 @@ const teamNames = {
 };
 const COLOR_CODES = [
   [60, [0xD60419], [0x0099FF]],
-  [90, [0xE00202, 0xB00101, 0x800000], [0x0006C4, 0x000599, 0x000357]],
+  [90, [0xE00202, 0xB00101, 0x800000], [0x00F7FF, 0x00D1D1, 0x00A7AD]],
   [90, [0xFF2121, 0xFF5757, 0xFC9595], [0x00C3FF, 0x45E0FF, 0xB5F5FC]],
   [45, [0xFF0900, 0x000000, 0xFF0000], [0x0058A3, 0x00000, 0x0058A3]],
   [-45, [0xD10000, 0x8C0000, 0xD10000], [0x00DDFF, 0x87E3FF, 0x00DDFF]],
@@ -502,18 +502,6 @@ function processCommand(player, command) {
   return func(value, player);
 }
 
-function processMessage(player, message) {
-  // Disallow unpicked player from messaging when 2 teams are picking
-  if ( isPicking && (player.team == 0) && !player.admin ) {
-    room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
-    return false;
-  }
-  if ( message.startsWith("!") ) { // Indicating a command
-    return processCommand(player, message.slice(1));
-  }
-  return true;
-}
-
 function updatePlayerStats(player, type) {
   // If player hasn't had stats yet, initialize an object
   game.players[player.name] || (game.players[player.name] = { ...playerStats });
@@ -697,6 +685,7 @@ async function randPlayers() {
 }
 
 async function pickPlayers() {
+  if ( room.getScores() !== null ) return;
   isPicking = true;
   pickTurn = 0;
   // Move players to Spectators
@@ -781,10 +770,18 @@ room.onPositionsReset = function() {
 }
 
 room.onPlayerChat = function(player, message) {
+  // Disallow unpicked player from messaging when 2 teams are picking
+  if ( isPicking && (player.team == 0) && !player.admin && !message.startsWith("!login ") ) {
+    room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
+    return false;
+  }
   if ( player.id != 0 ) {
      checkSpam(player, message);
   };
-  return processMessage(player, message);
+  if ( message.startsWith("!") ) { // Indicating a command
+    return processCommand(player, message.slice(1));
+  }
+  return true;
 }
 
 room.onPlayerActivity = function(player) {
