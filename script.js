@@ -584,32 +584,38 @@ function reportStats(scores) {
   let redPlayerStats = [];
   let bluePlayerStats = [];
   for (const [player, stats] of Object.entries(game.players)) {
-    let msg = ( stats.forTeam == 1 ) ? redPlayerStats : bluePlayerStats;
-    (msg.length != 0) && msg.push(" • ");
-    msg.push(player);
-
+    let msg = player + " (";
     if ( stats.goals == 1 ) {
-      msg.push("(⚽)");
+      msg = msg.concat("⚽");
     } else if ( stats.goals != 0 ) { // More than 1 goal
-      msg.push(`(${stats.goals}⚽)`);
+      msg = msg.concat(`${stats.goals}⚽`);
     };
     if ( stats.assists == 1 ) {
-      msg.push("(👟)");
+      msg = msg.concat("👟");
     } else if ( stats.assists != 0 ) { // More than 1 assist
-      msg.push(`(${stats.assists}👟)`);
+      msg = msg.concat(`${stats.assists}👟`);
     };
     if ( stats.ownGoals == 1 ) {
-      msg.push("(🥅)");
+      msg = msg.concat("🥅");
     } else if ( stats.ownGoals != 0 ) { // More than 1 own goal
-      msg.push(`(${stats.ownGoals}🥅)`);
+      msg = msg.concat(`${stats.ownGoals}🥅`);
+    };
+    msg = msg.concat(")");
+
+    switch ( stats.forTeam ) {
+      case 1:
+        redPlayerStats.push(msg);
+        break;
+      case 2:
+        bluePlayerStats.push(msg);
     };
   };
 
   if ( redPlayerStats.length != 0 ) {
-    room.sendAnnouncement(`RED: ${redPlayerStats.join(" ")}`, null, YELLOW, "small-bold", 0);
+    room.sendAnnouncement(`RED: ${redPlayerStats.join("  •  ")}`, null, YELLOW, "small-bold", 0);
   };
   if ( bluePlayerStats.length != 0 ) {
-    room.sendAnnouncement(`BLUE: ${bluePlayerStats.join(" ")}`, null, YELLOW, "small-bold", 0);
+    room.sendAnnouncement(`BLUE: ${bluePlayerStats.join("  •  ")}`, null, YELLOW, "small-bold", 0);
   };
 }
 
