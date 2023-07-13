@@ -15,7 +15,7 @@ const COLOR_CODES = [
   [60, [0xD60419], [0x0099FF]],
   [90, [0xE00202, 0xB00101, 0x800000], [0x00F7FF, 0x00D1D1, 0x00A7AD]],
   [90, [0xFF2121, 0xFF5757, 0xFC9595], [0x00C3FF, 0x45E0FF, 0xB5F5FC]],
-  [45, [0xFF0900, 0x000000, 0xFF0000], [0x0058A3, 0x00000, 0x0058A3]],
+  [45, [0xD60000, 0x000000, 0xD60000], [0x0058A3, 0x00000, 0x0058A3]],
   [-45, [0xD10000, 0x8C0000, 0xD10000], [0x00DDFF, 0x87E3FF, 0x00DDFF]],
 ];
 const goalComments = {
@@ -90,7 +90,7 @@ var yellowCards = [];
 var game = JSON.parse(JSON.stringify(gameDefault));
 var timeouts = {
   toPick: null,
-  toAct: [],
+  toAct: {},
 };
 var room = HBInit({
   roomName: `[De Paul's auto room] Futsal 5v5 (${MODE})`,
@@ -222,7 +222,7 @@ async function updateCaptain(teamId, newCaptain) {
   await navigator.locks.request("update_captain", async lock => {
     if ( captains[teamId] != 0 ) {
       // Move old captain back to Spectators (if is still in the room)
-      room.setPlayerTeam(captains[teamId], 0);
+      await room.setPlayerTeam(captains[teamId], 0);
       // Clear captain slot
       captains[teamId] = 0;
     };
@@ -690,13 +690,13 @@ async function pickPlayers() {
   // Move players to Spectators
   let players = room.getPlayerList();
   for (let player of players) {
-    if ( player.team == 0 ) continue;
+    if ( (player.team == 0) || isCaptain(player.id) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
 
   // Assign captains
-  await updateCaptain(1);
-  await updateCaptain(2);
+  //await updateCaptain(1);
+  //await updateCaptain(2);
   room.sendAnnouncement("Đội trưởng 2 đội đang bắt đầu pick...", null, YELLOW);
   requestPick();
 }
