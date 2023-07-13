@@ -803,6 +803,7 @@ room.onGameStart = function(byPlayer) {
   reset();
   // Stop forcing captain to pick
   clearTimeout(timeouts.toPick);
+  setRandomColors();
   room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
 }
 
@@ -810,7 +811,6 @@ room.onGameStop = async function(byPlayer) {
   isPlaying = false;
   clearAfkRecords(); // Stop monitoring AFK when the game is stopped
   (byPlayer !== null) && room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
-  setRandomColors();
   await new Promise(r => setTimeout(r, AFTER_GAME_REST * 1000)); // Have a little rest
   if ( MODE == "rand" ) {
     randPlayers();
