@@ -4,6 +4,7 @@ const AFK_DEADLINE = 6.5;
 const PICK_DEADLINE = 25;
 const AFTER_GAME_REST = 2;
 const MAX_DUPE_MESSAGES = 2;
+const VOTES_COUNT_TO_KICK = 7;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
 const YELLOW = 0xFFEA00;
@@ -15,7 +16,7 @@ const COLOR_CODES = [
   [60, [0xD60419], [0x0099FF]],
   [90, [0xE00202, 0xB00101, 0x800000], [0x00F7FF, 0x00D1D1, 0x00A7AD]],
   [90, [0xFF2121, 0xFF5757, 0xFC9595], [0x00C3FF, 0x45E0FF, 0xB5F5FC]],
-  [45, [0xFF0900, 0x000000, 0xFF0000], [0x0058A3, 0x00000, 0x0058A3]],
+  [45, [0xD60000, 0x000000, 0xD60000], [0x0058A3, 0x00000, 0x0058A3]],
   [-45, [0xD10000, 0x8C0000, 0xD10000], [0x00DDFF, 0x87E3FF, 0x00DDFF]],
 ];
 const goalComments = {
@@ -70,6 +71,7 @@ var commands = { // Format: "alias: [function, requiresAdmin]"
   penalty: [penaltyFunc, false],
   kickafk: [kickAfkFunc, false],
   spec: [specFunc, false],
+  votekick: [voteKickFunc, false],
   login: [loginFunc, false],
   yellow: [yellowCardFunc, true],
   clearbans: [clearBansFunc, true],
@@ -87,10 +89,11 @@ var pickTurn = 0;
 var captains = {1: 0, 2: 0};
 var lastMessage = [null, null]; // Last message and the player ID of the sender
 var yellowCards = [];
+var votesToKick = {};
 var game = JSON.parse(JSON.stringify(gameDefault));
 var timeouts = {
   toPick: null,
-  toAct: [],
+  toAct: {},
 };
 var room = HBInit({
   roomName: `[De Paul's auto room] Futsal 5v5 (${MODE})`,
@@ -108,12 +111,16 @@ if ( MODE == "pick" ) {
   commands = {...commands, ...pickCommands};
 };
 
-// Kick player if player has a duplicate tag
-function validateTag(player) {
+// Kick player if player violates any rule
+function validatePlayer(player) {
   let tag = getTag(player.name.trim());
-  if ( room.getPlayerList().some((_player) => (_player.id != player.id) && (getTag(_player.name) == tag)) ) {
-    room.kickPlayer(player.id, "Vui lòng đổi tên");
-  };
+  room.getPlayerList().some((_player) => (
+    (_player.id != player.id) && // Not the same player
+    (
+      (_player.conn == player.conn) || // Same device
+      (getTag(_player.name) == tag) // Duplicate tag
+    )
+  )) && room.kickPlayer(player.id);
 }
 
 // Get a chat-pingable tag from player's name
@@ -437,6 +444,31 @@ function assignCaptainFunc(value, player) {
   return true;
 }
 
+function voteKickFunc(tag, player) {
+  if ( !tag ) {
+    room.sendAnnouncement("Vui lòng cung cấp một người chơi hợp lệ (!votekick @De_Paul)", player.id, RED);
+    return false;
+  }
+
+  let votedPlayer = getPlayerByTag(tag);
+  if ( !votedPlayer ) {
+    room.sendAnnouncement("Người chơi không tồn tại hoặc đã rời đi", player.id, RED);
+    return false;
+  };
+  if ( !votesToKick[votedPlayer.id] ) {
+    votesToKick[votedPlayer.id] = new Set([player.conn]);
+  } else {
+    votesToKick[votedPlayer.id].add(player.conn);
+  };
+
+  room.sendAnnouncement(`${player.name} đã vote kick ${votedPlayer.name} (${votesToKick[votedPlayer.id].size}/${VOTES_COUNT_TO_KICK})`, null, GREEN);
+  if ( votesToKick[votedPlayer.id].size >= VOTES_COUNT_TO_KICK ) {
+    room.kickPlayer(votedPlayer.id, "Bạn đã bị những người chơi khác vote kick");
+    delete votesToKick[votedPlayer.id];
+  }
+  return false;
+}
+
 function loginFunc(password, player) {
   switch ( password ) {
     case "":
@@ -690,7 +722,7 @@ async function pickPlayers() {
   // Move players to Spectators
   let players = room.getPlayerList();
   for (let player of players) {
-    if ( player.team == 0 ) continue;
+    if ( (player.team == 0) || isCaptain(player.id) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
 
@@ -706,7 +738,7 @@ function reset() {
 }
 
 room.onPlayerJoin = async function(player) {
-  validateTag(player);
+  validatePlayer(player);
   welcomePlayer(player);
   await updateTeamPlayers(player);
   if (MODE == "pick") {
@@ -722,6 +754,7 @@ room.onPlayerJoin = async function(player) {
 }
 
 room.onPlayerLeave = async function(player) {
+  delete votesToKick[player.id];
   if ( player.team != 0 ) {
     await updateTeamPlayers();
     if ( MODE == "pick" ) {
