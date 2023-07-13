@@ -282,7 +282,7 @@ function requestPick() {
   room.sendAnnouncement(`Đã đến lượt bạn chọn, vui lòng chọn người chơi bằng lệnh !pick @<tag> trong ${PICK_DEADLINE} giây (VD: !pick @De_Paul)
 Mẹo: nhập "!pick @", dùng phím mũi tên để tìm người chơi rồi bấm phím TAB để thanh chat tự động điền`, captains[pickTurn], YELLOW, "bold", 2);
   // If captain doesn't pick in time, change captain
-  timeouts.toPick = setTimeout(updateCaptain.bind(pickTurn), PICK_DEADLINE * 1000);
+  timeouts.toPick = setTimeout(updateCaptain.bind(null, pickTurn), PICK_DEADLINE * 1000);
 }
 
 function helpFunc(value, player) {
