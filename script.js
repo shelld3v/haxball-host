@@ -234,7 +234,7 @@ async function updateCaptain(teamId, newCaptain) {
       if ( !newCaptain ) return; // No player left to assign
     }
     // Move new captain to team
-    if ( newCaptain.team == 0 ) {
+    if ( newCaptain.team != teamId ) {
       await room.setPlayerTeam(newCaptain.id, teamId);
     };
     captains[teamId] = newCaptain.id;
