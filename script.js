@@ -572,7 +572,7 @@ function updateStats(team) {
 
   room.sendChat(comment);
   // Calculate goal range
-  if ( lastBallPosition.x < 150 ) return; // Too far, probably dribbled to the goal instead of kicking it
+  if ( -150 < lastBallPosition.x < 150 ) return; // Too far, probably dribbled to the goal instead of kicking it
   let distance = 0;
   if ( -95 <= lastBallPosition.y <= 95 ) {
     distance = 793 - Math.abs(lastBallPosition.x);
