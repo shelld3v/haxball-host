@@ -54,7 +54,6 @@ const teamStats = {
   possessedKicks: 0,
 };
 const gameDefault = {
-  lastKicked: [null, null], // 2 last players who kicked the ball
   players: {}, // Store players' stats
   teams: { // Store teams' stats
     1: { ...teamStats }, // RED team's stats
@@ -85,7 +84,9 @@ var isPlaying = false;
 var isPicking = false;
 var pickTurn = 0;
 var captains = {1: 0, 2: 0};
+var lastKicked = [null, null]; // 2 last players who kicked the ball
 var lastMessage = [null, null]; // Last message and the player ID of the sender
+var lastBallPosition = null;
 var yellowCards = [];
 var game = JSON.parse(JSON.stringify(gameDefault));
 var timeouts = {
@@ -172,6 +173,16 @@ function setRandomColors() {
   room.setTeamColors(2, colors[0], 0xFFFFFF, colors[2]);
 }
 
+// Set avatars of players on the pitch
+function setPlayersAvatar(avatar) {
+  room.getPlayerList().forEach((player) => (player.id != 0) && room.setPlayerAvatar(player.id, avatar));
+}
+
+// Clear avatar of players that we set
+function clearPlayersAvatar(avatar) {
+  room.getPlayerList().forEach((player) => (player.id != 0) && room.setPlayerAvatar(player.id, null));
+}
+
 // Move a player to a team (if needed)
 async function updateTeamPlayers(specPlayer) {
   // 2 teams are picking
@@ -196,11 +207,12 @@ async function updateTeamPlayers(specPlayer) {
 
 // Update information to monitor last kickers, possession and passing accuracy
 function updateBallKick(player) {
+  lastBallPosition = room.getBallPosition();
   // Update information about 2 last players who kicked the ball
-  game.lastKicked.push(player);
-  game.lastKicked.shift();
+  lastKicked.push(player);
+  lastKicked.shift();
   // Get the previous kicker
-  let previousKicker = game.lastKicked[0];
+  let previousKicker = lastKicked[0];
 
   // Update total kicks
   game.teams[player.team].kicks++;
@@ -254,7 +266,7 @@ async function updateCaptain(teamId, newCaptain) {
 async function pick(pickedPlayer, teamId) {
   // Pick the player
   await room.setPlayerTeam(pickedPlayer.id, teamId);
-  room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${teamNames[teamId]}`, null, GREEN);
+  room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${teamNames[teamId]}`, null, GREEN, "small");
   requestPick();
 }
 
@@ -276,7 +288,7 @@ function requestPick() {
     return;
   };
 
-  room.sendAnnouncement(`${teamNames[pickTurn]} đang chọn người chơi...`, null, YELLOW);
+  room.sendAnnouncement(`${teamNames[pickTurn]} đang chọn người chơi...`, null, YELLOW, "small");
   // Last player in Spectators, pick that player
   if ( !players.some((player) => (player.team == 0) && (player.id != randomPlayer.id)) ) {
     pick(randomPlayer, pickTurn);
@@ -526,7 +538,7 @@ function updatePlayerStats(player, type) {
 
 // Update stats about goals, assists and own goals
 function updateStats(team) {
-  let [assister, scorer] = game.lastKicked;
+  let [assister, scorer] = lastKicked;
   if ( scorer.team != team ) { // Own goal
     updatePlayerStats(scorer, 0);
     room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
@@ -559,20 +571,33 @@ function updateStats(team) {
   };
 
   room.sendChat(comment);
+  // Calculate goal range
+  if ( lastBallPosition.x < 150 ) return; // Too far, probably dribbled to the goal instead of kicking it
+  let distance = 0;
+  if ( -95 <= lastBallPosition.y <= 95 ) {
+    distance = 793 - Math.abs(lastBallPosition.x);
+  } else {
+    // Use Pythagoras
+    distance = Math.sqrt(
+      (793 - Math.abs(lastBallPosition.x)) ** 2 + (Math.abs(lastBallPosition.y) - 95) ** 2
+    )
+  };
+  room.sendAnnouncement(`Khoảng cách dứt điểm: ${~~(distance / 13)}m`, null, GREEN);
 }
 
 function reportStats(scores) {
   room.sendAnnouncement(` RED ${scores.red} - ${scores.blue} BLUE`, null, YELLOW, "bold");
+  let stats = "";
   // Possession stats
   let totalPossessedKicks = game.teams[1].possessedKicks + game.teams[2].possessedKicks;
   let redPossession = ~~(game.teams[1].possessedKicks / totalPossessedKicks * 100);
   let bluePossession = 100 - redPossession;
-  room.sendAnnouncement(`Kiểm soát bóng: 🔴 ${redPossession}% - ${bluePossession}% 🔵`, null, YELLOW, "small-bold", 0);
+  stats = stats.concat(`Kiểm soát bóng: 🔴 ${redPossession}% - ${bluePossession}% 🔵`);
   // Passing stats
-  room.sendAnnouncement(`Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} 🔵`, null, YELLOW, "small-bold", 0);
+  stats = stats.concat("\n", `Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} 🔵`);
   let redSuccessRate = ~~(game.teams[1].possessedKicks / game.teams[1].kicks * 100);
   let blueSuccessRate = ~~(game.teams[2].possessedKicks / game.teams[2].kicks * 100);
-  room.sendAnnouncement(`Tỉ lệ xử lý bóng thành công: 🔴 ${redSuccessRate}% - ${blueSuccessRate}% 🔵`, null, YELLOW, "small-bold", 0);
+  stats = stats.concat("\n", `Tỉ lệ xử lý bóng thành công: 🔴 ${redSuccessRate}% - ${blueSuccessRate}% 🔵`);
   // Player stats information
   let redPlayerStats = [];
   let bluePlayerStats = [];
@@ -605,11 +630,13 @@ function reportStats(scores) {
   };
 
   if ( redPlayerStats.length != 0 ) {
-    room.sendAnnouncement(`RED: ${redPlayerStats.join("  •  ")}`, null, YELLOW, "small-bold", 0);
+    stats = stats.concat("\n", `RED: ${redPlayerStats.join("  •  ")}`);
   };
   if ( bluePlayerStats.length != 0 ) {
-    room.sendAnnouncement(`BLUE: ${bluePlayerStats.join("  •  ")}`, null, YELLOW, "small-bold", 0);
+    stats = stats.concat("\n", `BLUE: ${bluePlayerStats.join("  •  ")}`);
   };
+
+  room.sendAnnouncement(stats, null, YELLOW, "small-bold", 0);
 }
 
 function celebrateGoal(team) {
@@ -634,6 +661,7 @@ function celebrateGoal(team) {
   };
 
   room.sendChat(`${scream} ${scoreline}, ${comment}`);
+  setPlayersAvatar("⚽");
 }
 
 async function checkSpam(player, message) {
@@ -771,7 +799,9 @@ room.onTeamGoal = function(team) {
 }
 
 room.onPositionsReset = function() {
-  game.lastKicked = [null, null];
+  lastBallPosition = null;
+  lastKicked = [null, null];
+  clearPlayersAvatar();
 }
 
 room.onPlayerChat = function(player, message) {
