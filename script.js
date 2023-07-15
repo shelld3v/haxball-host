@@ -173,13 +173,13 @@ function setRandomColors() {
   room.setTeamColors(2, colors[0], 0xFFFFFF, colors[2]);
 }
 
-// Set avatars of players on the pitch
-function setPlayersAvatar(avatar) {
-  room.getPlayerList().forEach((player) => (player.id != 0) && room.setPlayerAvatar(player.id, avatar));
+// Set avatars for players of a specific team
+function setTeamAvatar(teamId, avatar) {
+  room.getPlayerList().forEach((player) => (player.id == teamId) && room.setPlayerAvatar(player.id, avatar));
 }
 
-// Clear avatar of players that we set
-function clearPlayersAvatar(avatar) {
+// Clear avatar of all players on the pitch
+function clearPlayersAvatar() {
   room.getPlayerList().forEach((player) => (player.id != 0) && room.setPlayerAvatar(player.id, null));
 }
 
@@ -578,11 +578,9 @@ function updateStats(team) {
     distance = 793 - Math.abs(lastBallPosition.x);
   } else {
     // Use Pythagoras
-    distance = Math.sqrt(
-      (793 - Math.abs(lastBallPosition.x)) ** 2 + (Math.abs(lastBallPosition.y) - 95) ** 2
-    )
+    distance = Math.sqrt((793 - Math.abs(lastBallPosition.x)) ** 2 + (Math.abs(lastBallPosition.y) - 95) ** 2);
   };
-  room.sendAnnouncement(`Khoảng cách dứt điểm: ${~~(distance / 13)}m`, null, GREEN);
+  room.sendAnnouncement(`Khoảng cách dứt điểm: ${~~(distance / 37)}m`, null, GREEN);
 }
 
 function reportStats(scores) {
@@ -661,7 +659,7 @@ function celebrateGoal(team) {
   };
 
   room.sendChat(`${scream} ${scoreline}, ${comment}`);
-  setPlayersAvatar("⚽");
+  setTeamAvatar(team, "⚽");
 }
 
 async function checkSpam(player, message) {
@@ -839,6 +837,7 @@ room.onGameStart = function(byPlayer) {
   reset();
   // Stop forcing captain to pick
   clearTimeout(timeouts.toPick);
+  clearPlayersAvatar();
   setRandomColors();
   room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
 }
