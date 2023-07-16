@@ -483,13 +483,13 @@ function yellowCardFunc(tag, player) {
     return false;
   };
 
-  let index = yellowCards.indexOf(targetPlayer.conn);
+  let index = yellowCards.indexOf(targetPlayer.auth);
   if ( index != -1 ) { // Player has already received a yellow card
     yellowCards.splice(index, 1); // Clear the card
     room.kickPlayer(targetPlayer.id, "Bạn đã nhận 2 thẻ vàng", true);
     room.sendAnnouncement(`🟨🟨 ${targetPlayer.name} đã nhận thẻ vàng thứ 2 từ ${player.name} (BAN)`, null, YELLOW);
   } else {
-    yellowCards.push(targetPlayer.conn);
+    yellowCards.push(targetPlayer.auth);
     room.sendAnnouncement(`🟨 ${targetPlayer.name} đã nhận một thẻ vàng từ ${player.name}, nhận 2 thẻ vàng người chơi sẽ bị ban`, null, YELLOW);
   };
   return false;
