@@ -191,8 +191,8 @@ async function updateTeamPlayers(specPlayer) {
 
   await navigator.locks.request("update_team_players", async lock => {
     if ( !specPlayer ) {
-      // Get a bench player (like Penaldo), exclude admins
-      specPlayer = room.getPlayerList().find((player) => (player.team == 0) && !player.admin);
+      // Get a bench player (like Penaldo)
+      specPlayer = room.getPlayerList().find((player) => (player.team == 0) && (player.id != 0));
       if ( !specPlayer ) return; // No players left in the Spectators
     }
     // Find team that needs new player the most
@@ -360,7 +360,7 @@ function specFunc(value, player) {
 
   navigator.locks.request("update_captain", async lock => {
     // Replace with another player
-    let newPlayer = room.getPlayerList().find((_player) => (_player.team == 0) && !_player.admin);
+    let newPlayer = room.getPlayerList().find((_player) => (_player.team == 0) && (_player.id != 0));
     if ( newPlayer ) {
       await room.setPlayerTeam(newPlayer.id, player.team);
     };
