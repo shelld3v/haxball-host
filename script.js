@@ -87,7 +87,7 @@ var pickTurn = 0;
 var captains = {1: 0, 2: 0};
 var lastKicked = [null, null]; // 2 last players who kicked the ball
 var lastMessage = [null, null]; // Last message and the player ID of the sender
-var lastBallPosition = null;
+var lastBallProperties = null;
 var yellowCards = [];
 var game = JSON.parse(JSON.stringify(gameDefault));
 var timeouts = {
@@ -126,6 +126,12 @@ function getTag(name) {
 // Get a random element from an array
 function randomChoice(array) {
   return array[Math.floor(Math.random() * array.length)];
+}
+
+// Get value in meters from haxball length unit
+function convertToMeters(value) {
+  // 37 is the ratio I got by comparing a haxball pitch with a real-life futsal pitch
+  return ~~(value / 37);
 }
 
 // Get a non-host player by tag
@@ -209,7 +215,8 @@ async function updateTeamPlayers(specPlayer) {
 
 // Update information to monitor last kickers, possession and passing accuracy
 function updateBallKick(player) {
-  lastBallPosition = room.getBallPosition();
+  // Get properties of the ball
+  lastBallProperties = room.getDiscProperties(0);
   // Update information about 2 last players who kicked the ball
   lastKicked.push(player);
   lastKicked.shift();
@@ -573,15 +580,15 @@ function updateStats(team) {
   };
 
   room.sendChat(comment);
-  // Calculate goal range
-  let distance = 0;
-  if ( Math.abs(lastBallPosition.y) <= 95 ) {
-    distance = 793 - Math.abs(lastBallPosition.x);
+  // Calculate goal stats
+  let speed = convertToMeters(Math.sqrt(lastBallProperties.xspeed ** 2 + lastBallProperties.yspeed ** 2) * 60);
+  if ( Math.abs(lastBallProperties.y) <= 95 ) {
+    var distance = 793 - Math.abs(lastBallProperties.x);
   } else {
-    // Use Pythagoras
-    distance = Math.sqrt((793 - Math.abs(lastBallPosition.x)) ** 2 + (Math.abs(lastBallPosition.y) - 95) ** 2);
+    var distance = Math.sqrt((793 - Math.abs(lastBallProperties.x)) ** 2 + (Math.abs(lastBallProperties.y) - 95) ** 2);
   };
-  room.sendAnnouncement(`Khoảng cách dứt điểm: ${~~(distance / 37) || "dưới 1"}m`, null, GREEN);
+  distance = convertToMeters(distance);
+  room.sendAnnouncement(`Khoảng cách: ${distance || "dưới 1"}m | Lực sút: ${speed} (m/s)`, null, GREEN);
 }
 
 function reportStats(scores) {
@@ -798,7 +805,7 @@ room.onTeamGoal = function(team) {
 }
 
 room.onPositionsReset = function() {
-  lastBallPosition = null;
+  lastBallProperties = null;
   lastKicked = [null, null];
   clearPlayersAvatar();
 }
