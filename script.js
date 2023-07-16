@@ -677,17 +677,17 @@ async function checkSpam(player, message) {
 }
 
 // Stop all AFK trackers
-function clearAfkRecords(player) {
+function clearAfkRecords() {
   for (id of Object.keys(timeouts.toAct)) {
     clearTimeout(timeouts.toAct[id]);
     delete timeouts.toAct[id];
   };
 }
 
-function clearAfkRecord(player) {
-  if ( !timeouts.toAct[player.id] ) return;
-  clearTimeout(timeouts.toAct[player.id]);
-  delete timeouts.toAct[player.id];
+function clearAfkRecord(id) {
+  if ( !timeouts.toAct[id] ) return;
+  clearTimeout(timeouts.toAct[id]);
+  delete timeouts.toAct[id];
 }
 
 function welcomePlayer(player) {
@@ -819,7 +819,7 @@ room.onPlayerChat = function(player, message) {
 }
 
 room.onPlayerActivity = function(player) {
-  clearAfkRecord(player);
+  clearAfkRecord(player.id);
 }
 
 room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
