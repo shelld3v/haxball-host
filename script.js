@@ -176,12 +176,12 @@ function setRandomColors() {
 
 // Set avatars for players of a specific team
 function setTeamAvatar(teamId, avatar) {
-  room.getPlayerList().forEach((player) => (player.id == teamId) && room.setPlayerAvatar(player.id, avatar));
+  room.getPlayerList().forEach((player) => (player.team == teamId) && room.setPlayerAvatar(player.id, avatar));
 }
 
 // Clear avatar of all players on the pitch
 function clearPlayersAvatar() {
-  room.getPlayerList().forEach((player) => (player.id != 0) && room.setPlayerAvatar(player.id, null));
+  room.getPlayerList().forEach((player) => (player.team != 0) && room.setPlayerAvatar(player.id, null));
 }
 
 // Move a player to a team (if needed)
@@ -573,15 +573,14 @@ function updateStats(team) {
 
   room.sendChat(comment);
   // Calculate goal range
-  if ( -150 < lastBallPosition.x < 150 ) return; // Too far, probably dribbled to the goal instead of kicking it
   let distance = 0;
-  if ( -95 <= lastBallPosition.y <= 95 ) {
+  if ( Math.abs(lastBallPosition.y) <= 95 ) {
     distance = 793 - Math.abs(lastBallPosition.x);
   } else {
     // Use Pythagoras
     distance = Math.sqrt((793 - Math.abs(lastBallPosition.x)) ** 2 + (Math.abs(lastBallPosition.y) - 95) ** 2);
   };
-  room.sendAnnouncement(`Khoảng cách dứt điểm: ${~~(distance / 37)}m`, null, GREEN);
+  room.sendAnnouncement(`Khoảng cách dứt điểm: ${~~(distance / 37) || "dưới 1"}m`, null, GREEN);
 }
 
 function reportStats(scores) {
