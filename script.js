@@ -366,15 +366,15 @@ function specFunc(value, player) {
     return true;
   };
 
+  room.sendAnnouncement("Bạn đã được di chuyển ra Spectators", player.id, GREEN);
   navigator.locks.request("update_captain", async lock => {
     // Replace with another player
     let newPlayer = room.getPlayerList().find((_player) => (_player.team == 0) && (_player.id != 0));
     if ( newPlayer ) {
       await room.setPlayerTeam(newPlayer.id, player.team);
     };
+    room.setPlayerTeam(player.id, 0);
   });
-  room.setPlayerTeam(player.id, 0);
-  room.sendAnnouncement("Bạn đã được di chuyển ra Spectators", player.id, GREEN);
   return true;
 }
 
