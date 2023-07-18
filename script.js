@@ -548,8 +548,9 @@ function updatePlayerStats(player, type) {
 function updateStats(team) {
   let [pre_assister, assister, scorer] = lastKicked;
   // Not an own goal but probably a clearing/goalkeeping effort
-  if ( (Math.abs(lastBallDisc.x) >= 790) && (assister !== null) ) {
-    let [assisted, scorer] = [pre_assister, assister];
+  if ( (scorer.team != team) && (Math.abs(lastBallDisc.x) >= 790) && (assister !== null) ) {
+    // Correct the credits
+    let [assister, scorer] = [pre_assister, assister];
   };
 
   if ( scorer.team != team ) { // Own goal
