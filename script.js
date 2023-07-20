@@ -97,7 +97,7 @@ var timeouts = {
 
 var room = HBInit({
   roomName: `[De Paul's auto room] Futsal 5v5 (${MODE})`,
-  maxPlayers: 21,
+  maxPlayers: 30,
   playerName: "BLV Trông Anh Ngược",
   public: false,
 });
