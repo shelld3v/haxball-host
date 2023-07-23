@@ -1,10 +1,10 @@
-const ADMIN_PASSWORD = "chimtodan";
+const ADMIN_PASSWORD = "paul0dz";
 const MODE = "pick"; // can be "rand" or "pick"
 const AFK_DEADLINE = 6.5;
 const PICK_DEADLINE = 23;
 const PAUSE_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
-const MAX_DUPE_MESSAGES = 2;
+const MAX_DUPE_MESSAGES = 3;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
 const YELLOW = 0xFFEA00;
@@ -70,6 +70,7 @@ var commands = { // Format: "alias: [function, mỉnole, availableModes]"
   kickafk: [kickAfkFunc, 0, ["rand", "pick"]],
   spec: [specFunc, 0, ["rand", "pick"]],
   login: [loginFunc, 0, ["rand", "pick"]],
+  afk: [afkFunc, 0, ["rand", "pick"]],
   captains: [listCaptainsFunc, 0, ["pick"]],
   pick: [pickFunc, 1, ["pick"]],
   sub: [subFunc, 1, ["pick"]],
@@ -77,7 +78,6 @@ var commands = { // Format: "alias: [function, mỉnole, availableModes]"
   resume: [resumeFunc, 1, ["pick"]],
   yellow: [yellowCardFunc, 2, ["rand", "pick"]],
   clearbans: [clearBansFunc, 2, ["rand", "pick"]],
-  afk: [afkFunc, 2, ["rand", "pick"]],
   assigncap: [assignCaptainFunc, 2, ["pick"]],
 };
 var afkList = new Set([0]);
@@ -144,6 +144,11 @@ function getDistance(x, y) {
   return Math.sqrt(x ** 2 + y ** 2);
 }
 
+// Move AFK player to bottom of the Spectators list
+function reorderPlayers() {
+  room.reorderPlayers(Array.from(afkList));
+}
+
 // Get a player by name or tag
 function getPlayerByName(value) {
   // Find player by tag
@@ -172,13 +177,19 @@ function setRandomColors() {
 }
 
 // Set avatars for players of a specific team
-function setTeamAvatar(teamId, avatar) {
-  room.getPlayerList().forEach((player) => (player.team == teamId) && room.setPlayerAvatar(player.id, avatar));
-}
-
-// Clear avatar of all players on the pitch
-function clearPlayersAvatar() {
-  room.getPlayerList().forEach((player) => (player.team != 0) && room.setPlayerAvatar(player.id, null));
+async function teamAvatarEffect(teamId, avatar) {
+  let flickerDelay = 100;
+  let players = room.getPlayerList().filter((player) => player.team == teamId);
+  for (let i = 0; i < 4; i++) {
+    for (player of players) {
+      await room.setPlayerAvatar(player.id, avatar);
+    };
+    await new Promise(r => setTimeout(r, flickerDelay));
+    for (player of players) {
+      await room.setPlayerAvatar(player.id, null);
+    };
+    await new Promise(r => setTimeout(r, flickerDelay));
+  };
 }
 
 function canUseCommand(command, player) {
@@ -530,18 +541,23 @@ function clearBansFunc(value, player) {
 function afkFunc(value, player) {
   if ( afkList.has(player.id) ) { // Escape AFK mode
     afkList.delete(player.id);
-    room.sendAnnouncement("Đã thoát chế độ AFK", player.id, GREEN);
+    room.sendAnnouncement(`${player.name} đã thoát chế độ AFK`, null, GREEN);
   } else {
+    // Only allows 3 AFK players including the host
+    if ( afkList.size == 3 ) {
+      room.sendAnnouncement("Đã có quá nhiều người chơi AFK, bạn không thể AFK", player.id, RED);
+      return false;
+    }
     afkList.add(player.id);
-    // Move AFK player to top of the Spectators list
-    room.reorderPlayers(Array.from(afkList), true);
-    room.sendAnnouncement("Đã chuyển sang trạng thái AFK, dùng !afk một lần nữa để thoát AFK", player.id, GREEN);
+    room.sendAnnouncement(`${player.name} đã chuyển sang chế độ AFK, dùng !afk lần nữa để thoát`, null, GREEN);
     // Move the AFK player to Spectators
     if ( player.team != 0 ) {
       room.setPlayerTeam(player.id, 0);
-      updateTeamPlayers();
     };
   };
+
+  updateTeamPlayers();
+  reorderPlayers();
   return false;
 };
 
@@ -709,7 +725,7 @@ function celebrateGoal(team) {
   };
 
   room.sendChat(`${scream} ${scoreline}, ${comment}`);
-  setTeamAvatar(team, avatar);
+  teamAvatarEffect(team, avatar);
 }
 
 async function checkSpam(player, message) {
@@ -743,7 +759,7 @@ function initiateChat(player) {
   let msg = `Nhập !help để xem các câu lệnh
 Discord: https://discord.gg/DYWZFFsSYu`;
   room.sendAnnouncement(msg, player.id, GREEN, "normal", 0);
-  room.sendAnnouncement("Thông báo: Clan DPC đang tuyển thành viên, vào Discord của De Paul để xin gia nhập", player.id, YELLOW, "normal", 0);
+  room.sendAnnouncement(`Số người chơi đang AFK: ${afkList.size - 1}`, player.id, YELLOW, "normal", 0);
 }
 
 async function randPlayers() {
@@ -815,6 +831,9 @@ room.onPlayerLeave = async function(player) {
     if ( MODE == "pick" && isCaptain(player.id) ) {
       await updateCaptain(player.team);
     };
+  } else if ( afkList.has(player.id) ) { // Player was in AFK list
+    // Remove from AFK list
+    afkList.delete(player.id);
   };
 
   // There are no players left in Spectators
@@ -827,6 +846,7 @@ room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
   if ( changedPlayer.team == 0 ) {
     // Remove player from AFK tracklist
     clearAfkRecord(changedPlayer.id);
+    reorderPlayers();
     if ( MODE == "pick" ) {
       // Captain was moved to Spectators, assign captain
       switch ( changedPlayer.id ) {
@@ -855,7 +875,6 @@ room.onTeamGoal = function(team) {
 room.onPositionsReset = function() {
   lastBallProperties = null;
   lastKicked = [null, null, null];
-  clearPlayersAvatar();
   // Allows captains to pause the game before kick-off
   if ( (MODE == "pick") && (room.getScores().time != 0) ) {
     canPause = true;
@@ -907,7 +926,6 @@ room.onGameStart = function(byPlayer) {
   reset();
   // Stop forcing captain to pick
   clearTimeout(timeouts.toPick);
-  clearPlayersAvatar();
   setRandomColors();
   room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
 }
