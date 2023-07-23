@@ -146,7 +146,7 @@ function getDistance(x, y) {
 
 // Move AFK player to bottom of the Spectators list
 function reorderPlayers() {
-  room.reorderPlayers(Array.from(afkList));
+  room.reorderPlayers(Array.from(afkList), false);
 }
 
 // Get a player by name or tag
@@ -178,7 +178,7 @@ function setRandomColors() {
 
 // Set avatars for players of a specific team
 async function teamAvatarEffect(teamId, avatar) {
-  let flickerDelay = 100;
+  let flickerDelay = 500;
   let players = room.getPlayerList().filter((player) => player.team == teamId);
   for (let i = 0; i < 4; i++) {
     for (player of players) {
@@ -812,6 +812,7 @@ room.onPlayerJoin = async function(player) {
   validateTag(player);
   initiateChat(player);
   await updateTeamPlayers(player);
+  reorderPlayers();
   if ( MODE == "pick" ) {
     // Assign captains if missing
     switch ( 0 ) {
@@ -820,8 +821,8 @@ room.onPlayerJoin = async function(player) {
         break;
       case captains[2]:
         updateCaptain(2, player);
-    }
-  }
+    };
+  };
 }
 
 room.onPlayerLeave = async function(player) {
