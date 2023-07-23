@@ -4,6 +4,7 @@ const AFK_DEADLINE = 6.5;
 const PICK_DEADLINE = 23;
 const PAUSE_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
+const PREDICTION_PERIOD = 20;
 const MAX_DUPE_MESSAGES = 3;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
@@ -72,6 +73,7 @@ var commands = { // Format: "alias: [function, mỉnole, availableModes]"
   login: [loginFunc, 0, ["rand", "pick"]],
   afk: [afkFunc, 0, ["rand", "pick"]],
   captains: [listCaptainsFunc, 0, ["pick"]],
+  predict: [predictFunc, 0, ["rand"]],
   pick: [pickFunc, 1, ["pick"]],
   sub: [subFunc, 1, ["pick"]],
   pause: [pauseFunc, 1, ["pick"]],
@@ -89,6 +91,8 @@ var winningStreak = 0;
 var prevLoser = 1;
 var pickTurn = 0;
 var captains = {1: 0, 2: 0};
+var prevScore = null;
+var predictions = {};
 var lastKicked = [null, null, null]; // Last players who kicked the ball
 var lastMessage = [null, null]; // Last message and the player ID of the sender
 var lastBallProperties = null;
@@ -178,7 +182,7 @@ function setRandomColors() {
 
 // Set avatars for players of a specific team
 async function teamAvatarEffect(teamId, avatar) {
-  let flickerDelay = 500;
+  let flickerDelay = 400;
   let players = room.getPlayerList().filter((player) => player.team == teamId);
   for (let i = 0; i < 4; i++) {
     for (player of players) {
@@ -207,8 +211,7 @@ function afkCallback(id) {
 
 // Move a player to a team (if needed)
 async function updateTeamPlayers(specPlayer) {
-  // 2 teams are picking
-  if ( isPicking ) return;
+  if ( room.getScores() === null ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
     let players = getNonAfkPlayers();
@@ -416,6 +419,40 @@ function pickFunc(value, player) {
   };
   clearTimeout(timeouts.toPick);
   pick(pickedPlayer, player.team);
+  return false;
+}
+
+function predictFunc(prediction, player) {
+  if ( player.team != 0 ) {
+    room.sendAnnouncement("Cầu thủ không được tham gia dự đoán để tránh hiện tượng bán độ", player.id, RED);
+    return false;
+  };
+  if ( !prediction ) {
+    room.sendAnnouncement("Vui lòng cung cấp một tỉ số hợp lệ, có dạng RED-BLUE (VD: 3-1)", player.id, RED);
+    return false;
+  };
+  let scores = room.getScores();
+  if ( (scores === null) || (scores.time > PREDICTION_PERIOD) ) {
+    room.sendAnnouncement("Đã hết thời hạn dự đoán tỉ số", player.id, RED);
+    return false;
+  };
+
+  let score = prediction.split("-").map((goals) => parseInt(goals));
+  if ( (score.length != 2) || score.includes(NaN) ) {
+    room.sendAnnouncement("Tỉ số không hợp lệ, vui lòng đảm bảo tỉ số có dạng RED-BLUE (VD: 2-1)", player.id, RED);
+    return false;
+  };
+  let scoreLimit = room.getScores().scoreLimit;
+  if ( (scoreLimit != 0) && score.some((goals) => goals > scoreLimit) ) {
+    room.sendAnnouncement(`Mỗi đội không thế ghi được nhiều hơn ${scoreLimit} bàn`, player.id, RED);
+    return false;
+  };
+  if ( Object.values(predictions).filter((_prediction) => _prediction == prediction).length == 5 ) { // 5 people have already predicted this
+    room.sendAnnouncement("Đã có 5 người dự đoán tỉ số này, vui lòng dự đoán tỉ số khác", player.id, RED);
+    return false;
+  };
+  predictions[player.id] = prediction;
+  room.sendAnnouncement(`${player.name} đã dự đoán tỉ số RED ${prediction} BLUE`, null, GREEN);
   return false;
 }
 
@@ -764,15 +801,23 @@ Discord: https://discord.gg/DYWZFFsSYu`;
 
 async function randPlayers() {
   if ( room.getScores() !== null ) return;
+  let predictionWinners = Object.keys(predictions).filter((id) => predictions[id] == prevScore);
+  for (winner of predictionWinners) {
+    room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", winner, GREEN, "bold", 2);
+  };
   let prevWinner = ( prevLoser == 1 ) ? 2 : 1;
   // Get player list and suffle it
   let idList = getNonAfkPlayers().sort(function(player1, player2) {
     // Sort players of the winning team to be on top of the list so they will be picked up in the same team  
     if ( player1.team == prevWinner ) return -1;
     if ( player2.team == prevWinner ) return 1;
+    // Prediction winners get advantages over others
+    if ( predictionWinners.includes(player1.id) && !predictionWinners.includes(player2.id) ) return -1;
+    if ( predictionWinners.includes(player2.id) && !predictionWinners.includes(player1.id) ) return 1;
     // Random order
     return Math.random() - 0.5;
   }).map((player) => player.id);
+
   // Max number of players for each team
   let maxIndex = Math.min(idList.length, 10);
   let winnerMaxIndex = ~~(maxIndex / 2);
@@ -786,6 +831,7 @@ async function randPlayers() {
       room.setPlayerTeam(id, 0);
     };
   });
+
   room.startGame();
 }
 
@@ -806,6 +852,7 @@ async function pickPlayers() {
 
 function reset() {
   game = JSON.parse(JSON.stringify(gameDefault));
+  predictions = {};
 }
 
 room.onPlayerJoin = async function(player) {
@@ -891,11 +938,11 @@ room.onPlayerChat = function(player, message) {
     room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
     return false;
   }
-  if ( !player.admin ) {
-     checkSpam(player, message);
-  };
   if ( message.startsWith("!") ) { // Indicating a command
     return processCommand(player, message.slice(1));
+  };
+  if ( !player.admin ) {
+     checkSpam(player, message);
   };
   return true;
 }
@@ -911,6 +958,7 @@ room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
 }
 
 room.onTeamVictory = function(scores) {
+  prevScore = `${scores.red}-${scores.blue}`;
   let loser = (scores.red > scores.blue) ? 2 : 1;
   if ( loser == prevLoser ) {
     winningStreak++;
@@ -929,6 +977,7 @@ room.onGameStart = function(byPlayer) {
   clearTimeout(timeouts.toPick);
   setRandomColors();
   room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
+  room.sendChat(`Các quý vị khán giả có ${PREDICTION_PERIOD} giây đầu trận để dự đoán tỉ số và có cơ hội được đá trận sau, cú pháp "!predict RED-BLUE" (VD: !predict 1-2)`);
 }
 
 room.onGameStop = async function(byPlayer) {
