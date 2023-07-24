@@ -100,7 +100,6 @@ var yellowCards = [];
 var game = JSON.parse(JSON.stringify(gameDefault));
 var timeouts = {
   toPick: null,
-  toPause: null,
   toResume: null,
   toAct: {},
 };
@@ -983,7 +982,10 @@ room.onGameStart = function(byPlayer) {
 room.onGameStop = async function(byPlayer) {
   isPlaying = false;
   clearAfkRecords(); // Stop monitoring AFK when the game is stopped
-  (byPlayer !== null) && room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
+  if ( byPlayer !== null ) {
+    room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
+    return;
+  };
   await new Promise(r => setTimeout(r, AFTER_GAME_REST * 1000)); // Have a little rest
   if ( MODE == "rand" ) {
     randPlayers();
