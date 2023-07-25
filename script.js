@@ -820,7 +820,7 @@ Discord: https://discord.gg/DYWZFFsSYu`;
 
 async function randPlayers() {
   if ( room.getScores() !== null ) return;
-  let predictionWinners = Object.keys(predictions).filter((id) => predictions[id] == prevScore);
+  let predictionWinners = Object.keys(predictions).filter((id) => predictions[id] == prevScore).map((id) => parseInt(id));
   for (winner of predictionWinners) {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", winner, GREEN, "bold", 2);
   };
