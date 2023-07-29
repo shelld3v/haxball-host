@@ -335,7 +335,7 @@ function requestPick() {
   pickTurn = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
   room.sendAnnouncement(`${TEAM_NAMES[pickTurn]} đang chọn người chơi...`, null, YELLOW);
   // Players in Spectators are enough to fit in the missing team
-  if ( Math.abs(redPlayersCount - bluePlayersCount) >= specPlayers.length ) {
+  if ( (Math.abs(redPlayersCount - bluePlayersCount) >= specPlayers.length) || (specPlayers.length == 1) ) {
     // Move all players to the missing team
     for (player of specPlayers) {
       pick(player, pickTurn);
