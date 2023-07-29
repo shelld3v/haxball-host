@@ -15,6 +15,7 @@ const TEAM_NAMES = {
   2: "BLUE",
 };
 const COLOR_CODES = [
+  [[60, 0xFFCC00], [0xE83030], [0x004170]],
   [[60, 0xFFCC00], [0xFF4A4A], [0x5ECFFF]],
   [[60, 0xFFCC00], [0xD60419], [0x0099FF]],
   [[0, 0xF7FFF2], [0xE00202, 0xB00101, 0x800000], [0x00F7FF, 0x00D1D1, 0x00A7AD]],
@@ -315,7 +316,6 @@ async function pick(pickedPlayer, teamId) {
   // Pick the player
   await room.setPlayerTeam(pickedPlayer.id, teamId);
   room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${TEAM_NAMES[teamId]}`, null, GREEN);
-  requestPick();
 }
 
 // Request a pick from the needed team
@@ -438,6 +438,7 @@ function pickFunc(value, player) {
   };
   clearTimeout(timeouts.toPick);
   pick(pickedPlayer, player.team);
+  requestPick();
   return false;
 }
 
