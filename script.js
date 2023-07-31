@@ -6,7 +6,7 @@ const PAUSE_TIMEOUT = 13;
 const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 20;
-const MAX_ADDED_TIME = 240;
+const MAX_ADDED_TIME = 210;
 const MAX_DUPE_MESSAGES = 3;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
@@ -127,6 +127,7 @@ var penalty = null;
 var timeouts = {
   toPick: null,
   toResume: null,
+  toTakePenalty: null,
   toAct: {},
 };
 
@@ -140,7 +141,7 @@ room.setScoreLimit(5);
 room.setTimeLimit(5);
 room.setCustomStadium(STADIUM);
 room.setTeamsLock(1);
-room.setKickRateLimit(6, 0, 0);
+room.setKickRateLimit(7, 0, 0);
 room.startGame();
 
 // Kick player if player has a duplicate tag
@@ -250,6 +251,7 @@ function afkCallback(id) {
 }
 
 function penaltyTimeoutCallback() {
+  if ( !isTakingPenalty ) return;
   room.sendChat("Cầu thủ đã không thực hiện penalty trong thời gian quy định");
   // Count as a miss if player doesn't perform the penalty in time
   penalty.results[penalty.turn - 1].push(false);
@@ -263,8 +265,8 @@ function getPenaltyLoser() {
 
   if ( penalty.index >= 5 ) { // "Sudden Death" round
     if (redPenalties.length != bluePenalties.length) return null;
-    if (redPenalties[-1] == bluePenalties[-1]) return null;
-    return redPenalties[-1] ? 2 : 1;
+    if (redPenalties.at(-1) == bluePenalties.at(-1)) return null;
+    return redPenalties.at(-1) ? 2 : 1;
   }
 
   // One team has more penalties scored than the other team even if the other team scores all the remaining penalties
@@ -309,7 +311,7 @@ function updateBallKick(player) {
   let scores = room.getScores();
   // Switch to penalty shootout when it hits maximum added time
   if (
-    (lastBallProperties.x < 500) && // The ball is not in dangerous area
+    (Math.sign(lastBallProperties.x) != Math.sign(lastBallProperties.xspeed)) && // Not a kick toward the goal
     scores.timeLimit &&
     (scores.time - scores.timeLimit > MAX_ADDED_TIME) && // Maximum extra time exceeded
     (room.getPlayerList().filter((player) => player.team != 0).length == 10) // Enough players for a penalty shootout
@@ -715,7 +717,7 @@ function updatePlayerStats(player, type) {
 function updateStats(team) {
   var [scorer, assister, preAssister] = lastKicked;
   // Not an own goal but probably a clearing/goalkeeping effort
-  if ( (scorer.team != team) && (Math.abs(lastBallProperties.x) > 779) && (assister !== null) ) {
+  if ( (scorer.team != team) && (Math.abs(lastBallProperties.x) > 780) && (assister !== null) ) {
     // Correct the credits
     [scorer, assister] = [assister, preAssister];
   };
@@ -766,7 +768,7 @@ function updateStats(team) {
 
 function reportStats() {
   let scoreline = ` RED ${prevScore} BLUE`;
-  if ( penalty.index != 0 ) {
+  if ( penalty.index > 0 ) {
     scoreline += ` (Luân lưu: ${penalty.results[0].filter((result) => result).length}-${penalty.results[1].filter((result) => result).length})`;
   }
   room.sendAnnouncement(scoreline, null, YELLOW, "bold");
@@ -858,24 +860,6 @@ function celebratePenalty(team) {
   } else {
     room.sendChat(randomChoice(PENALTY_MISS_COMMENTARIES));
   };
-  let penResults = [[], []];
-  for (let i = 0; i < 2; i++) {
-    penalty.results[i].forEach(function(result) {
-      switch ( result ) {
-        case ( true ):
-          penResults[i].push("🟢");
-          break;
-        case ( false ):
-          penResults[i].push("🔴");
-      };
-    });
-    if ( penResults[i].length < 5 ) {
-      penResults[i].push("⚪".repeat(5 - penResults[i].length));
-    } else if ( penResults[i].length < Math.max(penResults[0].length, penResults[1].length) ) {
-      penResults[i].push("⚪");
-    };
-  };
-  room.sendAnnouncement(` RED ${penResults[0].reverse().join("")} - ${penResults[1].join("")} BLUE`, null, BLUE, "bold");
 }
 
 async function checkSpam(player, message) {
@@ -941,6 +925,10 @@ async function startPenaltyShootout() {
 async function endPenaltyShootout(loser) {
   isTakingPenalty = false;
   handlePostGame(loser);
+  room.stopGame();
+  room.setTimeLimit(5);
+  room.setScoreLimit(5);
+  room.setCustomStadium(STADIUM);
   // Put players back to where they were before the penalty shootout
   for (id of penalty.red[0]) {
     room.setPlayerTeam(id, 1);
@@ -948,13 +936,18 @@ async function endPenaltyShootout(loser) {
   for (id of penalty.blue[0]) {
     room.setPlayerTeam(id, 2);
   };
-  room.stopGame();
-  room.setTimeLimit(5);
-  room.setScoreLimit(5);
-  room.setCustomStadium(STADIUM);
 }
 
 async function takePenalty() {
+  let loser = getPenaltyLoser();
+  // Found the winner in this penalty shootout
+  if ( loser !== null ) {
+    let winner = ( loser == 1 ) ? 2 : 1;
+    room.sendChat(`Và đó cũng là dấu chấm hết, ${TEAM_NAMES[winner]} là những người chiến thắng, sau màn trình diễn đáng kinh ngạc của họ`);
+    endPenaltyShootout(loser);
+    return;
+  };
+
   // Put previous penalty taker and goalkeeper back to the Spectators
   for (player of room.getPlayerList()) {
     if (player.team == 0) continue;
@@ -973,15 +966,33 @@ async function takePenalty() {
     var group = penalty.red;
   };
 
-  let penaltyTaker = room.getPlayer(group[0][penalty.index % 5]);
+  let penaltyTaker = room.getPlayer(group[0][penalty.index % group[0].length]);
   let goalkeeper = room.getPlayer(group[1]);
   if ( !goalkeeper || !penaltyTaker ) {
     return;
   };
-  room.setPlayerTeam(penaltyTaker.id, 1);
-  room.setPlayerTeam(goalkeeper.id, 2);
-  room.sendChat(`Giờ ${getTag(penaltyTaker.name)} sẽ bước lên để thức hiện quả penalty`);
-  room.sendAnnouncement(`Bạn có ${PENALTY_TIMEOUT} giây để thực hiện quả penalty`, penaltyTaker.id, YELLOW, "bold", 2);
+  await room.setPlayerTeam(penaltyTaker.id, 1);
+  await room.setPlayerTeam(goalkeeper.id, 2);
+  let penResults = [[], []];
+  for (let i = 0; i < 2; i++) {
+    penalty.results[i].forEach(function(result) {
+      switch ( result ) {
+        case ( true ):
+          penResults[i].push("🟢");
+          break;
+        case ( false ):
+          penResults[i].push("🔴");
+      };
+    });
+    if ( penResults[i].length < 5 ) {
+      penResults[i].push("⚪".repeat(5 - penResults[i].length));
+    } else if ( penResults[i].length < Math.max(...penResults.map((results) => results.length)) ) {
+      penResults[i].push("⚪");
+    };
+  };
+  room.sendAnnouncement(` RED ${penResults[0].reverse().join("")} - ${penResults[1].join("")} BLUE`, null, BLUE, "bold");
+  room.sendChat(`Bây giờ ${getTag(penaltyTaker.name)} sẽ bước lên để thức hiện quả penalty`);
+  room.sendAnnouncement(`Bạn có ${PENALTY_TIMEOUT} giây để thực hiện quả penalty`, penaltyTaker.id, YELLOW);
   timeouts.toTakePenalty = setTimeout(penaltyTimeoutCallback, PENALTY_TIMEOUT * 1000);
 }
 
@@ -1133,14 +1144,7 @@ room.onTeamGoal = function(team) {
 
 room.onPositionsReset = function() {
   if ( isTakingPenalty ) {
-    let loser = getPenaltyLoser();
-    if ( loser === null ) {
-      takePenalty();
-    } else {
-      let winner = ( loser == 1 ) ? 2 : 1;
-      room.sendChat(`Và đó cũng là dấu chấm hết, ${TEAM_NAMES[winner]} là những người chiến thắng, sau màn trình diễn đáng kinh ngạc của họ`);
-      endPenaltyShootout(loser);
-    };
+    takePenalty();
     return;
   };
 
@@ -1198,7 +1202,7 @@ room.onGameStart = function(byPlayer) {
   setRandomColors();
   room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
   if ( MODE == "rand" ) {
-    room.sendChat(`Các quý vị khán giả có ${PREDICTION_PERIOD} giây đầu trận để dự đoán tỉ số và có cơ hội được đá trận sau, cú pháp "!predict RED-BLUE" (VD: !predict 1-2)`);
+    room.sendChat(`Các quý vị khán giả có ${PREDICTION_PERIOD} giây đầu trận để dự đoán tỉ số và sẽ được đá trận sau nếu đoán đúng, cú pháp "!predict RED-BLUE" (VD: !predict 1-2)`);
   };
 }
 
