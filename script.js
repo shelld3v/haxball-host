@@ -2,9 +2,9 @@ const ADMIN_PASSWORD = "paul0dz";
 const MODE = "pick"; // can be "rand" or "pick"
 const AFK_DEADLINE = 6.5;
 const PICK_DEADLINE = 25;
-const PAUSE_TIMEOUT = 10;
+const PAUSE_TIMEOUT = 13;
 const PENALTY_TIMEOUT = 10;
-const AFTER_GAME_REST = 2;
+const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 20;
 const MAX_ADDED_TIME = 240;
 const MAX_DUPE_MESSAGES = 3;
@@ -17,6 +17,7 @@ const TEAM_NAMES = {
   2: "BLUE",
 };
 const COLOR_CODES = [
+  [[60, 0xFFCC00], [0xE83030], [0x004170]],
   [[60, 0xFFCC00], [0xFF4A4A], [0x5ECFFF]],
   [[60, 0xFFCC00], [0xD60419], [0x0099FF]],
   [[0, 0xF7FFF2], [0xE00202, 0xB00101, 0x800000], [0x00F7FF, 0x00D1D1, 0x00A7AD]],
@@ -145,7 +146,7 @@ room.startGame();
 // Kick player if player has a duplicate tag
 function validateTag(player) {
   let tag = getTag(player.name.trim());
-  if ( room.getPlayerList().some((_player) => (_player.id != player.id) && (getTag(_player.name) == tag)) ) {
+  if ( room.getPlayerList().some((_player) => (_player.id != player.id) && (getTag(_player.name.trim()) == tag)) ) {
     room.kickPlayer(player.id, "Vui lòng đổi tên");
   };
 }
@@ -377,7 +378,6 @@ async function pick(pickedPlayer, teamId) {
   // Pick the player
   await room.setPlayerTeam(pickedPlayer.id, teamId);
   room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${TEAM_NAMES[teamId]}`, null, GREEN);
-  requestPick();
 }
 
 // Request a pick from the needed team
@@ -397,7 +397,7 @@ function requestPick() {
   pickTurn = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
   room.sendAnnouncement(`${TEAM_NAMES[pickTurn]} đang chọn người chơi...`, null, YELLOW);
   // Players in Spectators are enough to fit in the missing team
-  if ( Math.abs(redPlayersCount - bluePlayersCount) >= specPlayers.length ) {
+  if ( (Math.abs(redPlayersCount - bluePlayersCount) >= specPlayers.length) || (specPlayers.length == 1) ) {
     // Move all players to the missing team
     for (player of specPlayers) {
       pick(player, pickTurn);
@@ -500,6 +500,7 @@ function pickFunc(value, player) {
   };
   clearTimeout(timeouts.toPick);
   pick(pickedPlayer, player.team);
+  requestPick();
   return false;
 }
 
@@ -985,7 +986,7 @@ async function takePenalty() {
 }
 
 async function randPlayers() {
-  let predictionWinners = Object.keys(predictions).filter((id) => predictions[id] == prevScore);
+  let predictionWinners = Object.keys(predictions).filter((id) => predictions[id] == prevScore).map((id) => parseInt(id));
   for (winner of predictionWinners) {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", winner, GREEN, "bold", 2);
   };
