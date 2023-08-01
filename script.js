@@ -88,7 +88,7 @@ const penaltyDefault = {
   index: -1, // Index of the current penalty taker
   results: [[], []], // Results of taken penalties (first array for RED, second for BLUE)
 };
-var commands = { // Format: "alias: [function, mỉnole, availableModes]"
+var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   help: [helpFunc, 0, ["rand", "pick"]],
   discord: [discordFunc, 0, ["rand", "pick"]],
   bb: [byeFunc, 0, ["rand", "pick"]],
