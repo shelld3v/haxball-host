@@ -1,7 +1,7 @@
 const ADMIN_PASSWORD = "paul0dz";
 const MODE = "pick"; // can be "rand" or "pick"
 const AFK_DEADLINE = 6.5;
-const PICK_DEADLINE = 25;
+const PICK_DEADLINE = 23;
 const PAUSE_TIMEOUT = 13;
 const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
@@ -232,7 +232,7 @@ function showSpecTable() {
   let playerList = room.getPlayerList()
     .filter((player) => (player.team == 0) && !afkList.has(player.id))
     .map((player, index) => `${player.name} (#${index + 1})`);
-  let table = " ".repeat(85) + "DANH SÁCH DỰ BỊ" + "\n" + "_".repeat(150) + "\n" + playerList.join("  •  ") + "\n" + "_".repeat(150);
+  let table = " ".repeat(85) + "DANH SÁCH DỰ BỊ\n" + "_".repeat(150) + "\n" + playerList.join("  •  ") + "\n" + "_".repeat(150);
   room.sendAnnouncement(table, captains[pickTurn], BLUE, "small-bold");
   room.sendAnnouncement("Hướng dẫn: dùng !pick <số> hoặc !pick <tên> hoặc !pick <tag> để chọn người chơi (VD: !pick 2 / !pick paul / !pick @De_Paul)", captains[pickTurn], YELLOW, "small", 0);
 }
@@ -380,6 +380,7 @@ async function pick(pickedPlayer, teamId) {
   // Pick the player
   await room.setPlayerTeam(pickedPlayer.id, teamId);
   room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${TEAM_NAMES[teamId]}`, null, GREEN);
+  requestPick();
 }
 
 // Request a pick from the needed team
@@ -397,17 +398,17 @@ function requestPick() {
   };
 
   pickTurn = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
-  room.sendAnnouncement(`${TEAM_NAMES[pickTurn]} đang chọn người chơi...`, null, YELLOW);
   // Players in Spectators are enough to fit in the missing team
   if ( (Math.abs(redPlayersCount - bluePlayersCount) >= specPlayers.length) || (specPlayers.length == 1) ) {
     // Move all players to the missing team
     for (player of specPlayers) {
-      pick(player, pickTurn);
+      room.setPlayerTeam(player.id, pickTurn);
     };
     room.startGame();
     return;
   };
 
+  room.sendAnnouncement(`${TEAM_NAMES[pickTurn]} đang chọn người chơi...`, null, YELLOW);
   showSpecTable();
   room.sendAnnouncement("Đã đến lượt bạn chọn người chơi", captains[pickTurn], YELLOW, "bold", 2);
   // If captain doesn't pick in time, change captain
@@ -502,7 +503,6 @@ function pickFunc(value, player) {
   };
   clearTimeout(timeouts.toPick);
   pick(pickedPlayer, player.team);
-  requestPick();
   return false;
 }
 
@@ -791,21 +791,21 @@ function reportStats() {
   for (const [player, stats] of Object.entries(game.players)) {
     let msg = player + " (";
     if ( stats.goals == 1 ) {
-      msg = msg.concat("⚽");
+      msg += "⚽";
     } else if ( stats.goals != 0 ) { // More than 1 goal
-      msg = msg.concat(`${stats.goals}⚽`);
+      msg += `${stats.goals}⚽`;
     };
     if ( stats.assists == 1 ) {
-      msg = msg.concat("👟");
+      msg += "👟";
     } else if ( stats.assists != 0 ) { // More than 1 assist
-      msg = msg.concat(`${stats.assists}👟`);
+      msg += `${stats.assists}👟`;
     };
     if ( stats.ownGoals == 1 ) {
-      msg = msg.concat("🥅");
+      msg += "🥅";
     } else if ( stats.ownGoals != 0 ) { // More than 1 own goal
-      msg = msg.concat(`${stats.ownGoals}🥅`);
+      msg += `${stats.ownGoals}🥅`;
     };
-    msg = msg.concat(")");
+    msg += ")";
 
     switch ( stats.forTeam ) {
       case 1:
@@ -997,7 +997,13 @@ async function takePenalty() {
 }
 
 async function randPlayers() {
-  let predictionWinners = Object.keys(predictions).filter((id) => predictions[id] == prevScore).map((id) => parseInt(id));
+  // Prediction winners
+  let predictionWinners = Object.keys(predictions).reduce(function(winners, id) {
+    if ( predictions[id] == prevScore ) {
+      winners.push(parseInt(id));
+    };
+    return winners;
+  }, []);
   for (winner of predictionWinners) {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", winner, GREEN, "bold", 2);
   };
@@ -1165,11 +1171,11 @@ room.onPlayerChat = function(player, message) {
     room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
     return false;
   }
-  if ( message.startsWith("!") ) { // Indicating a command
-    return processCommand(player, message.slice(1));
-  };
   if ( !player.admin ) {
     checkSpam(player, message);
+  };
+  if ( message.startsWith("!") ) { // Indicating a command
+    return processCommand(player, message.slice(1));
   };
   return true;
 }
@@ -1202,7 +1208,7 @@ room.onGameStart = function(byPlayer) {
   setRandomColors();
   room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
   if ( MODE == "rand" ) {
-    room.sendChat(`Các quý vị khán giả có ${PREDICTION_PERIOD} giây đầu trận để dự đoán tỉ số và sẽ được đá trận sau nếu đoán đúng, cú pháp "!predict RED-BLUE" (VD: !predict 1-2)`);
+    room.sendChat(`Các quý vị khán giả có ${PREDICTION_PERIOD} giây đầu trận để dự đoán tỉ số và được đá trận sau nếu đoán đúng, cú pháp "!predict RED-BLUE" (VD: !predict 1-2)`);
   };
 }
 
