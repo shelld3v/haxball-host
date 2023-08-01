@@ -499,7 +499,7 @@ function pickFunc(value, player) {
   };
   if ( pickedPlayer.team != 0 ) {
     room.sendAnnouncement("Người chơi không ở Spectators", player.id, RED);
-    return false
+    return false;
   };
   clearTimeout(timeouts.toPick);
   pick(pickedPlayer, player.team);
@@ -911,9 +911,9 @@ async function startPenaltyShootout() {
   });
   let scores = room.getScores();
   prevScore = `${scores.red}-${scores.blue}`;
+  room.stopGame();
   room.sendChat("Vậy là những phút thi đấu chính thức của trận đấu đã hết, 2 đội sẽ bước đến loạt sút luân lưu");
   room.sendChat("Lưu ý: bất kì cầu thủ nào trong 2 đội rời đi loạt luân lưu sẽ kết thúc và phấn thắng tính cho đội kia");
-  room.stopGame();
   await new Promise(r => setTimeout(r, AFTER_GAME_REST * 1000));
   room.setTimeLimit(0);
   room.setScoreLimit(0);
@@ -959,9 +959,6 @@ async function takePenalty() {
     var group = penalty.blue;
   } else {
     penalty.index++;
-    if ( penalty.index == 6 ) {
-      room.sendChat('Giờ sẽ đến loạt sút "Sudden Death", một đội thực hiện thành công và đội còn lại đá trượt, loạt sút sẽ kết thúc');
-    };
     penalty.turn = 1;
     var group = penalty.red;
   };
@@ -991,6 +988,9 @@ async function takePenalty() {
     };
   };
   room.sendAnnouncement(` RED ${penResults[0].reverse().join("")} - ${penResults[1].join("")} BLUE`, null, BLUE, "bold");
+  if ( (penalty.index == 6) && (penalty.turn == 1) ) {
+    room.sendChat('Giờ ta sẽ đến loạt sút "Sudden Death", một đội thực hiện thành công và đội còn lại đá trượt thì kết quả sẽ được định đoạt');
+  };
   room.sendChat(`Bây giờ ${getTag(penaltyTaker.name)} sẽ bước lên để thức hiện quả penalty`);
   room.sendAnnouncement(`Bạn có ${PENALTY_TIMEOUT} giây để thực hiện quả penalty`, penaltyTaker.id, YELLOW);
   timeouts.toTakePenalty = setTimeout(penaltyTimeoutCallback, PENALTY_TIMEOUT * 1000);
@@ -1001,12 +1001,10 @@ async function randPlayers() {
   let predictionWinners = Object.keys(predictions).reduce(function(winners, id) {
     if ( predictions[id] == prevScore ) {
       winners.push(parseInt(id));
+      room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", id, GREEN, "bold", 2);
     };
     return winners;
   }, []);
-  for (winner of predictionWinners) {
-    room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", winner, GREEN, "bold", 2);
-  };
   let prevWinner = ( prevLoser == 1 ) ? 2 : 1;
   // Get player list and suffle it
   let idList = getNonAfkPlayers().sort(function(player1, player2) {
