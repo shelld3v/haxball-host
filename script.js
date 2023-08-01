@@ -1086,13 +1086,6 @@ room.onPlayerJoin = async function(player) {
 room.onPlayerLeave = async function(player) {
   if ( player.team != 0 ) {
     await updateTeamPlayers();
-    // A captain left, assign another one
-    if ( MODE == "pick" ) {
-      if ( isCaptain(player.id) ) {
-        await updateCaptain(player.team);
-      };
-      if ( isPicking ) showSpecTable();
-    };
     // A penalty taker left, end the penalty shootout and give the win the other team
     if ( isTakingPenalty && penalty.red[0].concat(penalty.blue[0]).includes(player.id) ) {
       room.sendChat(`Một cầu thủ bên phía ${TEAM_NAMES[player.team]} đã rời phòng, ${TEAM_NAMES[player.team]} đã bị xử thua`);
@@ -1103,9 +1096,16 @@ room.onPlayerLeave = async function(player) {
     afkList.delete(player.id);
   };
 
-  // There are no players left in Spectators
-  if ( (MODE == "pick") && !room.getPlayerList().some((player) => (player.team == 0) && !afkList.has(player.id)) ) {
-    room.startGame();
+  if ( MODE == "pick" ) {
+    // A captain left, assign another one
+    if ( isCaptain(player.id) ) {
+      await updateCaptain(player.team);
+    };
+    // There are no players left in Spectators
+    if ( !room.getPlayerList().some((player) => (player.team == 0) && !afkList.has(player.id)) ) {
+      room.startGame();
+    };
+    if ( isPicking ) showSpecTable();
   };
 }
 
