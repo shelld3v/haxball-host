@@ -214,7 +214,7 @@ function setRandomColors() {
 
 // Set avatars for players of a specific team
 async function teamAvatarEffect(teamId, avatar) {
-  let flickerDelay = 250;
+  let flickerDelay = 200;
   let players = room.getPlayerList().filter((player) => player.team == teamId);
   for (let i = 0; i < 4; i++) {
     for (player of players) {
@@ -442,7 +442,7 @@ function kickAfkFunc(value, player) {
   room.getPlayerList().forEach(function(_player) {
     if ( _player.team == 0 ) return;
     let id = _player.id;
-    if ( timeouts.toAct[id] !== undefined ) return; // Player is already monitored
+    if ( timeouts.toAct[id] !== undefined ) return; // Player has already been monitored
     timeouts.toAct[id] = setTimeout(afkCallback.bind(null, id), AFK_DEADLINE * 1000);
   });
   room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick", null, GREEN);
