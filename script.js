@@ -1,8 +1,8 @@
 const ADMIN_PASSWORD = "paul0dz";
 const MODE = "pick"; // can be "rand" or "pick"
 const AFK_DEADLINE = 6.5;
-const PICK_DEADLINE = 23;
-const PAUSE_TIMEOUT = 13;
+const PICK_DEADLINE = 22;
+const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 20;
@@ -19,7 +19,7 @@ const TEAM_NAMES = {
 const COLOR_CODES = [
   [[60, 0xFFCC00, [0xE83030]], [60, 0xFFCC00, [0x004170]]],
   [[60, 0xFFFFFF, [0xFF4A4A]], [60, 0xFFFFFF, [0x5ECFFF]]],
-  [[60, 0x000000, [0xD60419]], [60, 0x000000, [0x0099FF]]],
+  [[60, 0xFFFFFF, [0xD60419]], [60, 0xFFFFFF, [0x0099FF]]],
   [[0, 0xF7FFF2, [0xE00202, 0xB00101, 0x800000]], [0, 0xF7FFF2, [0x00F7FF, 0x00D1D1, 0x00A7AD]]],
   [[90, 0xF7FFF2, [0xFF2121, 0xFF5757, 0xFC9595]], [90, 0xF7FFF2, [0x00C3FF, 0x45E0FF, 0xB5F5FC]]],
   [[45, 0xFFFFFF, [0x000000, 0xFF0000, 0x000000]], [45, 0x808080, [0xFFFFFF, 0x0000FF, 0xFFFFFF]]],
@@ -215,7 +215,7 @@ function setRandomColors() {
 
 // Set avatars for players of a specific team
 async function teamAvatarEffect(teamId, avatar) {
-  let flickerDelay = 150;
+  let flickerDelay = 200;
   let players = room.getPlayerList().filter((player) => player.team == teamId);
   for (let i = 0; i < 4; i++) {
     for (player of players) {
@@ -542,6 +542,10 @@ function predictFunc(prediction, player) {
 }
 
 function subFunc(value, player) {
+  if ( room.getScores() === null ) {
+    room.sendAnnouncement("Bạn chỉ có thể thay người khi trận đấu đang diễn ra", player.id, RED);
+    return false;
+  };
   let sub = value.split(" ", 2);
   if ( sub.length != 2 ) {
     room.sendAnnouncement("Đầu vào không hợp lệ, hãy đặt cầu thủ muốn thay vào ở TRƯỚC cầu thủ muốn thay ra (VD: !sub @b @a hoặc !sub b a)", player.id, RED);
@@ -580,7 +584,7 @@ function pauseFunc(value, player) {
 
   room.pauseGame(true);
   room.sendChat(`Trận đấu đã được tạm dừng bởi đội trưởng của ${TEAM_NAMES[player.team]} để thay người`);
-  room.sendAnnouncement(`Bạn có ${PAUSE_TIMEOUT} giây trước khi game khởi động trở lại, dùng !resume khi bạn đã xong việc`, player.id, YELLOW);
+  room.sendAnnouncement(`Bạn có ${PAUSE_TIMEOUT} giây để thay người (lệnh "!sub @thay_vào @thay_ra"), dùng !resume khi bạn đã xong việc`, player.id, YELLOW);
   timeouts.toResume = setTimeout(room.pauseGame.bind(null, false), PAUSE_TIMEOUT * 1000);
   return false;
 }
@@ -1084,11 +1088,6 @@ room.onPlayerJoin = async function(player) {
 room.onPlayerLeave = async function(player) {
   if ( player.team != 0 ) {
     await updateTeamPlayers();
-    // A penalty taker left, end the penalty shootout and give the win the other team
-    if ( isTakingPenalty && penalty.red[0].concat(penalty.blue[0]).includes(player.id) ) {
-      room.sendChat(`Một cầu thủ bên phía ${TEAM_NAMES[player.team]} đã rời phòng, ${TEAM_NAMES[player.team]} đã bị xử thua`);
-      endPenaltyShootout(player.team);
-    };
   } else if ( afkList.has(player.id) ) { // Player was in AFK list
     // Remove from AFK list
     afkList.delete(player.id);
@@ -1105,10 +1104,24 @@ room.onPlayerLeave = async function(player) {
     };
     if ( isPicking ) showSpecTable();
   };
+
+  // A penalty taker left, end the penalty shootout and give the win the other team
+  if ( isTakingPenalty && penalty.red[0].concat(penalty.blue[0]).includes(player.id) ) {
+    room.sendChat(`Một cầu thủ bên phía ${TEAM_NAMES[player.team]} đã rời phòng, ${TEAM_NAMES[player.team]} đã bị xử thua`);
+    endPenaltyShootout(player.team);
+  };
 }
 
 room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
-  if ( isTakingPenalty ) return;
+  if ( isTakingPenalty ) {
+    // The current penalty taker was moved to the Spectators, consider it a failed penalty
+    if ( (byPlayer.id != 0) && penalty.red[0].concat(penalty.blue[0]).includes(changedPlayer.id) ) {
+      clearTimeout(timeouts.toTakePenalty);
+      penaltyTimeoutCallback();
+    };
+    return;
+  };
+
   if ( changedPlayer.team == 0 ) {
     // Remove player from AFK tracklist
     clearAfkRecord(changedPlayer.id);
