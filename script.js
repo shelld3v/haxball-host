@@ -1115,7 +1115,7 @@ room.onPlayerLeave = async function(player) {
 room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
   if ( isTakingPenalty ) {
     // The current penalty taker was moved to the Spectators, consider it a failed penalty
-    if ( (byPlayer.id != 0) && penalty.red[0].concat(penalty.blue[0]).includes(changedPlayer.id) ) {
+    if ( (changedPlayer.team == 0) && (byPlayer.id != 0) && penalty.red[0].concat(penalty.blue[0]).includes(changedPlayer.id) ) {
       clearTimeout(timeouts.toTakePenalty);
       penaltyTimeoutCallback();
     };
