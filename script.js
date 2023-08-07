@@ -1221,6 +1221,7 @@ room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
 }
 
 room.onTeamVictory = function(scores) {
+  isPlaying = false;
   let loser = (scores.red > scores.blue) ? 2 : 1;
   prevScore = `${scores.red}-${scores.blue}`;
   handlePostGame(loser);
