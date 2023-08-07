@@ -309,6 +309,7 @@ async function updateTeamPlayers(specPlayer) {
 
 // Update information to monitor last kickers, possession and passing accuracy
 function updateBallKick(player) {
+  if ( !isPlaying ) return;
   // Get properties of the ball
   ballProperties = room.getDiscProperties(0);
 
@@ -1171,6 +1172,7 @@ room.onTeamGoal = function(team) {
     return;
   };
 
+  isPlaying = false; // The game is basically "off" until a position reset
   celebrateGoal(team);
   updateStats(team);
 }
@@ -1181,6 +1183,7 @@ room.onPositionsReset = function() {
     return;
   };
 
+  isPlaying = true;
   ballProperties = null;
   lastKicked = [null, null, null];
   // Allows captains to pause the game before kick-off
