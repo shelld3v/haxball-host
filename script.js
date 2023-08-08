@@ -63,7 +63,12 @@ const PENALTY_MISS_COMMENTARIES = [
 ];
 const STADIUM = '{"name":"De Paul Stadium","width":900,"height":404,"spawnDistance":310,"bg":{"type":"grass","width":793,"height":346,"kickOffRadius":95,"cornerRadius":0,"color":"718B5B"},"vertexes":[{"x":-793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":793,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":0,"y":404,"trait":"kickOffBarrier"},{"x":0,"y":95,"trait":"kickOffBarrier"},{"x":0,"y":-95,"trait":"line"},{"x":0,"y":-404,"trait":"kickOffBarrier"},{"x":-840,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":840,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":-840,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":840,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet"},{"x":-793,"y":-271,"trait":"line"},{"x":-572,"y":-50,"trait":"line"},{"x":793,"y":-271,"trait":"line"},{"x":572,"y":-50,"trait":"line"},{"x":-793,"y":271,"trait":"line"},{"x":-572,"y":50,"trait":"line"},{"x":793,"y":271,"trait":"line"},{"x":572,"y":50,"trait":"line"},{"x":793,"y":346,"bCoef":1,"trait":"ballArea"},{"x":793,"y":-346,"bCoef":1,"trait":"ballArea"},{"x":0,"y":346,"bCoef":0,"trait":"line"},{"x":0,"y":-346,"bCoef":0,"trait":"line"},{"x":0,"y":95,"trait":"kickOffBarrier","_selected":"segment","_data":{"mirror":{}}},{"x":0,"y":-95,"trait":"kickOffBarrier","_selected":"segment","_data":{"mirror":{}}},{"x":802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-802,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":-802,"y":-346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":-802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":-802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"},{"x":802,"y":98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":802,"y":346,"bCoef":1,"cMask":["ball"],"trait":"ballArea"}],"segments":[{"v0":0,"v1":1,"trait":"ballArea"},{"v0":2,"v1":3,"trait":"ballArea"},{"v0":4,"v1":5,"trait":"ballArea"},{"v0":6,"v1":7,"trait":"ballArea"},{"v0":8,"v1":9,"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":180,"cGroup":["blueKO"],"trait":"kickOffBarrier"},{"v0":9,"v1":10,"curve":-180,"cGroup":["redKO"],"trait":"kickOffBarrier"},{"v0":10,"v1":11,"trait":"kickOffBarrier"},{"v0":2,"v1":12,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":6,"v1":13,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":-95},{"v0":1,"v1":14,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":5,"v1":15,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","y":95},{"v0":12,"v1":14,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","x":-840},{"v0":13,"v1":15,"vis":true,"color":"FFFFFF","bCoef":0.1,"cMask":["ball"],"trait":"goalNet","x":585},{"v0":16,"v1":17,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":18,"v1":19,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":20,"v1":21,"curve":-90,"color":"FFFFFF","trait":"line"},{"v0":22,"v1":23,"curve":90,"color":"FFFFFF","trait":"line"},{"v0":17,"v1":21,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":-600},{"v0":19,"v1":23,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","x":572},{"v0":1,"v1":0,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":5,"v1":4,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":2,"v1":3,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-665},{"v0":6,"v1":7,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":665},{"v0":0,"v1":24,"vis":true,"color":"FFFFFF","bCoef":1,"trait":"ballArea","y":290},{"v0":3,"v1":25,"vis":true,"color":"FFFFFF","bCoef":1,"trait":"ballArea","y":-290},{"v0":26,"v1":27,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":10,"v1":9,"curve":-180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":29,"v1":28,"curve":180.43079330521417,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line","_selected":true,"_data":{"mirror":{},"arc":{"a":[0,-95],"b":[0,95],"curve":180.43079330521417,"radius":95.00067131878964,"center":[0.3571428571409862,0],"from":-1.574555707580645,"to":1.574555707580645}}},{"v0":2,"v1":1,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":6,"v1":5,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":30,"v1":31,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614},{"v0":32,"v1":33,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":34,"v1":35,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":-614},{"v0":36,"v1":37,"vis":false,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","x":614}],"goals":[{"p0":[-802,-95],"p1":[-802,95],"team":"red"},{"p0":[802,95],"p1":[802,-95],"team":"blue"}],"discs":[{"radius":4.5,"pos":[-793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":4.5,"pos":[-793,-95],"color":"FFFFFF","trait":"goalPost"},{"radius":4.5,"pos":[793,95],"color":"FFFFFF","trait":"goalPost"},{"radius":4.5,"pos":[793,-95],"color":"FFFFFF","trait":"goalPost"}],"planes":[{"normal":[0,1],"dist":-346,"trait":"ballArea","_data":{"extremes":{"normal":[0,1],"dist":-346,"canvas_rect":[-900,-404,900,404],"a":[-900,-346],"b":[900,-346]}}},{"normal":[0,-1],"dist":-346,"trait":"ballArea","_data":{"extremes":{"normal":[0,-1],"dist":-346,"canvas_rect":[-900,-404,900,404],"a":[-900,346],"b":[900,346]}}},{"normal":[0,1],"dist":-404,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,1],"dist":-404,"canvas_rect":[-900,-404,900,404],"a":[-900,-404],"b":[900,-404]}}},{"normal":[0,-1],"dist":-404,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,-1],"dist":-404,"canvas_rect":[-900,-404,900,404],"a":[-900,404],"b":[900,404]}}},{"normal":[1,0],"dist":-900,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[1,0],"dist":-900,"canvas_rect":[-900,-404,900,404],"a":[-900,-404],"b":[-900,404]}}},{"normal":[-1,0],"dist":-900,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[-1,0],"dist":-900,"canvas_rect":[-900,-404,900,404],"a":[900,-404],"b":[900,404]}}}],"traits":{"ballArea":{"vis":false,"bCoef":1,"cMask":["ball"]},"goalPost":{"invMass":0,"bCoef":1.5},"goalNet":{"vis":true,"bCoef":0.1,"cMask":["all"]},"kickOffBarrier":{"vis":false,"bCoef":0.1,"cGroup":["redKO","blueKO"],"cMask":["red","blue"]},"line":{"vis":true,"bCoef":0,"cMask":[""]},"arco":{"radius":2,"cMask":["n\/d"],"color":"cccccc"}},"playerPhysics":{"acceleration":0.11,"kickingAcceleration":0.083,"kickStrength":4.65,"bCoef":0.35},"ballPhysics":{"radius":6.55,"color":"FFDEAD","bCoef":0.465,"invMass":1.4},"joints":[],"redSpawnPoints":[],"blueSpawnPoints":[],"canBeStored":false}';
 const PENALTY_STADIUM = '{"name":"Penalty Shootout 2 0 from HaxMaps (updated by De Paul)","width":400,"height":250,"spawnDistance":300,"bg":{"type":"grass","width":500,"height":500,"kickOffRadius":10,"cornerRadius":0},"vertexes":[{"x":0,"y":-255,"trait":"green"},{"x":0,"y":-190,"trait":"green"},{"x":0,"y":-129,"trait":"green"},{"x":0,"y":-64,"trait":"green"},{"x":0,"y":0,"trait":"green"},{"x":0,"y":65,"trait":"green"},{"x":0,"y":129,"trait":"green"},{"x":0,"y":192,"trait":"green"},{"x":0,"y":255,"trait":"green"},{"x":-335,"y":-10,"trait":"white"},{"x":-335,"y":10,"trait":"white"},{"x":-347,"y":-10,"trait":"white"},{"x":-347,"y":10,"trait":"white"},{"x":-360,"y":-10,"trait":"white"},{"x":-347,"y":0,"trait":"white"},{"x":-360,"y":10,"trait":"white"},{"x":-323,"y":-10,"trait":"white"},{"x":-323,"y":10,"trait":"white"},{"x":-310,"y":-10,"trait":"white"},{"x":-323,"y":0,"trait":"white"},{"x":-310,"y":10,"trait":"white"},{"x":-335,"y":-35,"trait":"red"},{"x":-335,"y":35,"trait":"red"},{"x":-335,"y":-40,"trait":"white"},{"x":-335,"y":40,"trait":"white"},{"x":-335,"y":-45,"trait":"blue"},{"x":-335,"y":45,"trait":"blue"},{"x":0,"y":-15,"trait":"powerboost"},{"x":0,"y":15,"trait":"powerboost"},{"x":0,"y":-10,"trait":"white"},{"x":0,"y":10,"trait":"white"},{"x":0,"y":-7,"trait":"white"},{"x":0,"y":7,"trait":"white"},{"x":0,"y":-4,"trait":"white"},{"x":0,"y":4,"trait":"white"},{"x":0,"y":-2,"trait":"white"},{"x":0,"y":2,"trait":"white"},{"x":300,"y":-500,"trait":"white"},{"x":300,"y":500,"trait":"white"},{"x":150,"y":-200,"trait":"white"},{"x":300,"y":-200,"trait":"white"},{"x":150,"y":200,"trait":"white"},{"x":300,"y":200,"trait":"white"},{"x":-150,"y":-500,"trait":"white"},{"x":-150,"y":500,"trait":"white"},{"x":-150,"y":-190,"trait":"white"},{"x":-150,"y":190,"trait":"white"},{"x":300,"y":-100,"trait":"goalnet"},{"x":358,"y":-98,"trait":"goalnet"},{"x":364,"y":0,"trait":"goalnet"},{"x":358,"y":98,"trait":"goalnet"},{"x":300,"y":100,"trait":"goalnet"},{"x":400,"y":-150,"trait":"white"},{"x":410,"y":0,"trait":"white"},{"x":400,"y":150,"trait":"white"},{"x":-250,"y":-190,"trait":"penArea"},{"x":-50,"y":-190,"trait":"penArea"},{"x":-50,"y":190,"trait":"penArea"},{"x":-250,"y":190,"trait":"penArea"},{"x":285,"y":-100,"trait":"gkArea"},{"x":285,"y":100,"trait":"gkArea"},{"x":315,"y":-100,"trait":"gkArea"},{"x":315,"y":-15,"trait":"gkArea"},{"x":500,"y":-15,"trait":"gkArea"},{"x":500,"y":15,"trait":"gkArea"},{"x":315,"y":15,"trait":"gkArea"},{"x":315,"y":100,"trait":"gkArea"},{"x":-341,"y":65,"trait":"white"},{"x":-347,"y":65,"trait":"white"},{"x":-347,"y":57,"trait":"white"},{"x":-341,"y":57,"trait":"white"},{"x":-337,"y":65,"trait":"white"},{"x":-336,"y":65,"trait":"white"},{"x":-328,"y":54,"trait":"white"},{"x":-328,"y":65,"trait":"white"}],"segments":[{"v0":0,"v1":1,"trait":"darkgreen"},{"v0":1,"v1":2,"trait":"lightgreen"},{"v0":2,"v1":3,"trait":"darkgreen"},{"v0":3,"v1":4,"trait":"lightgreen"},{"v0":4,"v1":5,"trait":"darkgreen"},{"v0":5,"v1":6,"trait":"lightgreen"},{"v0":6,"v1":7,"trait":"darkgreen"},{"v0":7,"v1":8,"trait":"lightgreen"},{"v0":9,"v1":10,"trait":"white","curve":180},{"v0":9,"v1":10,"trait":"white","curve":-180},{"v0":11,"v1":12,"trait":"white"},{"v0":13,"v1":14,"trait":"white"},{"v0":14,"v1":15,"trait":"white"},{"v0":16,"v1":17,"trait":"white"},{"v0":18,"v1":19,"trait":"white"},{"v0":19,"v1":20,"trait":"white"},{"v0":21,"v1":22,"trait":"red","curve":-180},{"v0":21,"v1":22,"trait":"red","curve":180},{"v0":23,"v1":24,"trait":"white","curve":-180},{"v0":23,"v1":24,"trait":"white","curve":180},{"v0":25,"v1":26,"trait":"blue","curve":-180},{"v0":25,"v1":26,"trait":"blue","curve":180},{"v0":27,"v1":28,"trait":"powerboost","curve":180},{"v0":29,"v1":30,"trait":"white","curve":-180},{"v0":29,"v1":30,"trait":"white","curve":180},{"v0":31,"v1":32,"trait":"white","curve":-180},{"v0":31,"v1":32,"trait":"white","curve":180},{"v0":33,"v1":34,"trait":"white","curve":-180},{"v0":33,"v1":34,"trait":"white","curve":180},{"v0":35,"v1":36,"trait":"white","curve":-180},{"v0":35,"v1":36,"trait":"white","curve":180},{"v0":35,"v1":36,"trait":"white"},{"v0":37,"v1":38,"trait":"white"},{"v0":39,"v1":41,"trait":"white"},{"v0":39,"v1":40,"trait":"white"},{"v0":41,"v1":42,"trait":"white"},{"v0":43,"v1":44,"trait":"white"},{"v0":45,"v1":46,"trait":"white","curve":-111},{"v0":47,"v1":48,"trait":"goalnet","curve":-10},{"v0":48,"v1":49,"trait":"goalnet","curve":-10},{"v0":49,"v1":50,"trait":"goalnet","curve":-10},{"v0":50,"v1":51,"trait":"goalnet","curve":-10},{"v0":48,"v1":52,"trait":"white"},{"v0":49,"v1":53,"trait":"white"},{"v0":50,"v1":54,"trait":"white"},{"v0":55,"v1":56,"trait":"penArea"},{"v0":56,"v1":57,"trait":"penArea","curve":110},{"v0":57,"v1":58,"trait":"penArea"},{"v0":59,"v1":60,"trait":"gkArea"},{"v0":61,"v1":62,"trait":"gkArea"},{"v0":62,"v1":63,"trait":"gkArea"},{"v0":64,"v1":65,"trait":"gkArea"},{"v0":65,"v1":66,"trait":"gkArea"},{"v0":67,"v1":68,"trait":"white"},{"v0":68,"v1":70,"trait":"white"},{"v0":69,"v1":70,"trait":"white","curve":180},{"v0":71,"v1":72,"trait":"white"},{"v0":73,"v1":74,"trait":"white","curve":150},{"v0":73,"v1":74,"trait":"white","curve":-150}],"goals":[{"p0":[300,100],"p1":[300,-100],"team":"blue"},{"p0":[300,-100],"p1":[-10,0],"team":"red"},{"p0":[300,100],"p1":[-10,0],"team":"red"}],"discs":[{"pos":[300,100],"trait":"goalPost"},{"pos":[300,-100],"trait":"goalPost"},{"pos":[400,-150],"trait":"stanchion"},{"pos":[410,0],"trait":"stanchion"},{"pos":[400,150],"trait":"stanchion"}],"planes":[{"normal":[0,1],"dist":-500,"bCoef":0.1},{"normal":[0,-1],"dist":-500,"bCoef":0.1},{"normal":[1,0],"dist":-266,"bCoef":0.1},{"normal":[-1,0],"dist":-500,"bCoef":0.1}],"traits":{"green":{"vis":false,"cMask":[]},"darkgreen":{"vis":true,"color":"6B915A","cMask":[]},"lightgreen":{"vis":true,"color":"7B9E6D","cMask":[]},"white":{"vis":true,"color":"FFFFFF","cMask":[]},"red":{"vis":true,"color":"DF0024","cMask":[]},"blue":{"vis":true,"color":"0085C7","cMask":[]},"powerboost":{"vis":false,"bCoef":-2.835,"cMask":["ball"],"color":"FFFF00"},"goalnet":{"vis":true,"bCoef":0.1,"color":"FFFFFF","cMask":["ball","red"]},"penArea":{"vis":false,"bCoef":0,"cMask":["red"],"color":"DF0024"},"gkArea":{"vis":false,"bCoef":1,"cMask":["blue"],"color":"0085C7"},"goalPost":{"radius":5,"invMass":0,"bCoef":1.3,"color":"FFFFFF"},"stanchion":{"radius":3,"invMass":0,"bCoef":1,"cMask":["ball"],"color":"FFFFFF"}},"playerPhysics":{"acceleration":0.11}}';
-const GOAL_LINE = [802, 95];
+
+// Analyze the stadium
+let parsedStadium = JSON.parse(STADIUM);
+const GOAL_LINE = parsedStadium.goals[0].p0.map((coordinate) => Math.abs(coordinate)); // Both x and y values are positive numbers
+const BALL_RADIUS = parsedStadium.ballPhysics.radius || 10;
+delete parsedStadium; // Free the memory
 
 const playerStats = {
   goals: 0,
@@ -123,6 +128,7 @@ var prevScore = null;
 var predictions = {};
 var lastKicked = [null, null, null]; // Last players who kicked the ball
 var lastMessage = [null, null]; // Last message and the player ID of the sender
+var prevShootedTeam = 0;
 var ballProperties = null;
 var yellowCards = [];
 var game = null;
@@ -171,7 +177,7 @@ function convertToMeters(value) {
   return ~~(value / 37);
 }
 
-// Get the distance knowing the <x, y> value
+// Get the distance knowing the coordinates of 2 points
 function getDistance(x, y) {
   // Use Pythagoras
   return Math.sqrt(x ** 2 + y ** 2);
@@ -311,17 +317,26 @@ async function updateTeamPlayers(specPlayer) {
 function updateBallKick(player) {
   if ( !isPlaying ) return;
   // Get properties of the ball
-  ballProperties = room.getDiscProperties(0);
+  let newBallProperties = room.getDiscProperties(0);
+  // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
+  if ( prevShootedTeam != 0 ) {
+    if ( getDistance(newBallProperties.x - ballProperties.x, newBallProperties.y - ballProperties.y) < BALL_RADIUS * 2 ) {
+      game.teams[prevShootedTeam].shotsOnTarget--;
+    };
+    prevShootedTeam = 0;
+  };
+  ballProperties = newBallProperties;
 
   // The x position value of the opponent's goal
   let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE[0] : -GOAL_LINE[0];
   if ( xOpponentGoal * ballProperties.xspeed > 0 ) { // It's a kick toward the opponent goal
     // Check if it's shot on target
     if (
-      (Math.abs(ballProperties.x + ballProperties.xspeed * 99.762) > GOAL_LINE[0]) && // At this speed, the ball would cross the goal line; 99.762 is a number I got from https://github.com/haxball-replay-analyzer/haxball-replay-analyzer.github.io
+      (Math.abs(ballProperties.x + ballProperties.xspeed * 99.762) > GOAL_LINE[0]) && // At this speed, the ball would cross the goal line
       (Math.abs(ballProperties.y + ballProperties.yspeed / ballProperties.xspeed * (xOpponentGoal - ballProperties.x)) < GOAL_LINE[1]) // It's on target (not really accurate because it might hit the post)
     ) {
       game.teams[player.team].shotsOnTarget++;
+      prevShootedTeam = player.team;
     };
   } else {
     // Switch to penalty shootout when it hits maximum added time
@@ -737,7 +752,7 @@ function updatePlayerStats(player, type) {
 function updateStats(team) {
   var [scorer, assister, preAssister] = lastKicked;
   // Not an own goal but probably a clearing/goalkeeping effort
-  if ( (scorer.team != team) && (Math.abs(ballProperties.x) > 780) && (assister !== null) ) {
+  if ( (scorer.team != team) && (Math.abs(ballProperties.x) > GOAL_LINE - BALL_RADIUS * 2 - 5) && (assister !== null) ) {
     // Correct the credits
     [scorer, assister] = [assister, preAssister];
   };
@@ -747,6 +762,8 @@ function updateStats(team) {
     room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
     if ( assister === null ) {
       yellowCardFunc(getTag(scorer.name), room.getPlayer(0));
+    } else if ( assister.team == team ) {
+      game.teams[team].shotsOnTarget++; // An own goal is also a shot on target according to Opta
     };
     return;
   };
@@ -776,11 +793,11 @@ function updateStats(team) {
   room.sendChat(comment);
   // Calculate goal stats
   let speed = convertToMeters(getDistance(ballProperties.xspeed, ballProperties.yspeed) * 60); // There are 60 frames per second
-  if ( Math.abs(ballProperties.y) <= 95 ) {
-    var distance = 793 - Math.abs(ballProperties.x);
+  if ( Math.abs(ballProperties.y) <= GOAL_LINE[1] ) {
+    var distance = GOAL_LINE[0] - Math.abs(ballProperties.x);
   } else {
     // Get the distance between the ball and the nearest post
-    var distance = getDistance(793 - Math.abs(ballProperties.x), Math.abs(ballProperties.y) - 95);
+    var distance = getDistance(GOAL_LINE[0] - Math.abs(ballProperties.x), Math.abs(ballProperties.y) - GOAL_LINE[1]);
   };
   distance = convertToMeters(distance);
   room.sendAnnouncement(`Khoảng cách: ${distance || "dưới 1"}m | Lực sút: ${speed} (m/s)`, null, GREEN, "small");
@@ -946,6 +963,7 @@ async function startPenaltyShootout() {
 
 async function endPenaltyShootout(loser) {
   isTakingPenalty = false;
+  handlePostGame(loser);
   room.stopGame();
   room.setTimeLimit(5);
   room.setScoreLimit(5);
@@ -957,7 +975,6 @@ async function endPenaltyShootout(loser) {
   for (id of penalty.blue[0]) {
     room.setPlayerTeam(id, 2);
   };
-  handlePostGame(loser);
 }
 
 async function takePenalty() {
@@ -1244,9 +1261,9 @@ room.onGameStart = function(byPlayer) {
 }
 
 room.onGameStop = async function(byPlayer) {
-  isPlaying = false;
   clearAfkRecords(); // Stop monitoring AFK when the game is stopped
   if ( (byPlayer !== null) && (byPlayer.id != 0) ) { // It wasn't a game over or stopped by host player
+    isPlaying = false;
     room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
     return;
   };
