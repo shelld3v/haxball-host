@@ -1,6 +1,6 @@
 const ADMIN_PASSWORD = "paul0dz";
 const MODE = "pick"; // can be "rand" or "pick"
-const AFK_DEADLINE = 6.5;
+const AFK_DEADLINE = 7;
 const PICK_DEADLINE = 22;
 const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
@@ -614,7 +614,7 @@ function pauseFunc(value, player) {
 
   room.pauseGame(true);
   room.sendChat(`Trận đấu đã được tạm dừng bởi đội trưởng của ${TEAM_NAMES[player.team]} để thay người`);
-  room.sendAnnouncement(`Bạn có ${PAUSE_TIMEOUT} giây để thay người (lệnh "!sub @thay_vào @thay_ra"), dùng !resume khi bạn đã xong việc`, player.id, YELLOW);
+  room.sendAnnouncement(`Bạn có ${PAUSE_TIMEOUT} giây để thay người, dùng !resume khi bạn đã xong việc`, player.id, YELLOW);
   timeouts.toResume = setTimeout(room.pauseGame.bind(null, false), PAUSE_TIMEOUT * 1000);
   return false;
 }
@@ -752,7 +752,7 @@ function updatePlayerStats(player, type) {
 function updateStats(team) {
   var [scorer, assister, preAssister] = lastKicked;
   // Not an own goal but probably a clearing/goalkeeping effort
-  if ( (scorer.team != team) && (Math.abs(ballProperties.x) > GOAL_LINE - BALL_RADIUS * 2 - 5) && (assister !== null) ) {
+  if ( (scorer.team != team) && (Math.abs(ballProperties.x) > GOAL_LINE - BALL_RADIUS * 4) && (assister !== null) ) {
     // Correct the credits
     [scorer, assister] = [assister, preAssister];
   };
@@ -762,8 +762,6 @@ function updateStats(team) {
     room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
     if ( assister === null ) {
       yellowCardFunc(getTag(scorer.name), room.getPlayer(0));
-    } else if ( assister.team == team ) {
-      game.teams[team].shotsOnTarget++; // An own goal is also a shot on target according to Opta
     };
     return;
   };
@@ -1202,12 +1200,13 @@ room.onPositionsReset = function() {
 
   isPlaying = true;
   ballProperties = null;
+  prevShootedTeam = 0;
   lastKicked = [null, null, null];
   // Allows captains to pause the game before kick-off
   if ( (MODE == "pick") && (room.getScores().time != 0) ) {
     canPause = true;
     for (captain of Object.values(captains)) {
-      room.sendAnnouncement("Bạn có thể dừng game bằng lệnh !pause để thay người (dùng !sub) trước khi kick-off", captain, YELLOW);
+      room.sendAnnouncement('Bạn có thể dừng game bằng lệnh !pause để thay người (dùng "!sub @thay_vào @thay_ra") trước khi kick-off', captain, YELLOW);
     };
   };
 }
