@@ -7,7 +7,7 @@ const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 20;
 const MAX_ADDED_TIME = 210;
-const MAX_DUPE_MESSAGES = 3;
+const MAX_DUPE_MESSAGES = 2;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
 const BLUE = 0x00BFFF;
@@ -269,19 +269,16 @@ function penaltyTimeoutCallback() {
 
 // Returns the team that lost the penalty shootout (if there is one)
 function getPenaltyLoser() {
-  let redPenalties = penalty.results[0];
-  let bluePenalties = penalty.results[1];
-
   if ( penalty.index >= 5 ) { // "Sudden Death" round
-    if (redPenalties.length != bluePenalties.length) return null;
-    if (redPenalties.at(-1) == bluePenalties.at(-1)) return null;
-    return redPenalties.at(-1) ? 2 : 1;
+    if (penalty.results[0].length != penalty.results[1].length) return null;
+    if (penalty.results[0].at(-1) == penalty.results[1].at(-1)) return null;
+    return penalty.results[0].at(-1) ? 2 : 1;
   }
 
   // One team has more penalties scored than the other team even if the other team scores all the remaining penalties
-  if ( redPenalties.filter((result) => result).length > 5 - bluePenalties.filter((result) => !result).length ) {
+  if ( penalty.results[0].filter((result) => result).length > 5 - penalty.results[1].filter((result) => !result).length ) {
     return 2;
-  } else if ( bluePenalties.filter((result) => result).length > 5 - redPenalties.filter((result) => !result).length ) {
+  } else if ( penalty.results[1].filter((result) => result).length > 5 - penalty.results[0].filter((result) => !result).length ) {
     return 1;
   };
   return null;
@@ -316,6 +313,11 @@ async function updateTeamPlayers(specPlayer) {
 // Update information to monitor last kickers, possession and passing accuracy
 function updateBallKick(player) {
   if ( !isPlaying ) return;
+  // Update information about last players who kicked the ball
+  lastKicked.unshift(player);
+  lastKicked.pop();
+  // Get the previous kicker
+  let prevKicker = lastKicked[1];
   // Get properties of the ball
   let newBallProperties = room.getDiscProperties(0);
   // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
@@ -350,12 +352,6 @@ function updateBallKick(player) {
     };
   };
 
-  // Update information about last players who kicked the ball
-  lastKicked.unshift(player);
-  lastKicked.pop();
-  // Get the previous kicker
-  let prevKicker = lastKicked[1];
-
   // Update total kicks
   game.teams[player.team].kicks++;
   // Update accurate kicks
@@ -367,7 +363,7 @@ function updateBallKick(player) {
   if ( player.team != prevKicker.team ) return; // Received the ball from an opponent player
 
   // Received the ball from a teammate, so the previous kick was a pass
-  if (player.id != prevKicker.id) game.teams[player.team].passes++;
+  if ( player.id != prevKicker.id ) game.teams[player.team].passes++;
   // Received the ball from a teammate or from yourself, so the previous kick kept the possession
   game.teams[player.team].possessedKicks++;
 }
@@ -751,6 +747,8 @@ function updatePlayerStats(player, type) {
 // Update stats about goals, assists and own goals
 function updateStats(team) {
   var [scorer, assister, preAssister] = lastKicked;
+  if ( scorer === null ) return;
+
   // Not an own goal but probably a clearing/goalkeeping effort
   if ( (scorer.team != team) && (Math.abs(ballProperties.x) > GOAL_LINE - BALL_RADIUS * 4) && (assister !== null) ) {
     // Correct the credits
