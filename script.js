@@ -26,7 +26,10 @@ const TEAM_COLORS = [
   [[45, 0xFFFFFF, [0xD60000, 0x000000, 0xD60000]], [45, 0xFFFFFF, [0x0058A3, 0x000000, 0x0058A3]]],
   [[-45, 0xFFCC00, [0xD10000, 0x8C0000, 0xD10000]], [-45, 0xFFCC00, [0x00DDFF, 0x87E3FF, 0x00DDFF]]],
 ];
-const GOALKEEPER_COLOR = [0, 0xFFFFFF, [0x13A720, 0x2FD835, 0x13A720]];
+const GOALKEEPER_COLORS = {
+  red: [0, 0xFFFFFF, [0x363636, 0x262626, 0x363636]],
+  blue: [0, 0xFFFFFF, [0x13A720, 0x2FD835, 0x13A720]],
+};
 const GOAL_COMMENTARIES = {
   "-3": "một bàn thắng danh dự",
   "-2": "liệu sẽ có một cuộc lội ngược dòng xảy ra?",
@@ -1000,7 +1003,6 @@ async function startPenaltyShootout() {
   room.setTimeLimit(0);
   room.setScoreLimit(0);
   room.setCustomStadium(PENALTY_STADIUM);
-  room.setTeamColors(2, ...GOALKEEPER_COLOR);
   room.startGame();
   takePenalty();
 }
@@ -1041,11 +1043,13 @@ async function takePenalty() {
     penalty.turn = 2;
     var group = penalty.blue;
     room.setTeamColors(1, ...kits.blue);
+    room.setTeamColors(2, ...GOALKEEPER_COLORS.red);
   } else {
     penalty.index++;
     penalty.turn = 1;
     var group = penalty.red;
     room.setTeamColors(1, ...kits.red);
+    room.setTeamColors(2, ...GOALKEEPER_COLORS.blue);
   };
 
   let penaltyTaker = room.getPlayer(group[0][penalty.index % group[0].length]);
