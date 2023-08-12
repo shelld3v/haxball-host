@@ -111,10 +111,13 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   pause: [pauseFunc, 1, ["pick"]],
   resume: [resumeFunc, 1, ["pick"]],
   yellow: [yellowCardFunc, 2, ["rand", "pick"]],
+  mute: [muteFunc, 2, ["rand", "pick"]],
+  clearmutes: [clearMutesFunc, 2, ["rand", "pick"]],
   clearbans: [clearBansFunc, 2, ["rand", "pick"]],
   assigncap: [assignCaptainFunc, 2, ["pick"]],
 };
 var afkList = new Set([0]); // Host player is always in AFK mode
+var muteList = new Set();
 var duplicateMessagesCount = 0;
 var isPlaying = false;
 var isPicking = false;
@@ -259,6 +262,10 @@ function afkCallback(id) {
   delete timeouts.toAct[id];
 }
 
+function unmuteCallback(auth) {
+  muteList.delete(auth);
+}
+
 function penaltyTimeoutCallback() {
   if ( !isTakingPenalty ) return;
   room.sendChat("Cầu thủ đã không thực hiện penalty trong thời gian quy định");
@@ -270,10 +277,10 @@ function penaltyTimeoutCallback() {
 // Returns the team that lost the penalty shootout (if there is one)
 function getPenaltyLoser() {
   if ( penalty.index >= 5 ) { // "Sudden Death" round
-    if (penalty.results[0].length != penalty.results[1].length) return null;
-    if (penalty.results[0].at(-1) == penalty.results[1].at(-1)) return null;
+    if ( penalty.results[0].length != penalty.results[1].length ) return null;
+    if ( penalty.results[0].at(-1) == penalty.results[1].at(-1) ) return null;
     return penalty.results[0].at(-1) ? 2 : 1;
-  }
+  };
 
   // One team has more penalties scored than the other team even if the other team scores all the remaining penalties
   if ( penalty.results[0].filter((result) => result).length > 5 - penalty.results[1].filter((result) => !result).length ) {
@@ -664,7 +671,7 @@ function yellowCardFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp một người chơi hợp lệ (VD: !yellow @De_Paul hoặc !yellow paul)", player.id, RED);
     return false;
-  }
+  };
 
   let targetPlayer = getPlayerByName(value);
   if ( !targetPlayer ) {
@@ -681,6 +688,40 @@ function yellowCardFunc(value, player) {
     yellowCards.push(targetPlayer.auth);
     room.sendAnnouncement(`🟨 ${targetPlayer.name} đã nhận một thẻ vàng từ ${player.name}, nhận 2 thẻ vàng người chơi sẽ bị ban`, null, YELLOW);
   };
+  return false;
+}
+
+function muteFunc(value, player) {
+  if ( !value ) {
+    room.sendAnnouncement("Vui lòng cung cấp người chơi và thời hạn cấm chat (phút), bỏ trống hạn cấm nếu bạn muốn cấm vĩnh viễn (VD: !mute @ân 1 hoặc !mute paul)", player.id, RED);
+    return false;
+  };
+
+  let [targetPlayerId, period] = value.split(" ", 2);
+  let targetPlayer = getPlayerByName(targetPlayerId);
+  if ( !targetPlayer ) {
+    room.sendAnnouncement(`Không thể tìm thấy người chơi "${value}"`, player.id, RED);
+    return false;
+  };
+
+  if ( period !== undefined ) {
+    if ( isNaN(period) || period <= 0 ) {
+      room.sendAnnouncement("Vui lòng cung cấp một thời hạn cấm chat hợp lệ (VD: !mute @De_Paul 3)", player.id, RED);
+      return false;
+    };
+    room.sendAnnouncement(`Bạn đã bị cấm chat trong ${period} phút bởi ${player.id}`, targetPlayer.id, RED, "bold", 2);
+    setTimeout(unmuteCallback.bind(targetPlayer.auth), period * 1000);
+  } else {
+    room.sendAnnouncement(`Bạn đã bị cấm chat bởi ${player.id}`, targetPlayer.id, RED, "bold", 2);
+  };
+  room.sendAnnouncement(`Đã cấm chat ${targetPlayer.id}`, player.id, GREEN);
+  muteList.add(targetPlayer.auth);
+  return false;
+}
+
+function clearMutesFunc(value, player) {
+  muteList.clear();
+  room.sendAnnouncement("Đã xóa các lệnh cấm chat", null, GREEN);
   return false;
 }
 
@@ -750,7 +791,7 @@ function updateStats(team) {
   if ( scorer === null ) return;
 
   // Not an own goal but probably a clearing/goalkeeping effort
-  if ( (scorer.team != team) && (Math.abs(ballProperties.x) > GOAL_LINE - BALL_RADIUS * 4) && (assister !== null) ) {
+  if ( (scorer.team != team) && (Math.abs(ballProperties.x) > GOAL_LINE - BALL_RADIUS * 5) && (assister !== null) ) {
     // Correct the credits
     [scorer, assister] = [assister, preAssister];
   };
@@ -1220,6 +1261,10 @@ room.onPlayerChat = function(player, message) {
   };
   if ( message.startsWith("!") ) { // Indicating a command
     return processCommand(player, message.slice(1));
+  };
+  if ( muteList.has(player.auth) ) {
+    room.sendAnnouncement("Không thể chat, bạn đã bị cấm", player.id, RED);
+    return false;
   };
   return true;
 }
