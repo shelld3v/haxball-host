@@ -1,6 +1,6 @@
 const ADMIN_PASSWORD = "dpdz";
 const MODE = "pick"; // can be "rand" or "pick"
-const AFK_DEADLINE = 9;
+const AFK_DEADLINE = 10;
 const PICK_DEADLINE = 22;
 const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
@@ -120,6 +120,7 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   clearbans: [clearBansFunc, 2, ["rand", "pick"]],
   assigncap: [assignCaptainFunc, 2, ["pick"]],
 };
+var connectionIds = {}; // Store connection IDs of players (this ID is consistent for each network)
 var afkList = new Set([0]); // Host player is always in AFK mode
 var muteList = new Set();
 var duplicateMessagesCount = 0;
@@ -160,14 +161,6 @@ room.setCustomStadium(STADIUM);
 room.setTeamsLock(1);
 room.setKickRateLimit(7, 15, 3);
 room.startGame();
-
-// Kick player if player has a duplicate tag
-function validateTag(player) {
-  let tag = getTag(player.name.trim());
-  if ( room.getPlayerList().some((_player) => (_player.id != player.id) && (getTag(_player.name.trim()) == tag)) ) {
-    room.kickPlayer(player.id, "Vui lòng đổi tên");
-  };
-}
 
 // Get a chat-pingable tag from player's name
 function getTag(name) {
@@ -255,6 +248,18 @@ function showSpecTable() {
   room.sendAnnouncement("Hướng dẫn: dùng !pick <số> hoặc !pick <tên> hoặc !pick <tag> để chọn người chơi (VD: !pick 2 / !pick paul / !pick @De_Paul)", captains[pickTurn], YELLOW, "small", 0);
 }
 
+// Kick player if player has a duplicate tag
+function validateTag(player) {
+  let tag = getTag(player.name.trim());
+  if ( room.getPlayerList().some((_player) => (_player.id != player.id) && (getTag(_player.name.trim()) == tag)) ) {
+    room.kickPlayer(player.id, "Vui lòng đổi tên");
+  };
+}
+
+function saveConn(player) {
+  connectionIds[player.id] = player.conn;
+}
+
 function canUseCommand(command, player) {
   if ( !command[2].includes(MODE) ) return false; // Command is not available in this mode
   if ( (command[1] == 2) && !player.admin ) return false; // Admin required
@@ -268,8 +273,8 @@ function afkCallback(id) {
   delete timeouts.toAct[id];
 }
 
-function unmuteCallback(auth) {
-  muteList.delete(auth);
+function unmuteCallback(conn) {
+  muteList.delete(conn);
 }
 
 function penaltyTimeoutCallback() {
@@ -426,12 +431,37 @@ async function pick(pickedPlayer, teamId) {
   requestPick();
 }
 
+// Under certain conditions, automatically pick, start the game and return true
+function autoPick() {
+  let specPlayers = [];
+  let redPlayersCount = 0;
+  let bluePlayersCount = 0;
+  getNonAfkPlayers().forEach(function(player) {
+    switch ( player.team ) {
+      case 0:
+        specPlayers.push(player);
+        break;
+      case 1:
+        redPlayersCount++;
+        break;
+      case 2:
+        bluePlayersCount++;
+    };
+  });
+  if ( (specPlayers.length > 1) && (Math.abs(redPlayersCount - bluePlayersCount) < specPlayers.length) ) return false;
+
+  // Move all players to the missing team
+  for (player of specPlayers) {
+    room.setPlayerTeam(player.id, pickTurn);
+  };
+  room.startGame();
+  return true;
+}
+
 // Request a pick from the needed team
 function requestPick() {
-  if ( room.getScores() ) return; // Game started, no pick
-  // Find team that needs new player the most
-  let players = getNonAfkPlayers();
-  let specPlayers = players.filter((player) => player.team == 0);
+  if ( room.getScores() !== null ) return; // Game started, no pick
+  let players = room.getPlayerList();
   let redPlayersCount = players.filter((player) => player.team == 1).length;
   let bluePlayersCount = players.filter((player) => player.team == 2).length;
   // Enough players for 2 teams
@@ -439,17 +469,8 @@ function requestPick() {
     room.startGame();
     return;
   };
-
   pickTurn = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
-  // Players in Spectators are enough to fit in the missing team
-  if ( (Math.abs(redPlayersCount - bluePlayersCount) >= specPlayers.length) || (specPlayers.length == 1) ) {
-    // Move all players to the missing team
-    for (player of specPlayers) {
-      room.setPlayerTeam(player.id, pickTurn);
-    };
-    room.startGame();
-    return;
-  };
+  if ( autoPick() ) return;
 
   room.sendAnnouncement(`${TEAM_NAMES[pickTurn]} đang chọn người chơi...`, null, YELLOW);
   showSpecTable();
@@ -682,13 +703,13 @@ function yellowCardFunc(value, player) {
     return false;
   };
 
-  let index = yellowCards.indexOf(targetPlayer.auth);
+  let index = yellowCards.indexOf(connectionIds[targetPlayer.id]);
   if ( index != -1 ) { // Player has already received a yellow card
     yellowCards.splice(index, 1); // Clear the card
     room.kickPlayer(targetPlayer.id, "Bạn đã nhận 2 thẻ vàng", true);
     room.sendAnnouncement(`🟨🟨 ${targetPlayer.name} đã nhận thẻ vàng thứ 2 từ ${player.name} (BAN)`, null, YELLOW);
   } else {
-    yellowCards.push(targetPlayer.auth);
+    yellowCards.push(connectionIds[targetPlayer.id]);
     room.sendAnnouncement(`🟨 ${targetPlayer.name} đã nhận một thẻ vàng từ ${player.name}, nhận 2 thẻ vàng người chơi sẽ bị ban`, null, YELLOW);
   };
   return false;
@@ -700,10 +721,10 @@ function muteFunc(value, player) {
     return false;
   };
 
-  let [targetPlayerId, period] = value.split(" ", 2);
-  let targetPlayer = getPlayerByName(targetPlayerId);
+  let [name, period] = value.split(" ", 2);
+  let targetPlayer = getPlayerByName(name);
   if ( !targetPlayer ) {
-    room.sendAnnouncement(`Không thể tìm thấy người chơi "${value}"`, player.id, RED);
+    room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
     return false;
   };
 
@@ -713,12 +734,12 @@ function muteFunc(value, player) {
       return false;
     };
     room.sendAnnouncement(`Bạn đã bị cấm chat trong ${period} phút bởi ${player.id}`, targetPlayer.id, RED, "bold", 2);
-    setTimeout(unmuteCallback.bind(targetPlayer.auth), period * 60000);
+    setTimeout(unmuteCallback.bind(null, connectionIds[targetPlayer.id]), period * 60000);
   } else {
     room.sendAnnouncement(`Bạn đã bị cấm chat bởi ${player.id}`, targetPlayer.id, RED, "bold", 2);
   };
   room.sendAnnouncement(`Đã cấm chat ${targetPlayer.name}`, player.id, GREEN);
-  muteList.add(targetPlayer.auth);
+  muteList.add(connectionIds[targetPlayer.id]);
   return false;
 }
 
@@ -1159,6 +1180,7 @@ function handlePostGame(loser) {
 room.onPlayerJoin = async function(player) {
   validateTag(player);
   initiateChat(player);
+  saveConn(player);
   await updateTeamPlayers(player);
   reorderPlayers();
   if ( MODE == "pick" ) {
@@ -1175,6 +1197,7 @@ room.onPlayerJoin = async function(player) {
 }
 
 room.onPlayerLeave = async function(player) {
+  delete connectionIds[player.id]; // Delete unused record
   if ( player.team != 0 ) {
     await updateTeamPlayers();
   } else if ( afkList.has(player.id) ) { // Player was in AFK list
@@ -1187,11 +1210,7 @@ room.onPlayerLeave = async function(player) {
     if ( isCaptain(player.id) ) {
       await updateCaptain(player.team);
     };
-    // There are no players left in Spectators
-    if ( !room.getPlayerList().some((player) => (player.team == 0) && !afkList.has(player.id)) ) {
-      room.startGame();
-    };
-    if ( isPicking ) showSpecTable();
+    isPicking && !autoPick() && showSpecTable();
   };
 
   // A penalty taker left, end the penalty shootout and give the win the other team
@@ -1280,7 +1299,7 @@ room.onPlayerChat = function(player, message) {
   if ( message.startsWith("!") ) { // Indicating a command
     return processCommand(player, message.slice(1));
   };
-  if ( muteList.has(player.auth) ) {
+  if ( muteList.has(connectionIds[player.id]) ) {
     room.sendAnnouncement("Không thể chat, bạn đã bị cấm", player.id, RED);
     return false;
   };
