@@ -719,11 +719,11 @@ function muteFunc(value, player) {
       return false;
     };
     room.sendAnnouncement(`Bạn đã bị cấm chat trong ${period} phút bởi ${player.id}`, targetPlayer.id, RED, "bold", 2);
-    setTimeout(unmuteCallback.bind(targetPlayer.auth), period * 1000);
+    setTimeout(unmuteCallback.bind(targetPlayer.auth), period * 60000);
   } else {
     room.sendAnnouncement(`Bạn đã bị cấm chat bởi ${player.id}`, targetPlayer.id, RED, "bold", 2);
   };
-  room.sendAnnouncement(`Đã cấm chat ${targetPlayer.id}`, player.id, GREEN);
+  room.sendAnnouncement(`Đã cấm chat ${targetPlayer.name}`, player.id, GREEN);
   muteList.add(targetPlayer.auth);
   return false;
 }
