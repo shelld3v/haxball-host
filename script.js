@@ -1,6 +1,6 @@
 const ADMIN_PASSWORD = "dpdz";
 const MODE = "pick"; // can be "rand" or "pick"
-const AFK_DEADLINE = 7;
+const AFK_DEADLINE = 9;
 const PICK_DEADLINE = 22;
 const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
@@ -481,13 +481,7 @@ function kickAfkFunc(value, player) {
     return false;
   };
 
-  // Track every player on the pitch
-  room.getPlayerList().forEach(function(_player) {
-    if ( _player.team == 0 ) return;
-    let id = _player.id;
-    if ( timeouts.toAct[id] !== undefined ) return; // Player has already been monitored
-    timeouts.toAct[id] = setTimeout(afkCallback.bind(null, id), AFK_DEADLINE * 1000);
-  });
+  trackAfk();
   room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick", null, GREEN);
   return true;
 }
@@ -960,6 +954,17 @@ async function checkSpam(player, message) {
   };
 }
 
+// Track all players on the pitch to find and kick AFK players
+function trackAfk() {
+  // Track every player on the pitch
+  room.getPlayerList().forEach(function(player) {
+    if ( player.team == 0 ) return;
+    let id = player.id;
+    if ( timeouts.toAct[id] !== undefined ) return; // Player has already been monitored
+    timeouts.toAct[id] = setTimeout(afkCallback.bind(null, id), AFK_DEADLINE * 1000);
+  });
+}
+
 // Stop all AFK trackers
 function clearAfkRecords() {
   for (id of Object.keys(timeouts.toAct)) {
@@ -1309,6 +1314,7 @@ room.onGameStart = function(byPlayer) {
   // Stop forcing captain to pick
   clearTimeout(timeouts.toPick);
   setRandomColors();
+  trackAfk();
   room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
   if ( MODE == "rand" ) {
     room.sendChat(`Các quý vị khán giả có ${PREDICTION_PERIOD} giây đầu trận để dự đoán tỉ số và được đá trận sau nếu đoán đúng, cú pháp "!predict RED-BLUE" (VD: !predict 1-2)`);
