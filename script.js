@@ -825,7 +825,7 @@ function updateStats(team) {
     (scorer.team != team) &&
     (assister !== null) &&
     (assister.team == team) &&
-    (Math.abs(ballProperties.x) > GOAL_LINE - BALL_RADIUS * 6)
+    (Math.abs(ballProperties.x) > GOAL_LINE[0] - BALL_RADIUS * 4)
   ) {
     // Correct the credits
     [scorer, assister] = [assister, preAssister];
