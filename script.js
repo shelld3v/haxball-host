@@ -521,16 +521,15 @@ function specFunc(value, player) {
 
   room.sendAnnouncement("Bạn đã được di chuyển ra Spectators", player.id, GREEN);
   navigator.locks.request("update_captain", async lock => {
-    await room.setPlayerTeam(player.id, 0);
     if ( isPicking && !isCaptain(player.id) ) {
       showSpecTable();
-      return; // Don't replace player if 2 teams are picking and player is not a captain
+    } else { // Replace with another player
+      let newPlayer = getNonAfkPlayers().find((_player) => _player.team == 0);
+      if ( newPlayer ) {
+        await room.setPlayerTeam(newPlayer.id, player.team);
+      };
     };
-    // Replace with another player
-    let newPlayer = getNonAfkPlayers().find((_player) => _player.team == 0);
-    if ( newPlayer ) {
-      await room.setPlayerTeam(newPlayer.id, player.team);
-    };
+    await room.setPlayerTeam(player.id, 0);
   });
   return true;
 }
