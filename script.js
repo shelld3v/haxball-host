@@ -420,6 +420,9 @@ async function updateCaptain(teamId, newCaptain) {
       await room.setPlayerTeam(newCaptain.id, teamId);
       // Move old captain to Spectators
       await room.setPlayerTeam(oldCaptainId, 0);
+    } else {
+      // Move old captain to the bottom of the team list to prevent being re-selected as the captain next time
+      room.reorderPlayers([oldCaptainId], false);
     };
     room.sendAnnouncement(`${newCaptain.name} đã được chọn làm đội trưởng của ${TEAM_NAMES[teamId]}`, null, GREEN, "bold");
   });
@@ -839,9 +842,6 @@ function updateStats(team) {
   if ( scorer.team != team ) { // Own goal
     updatePlayerStats(scorer, 0);
     room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
-    if ( assister === null ) {
-      yellowCardFunc(getTag(scorer.name), room.getPlayer(0));
-    };
     return;
   };
 
