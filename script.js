@@ -370,10 +370,7 @@ function updateBallKick(player) {
   } else {
     // Switch to penalty shootout when it hits maximum added time
     let scores = room.getScores();
-    if (
-      (scores.time - scores.timeLimit > MAX_ADDED_TIME) && // Maximum extra time exceeded
-      (room.getPlayerList().filter((player) => player.team != 0).length == 10) // Enough players for a penalty shootout
-    ) {
+    if ( scores.time - scores.timeLimit > MAX_ADDED_TIME ) { // Maximum extra time exceeded
       startPenaltyShootout();
       return;
     };
@@ -445,7 +442,8 @@ function autoPick() {
   let specPlayers = [];
   let redPlayersCount = 0;
   let bluePlayersCount = 0;
-  getNonAfkPlayers().forEach(function(player) {
+  room.getPlayerList().forEach(function(player) {
+    if ( afkList.has(player.id) ) return;
     switch ( player.team ) {
       case 0:
         specPlayers.push(player);
@@ -546,7 +544,7 @@ function pickFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp một mã số, tên hoặc tag hợp lệ (VD: !pick 2 hoặc !pick paul hoặc pick @De_Paul)", player.id, RED);
     return false;
-  } else if ( room.getScores() !== null ) {
+  } else if ( !isPicking ) {
     room.sendAnnouncement("Lệnh không khả dụng ngay lúc này", player.id, RED);
     return false;
   } else if ( player.team != pickTurn ) {
