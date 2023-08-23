@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "dpdz";
+const ADMIN_PASSWORD = "dpxz";
 const MODE = "pick"; // can be "rand" or "pick"
 const AFK_DEADLINE = 10;
 const PICK_DEADLINE = 20;
@@ -203,8 +203,7 @@ function getPlayerByName(value) {
 
 // Get a player by position in Spectators list
 function getPlayerByPos(number) {
-  number--;
-  return getNonAfkPlayers().filter((player) => player.team == 0)[number];
+  return getNonAfkPlayers().filter((player) => player.team == 0)[number - 1];
 }
 
 // Exclude AFK players from player list
@@ -348,7 +347,7 @@ function updateBallKick(player) {
   // Get properties of the ball
   let newBallProperties = room.getDiscProperties(0);
   // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
-  if ( prevShootedTeam != 0 ) {
+  if ( prevShootedTeam != 0 && prevShootedTeam != player.team ) {
     if ( getDistance(newBallProperties.x - ballProperties.x, newBallProperties.y - ballProperties.y) < BALL_RADIUS * 2 ) {
       game.teams[prevShootedTeam].shotsOnTarget--;
     };
@@ -651,7 +650,7 @@ function pauseFunc(value, player) {
 
   room.pauseGame(true);
   room.sendChat(`Trận đấu đã được tạm dừng bởi đội trưởng của ${TEAM_NAMES[player.team]} để thay người`);
-  room.sendAnnouncement(`Bạn có ${PAUSE_TIMEOUT} giây để thay người, dùng !resume khi bạn đã xong việc`, player.id, YELLOW);
+  room.sendAnnouncement(`Bạn có ${PAUSE_TIMEOUT} giây để thay người, dùng !resume khi đã xong việc`, player.id, YELLOW);
   timeouts.toResume = setTimeout(room.pauseGame.bind(null, false), PAUSE_TIMEOUT * 1000);
   return false;
 }
