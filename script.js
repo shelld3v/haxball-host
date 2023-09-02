@@ -6,7 +6,7 @@ const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 20;
-const MAX_ADDED_TIME = 150;
+const MAX_ADDED_TIME = 120;
 const NOTIFICATION_INTERVAL = 300;
 const MAX_DUPE_MESSAGES = 2;
 const RED = 0xFF0000;
@@ -134,6 +134,7 @@ var canPause = false;
 var winningStreak = 0;
 var prevLoser = 1;
 var pickTurn = 0;
+var pausedBy = 0;
 var captains = {1: 0, 2: 0};
 var kits = {red: null, blue: null};
 var prevScore = null;
@@ -651,6 +652,7 @@ function pauseFunc(value, player) {
     return false;
   };
 
+  pausedBy = player.team;
   room.pauseGame(true);
   room.sendChat(`Trận đấu đã được tạm dừng bởi đội trưởng của ${TEAM_NAMES[player.team]} để thay người`);
   room.sendAnnouncement(`Bạn có ${PAUSE_TIMEOUT} giây để thay người, dùng !resume khi đã xong việc`, player.id, YELLOW);
@@ -659,6 +661,11 @@ function pauseFunc(value, player) {
 }
 
 function resumeFunc(value, player) {
+  if ( player.team != pausedBy ) {
+    room.sendAnnouncement("Vui lòng đợi đội bạn thay người", player.id, RED);
+    return false;
+  };
+
   room.pauseGame(false);
   return false;
 }
