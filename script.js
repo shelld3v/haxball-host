@@ -70,6 +70,7 @@ const STADIUM = '{"name":"De Paul Stadium","width":900,"height":404,"spawnDistan
 const PENALTY_STADIUM = '{"name":"De Paul Stadium [PENALTY]","width":420,"height":200,"spawnDistance":310,"bg":{"type":"grass","width":400,"height":260,"kickOffRadius":0,"cornerRadius":0,"color":"718B5B"},"vertexes":[{"x":323,"y":260,"bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":-30},{"x":323,"y":95,"bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":-30},{"x":323,"y":-95,"bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":30},{"x":323,"y":-260,"bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":30},{"x":370,"y":-95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0},{"x":370,"y":95,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0},{"x":332,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":323,"y":260,"bCoef":0,"trait":"line"},{"x":323,"y":-260,"bCoef":0,"trait":"line"},{"x":0,"y":-260,"bCoef":0,"trait":"line"},{"x":0,"y":260,"bCoef":0,"trait":"line"},{"x":323,"y":200,"bCoef":0,"trait":"line"},{"x":110,"y":200,"bCoef":0,"trait":"line"},{"x":110,"y":-200,"bCoef":0,"trait":"line"},{"x":323,"y":-200,"bCoef":0,"trait":"line"},{"x":0,"y":95,"bCoef":0,"trait":"line"},{"x":0,"y":-95,"bCoef":0,"trait":"line"},{"x":110,"y":5,"bCoef":0,"trait":"line"},{"x":110,"y":-5,"bCoef":0,"trait":"line"},{"x":55,"y":-260,"bCoef":0,"cMask":["red"],"trait":"penArea"},{"x":65,"y":260,"bCoef":0,"cMask":["red"],"trait":"penArea"},{"x":300,"y":-90,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"x":365,"y":-90,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"x":365,"y":90,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"x":300,"y":90,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"}],"segments":[{"v0":0,"v1":1,"trait":"ballArea"},{"v0":2,"v1":3,"trait":"ballArea"},{"v0":2,"v1":4,"vis":true,"color":"FFFFFF","cMask":["ball"],"trait":"goalNet","y":-95},{"v0":1,"v1":5,"vis":true,"color":"FFFFFF","cMask":["ball"],"trait":"goalNet","y":95},{"v0":1,"v1":0,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":-30,"x":665},{"v0":2,"v1":3,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":30,"x":665},{"v0":2,"v1":1,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":10,"v1":7,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":10,"v1":9,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":9,"v1":8,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":11,"v1":12,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":12,"v1":13,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":13,"v1":14,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":15,"v1":16,"curve":150,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":18,"v1":17,"curve":180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":17,"v1":18,"curve":180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":5,"v1":4,"vis":true,"color":"FFFFFF","cMask":["ball"],"trait":"goalNet"},{"v0":19,"v1":20,"curve":45,"vis":false,"bCoef":0,"cMask":["red"],"trait":"penArea"},{"v0":21,"v1":22,"vis":false,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"v0":22,"v1":23,"vis":false,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"v0":23,"v1":24,"vis":false,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"v0":24,"v1":21,"vis":false,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"}],"goals":[{"p0":[332,95],"p1":[332,-95],"team":"blue"},{"p0":[325,-100],"p1":[100,0],"team":"red"},{"p0":[100,0],"p1":[320,100],"team":"red"}],"discs":[{"radius":6.56,"color":"FFFDD0","bCoef":0.465,"invMass":1.4,"pos":[110,0],"cGroup":["ball","kick","score"]},{"pos":[323,95],"trait":"goalPost"},{"pos":[323,-95],"trait":"goalPost"}],"planes":[{"normal":[0,1],"dist":-260,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,1],"dist":-260,"canvas_rect":[-710,-260,710,260],"a":[-710,-260],"b":[710,-260]}}},{"normal":[0,-1],"dist":-260,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,-1],"dist":-260,"canvas_rect":[-710,-260,710,260],"a":[-710,260],"b":[710,260]}}},{"normal":[1,0],"dist":-499,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[1,0],"dist":-499,"canvas_rect":[-710,-260,710,260],"a":[-499,-260],"b":[-499,260]}}},{"normal":[-1,0],"dist":-376,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[-1,0],"dist":-376,"canvas_rect":[-710,-260,710,260],"a":[376,-260],"b":[376,260]}}}],"traits":{"ballArea":{"vis":false,"bCoef":1,"cMask":["ball"]},"goalPost":{"radius":4.5,"invMass":0,"color":"C6D881","bCoef":1},"goalNet":{"vis":true,"bCoef":0.2,"cMask":["all"]},"kickOffBarrier":{"vis":false,"bCoef":0.1,"cGroup":["redKO","blueKO"],"cMask":["red","blue"]},"line":{"vis":true,"bCoef":0,"cMask":[""]},"arco":{"radius":2,"cMask":["n/d"],"color":"cccccc"},"penArea":{"vis":false,"bCoef":0,"cMask":["red"]}},"playerPhysics":{"acceleration":0.1096,"kickingAcceleration":0.083,"kickStrength":4.65,"bCoef":0.35},"ballPhysics":"disc0","joints":[],"canBeStored":false,"redSpawnPoints":[[-100,0]],"blueSpawnPoints":[[323,0]],"kickOffReset":"full"}';
 const DISCORD_LINK = "https://discord.gg/DYWZFFsSYu";
 const ALLOWED_COMMANDS = ["!bye", "!pick", "!help", "!login"];
+const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1147919509915717772/9dkrZtMuJn_xMi2FKpntUhZ_x5dFevoeuvO4nMmQJUn5l2yBLhYsgkTPNgJxr4AnJAyn";
 
 // Analyze the stadium
 let parsedStadium = JSON.parse(STADIUM);
@@ -123,6 +124,12 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   clearbans: [clearBansFunc, 2, ["rand", "pick"]],
   assigncap: [assignCaptainFunc, 2, ["pick"]],
 };
+var players = [];
+var nonAfkPlayers = [];
+var specPlayers = [];
+var nonSpecPlayers = [];
+var redPlayers = [];
+var bluePlayers = [];
 var connectionIds = {}; // Store connection IDs of players (this ID is consistent for each network)
 var afkList = new Set([0]); // Host player is always in AFK mode
 var muteList = new Set();
@@ -189,6 +196,23 @@ function getDistance(x, y) {
   return Math.sqrt(x ** 2 + y ** 2);
 }
 
+// Send message to Discord Webhook
+function sendWebhook(title, content) {
+  fetch(DISCORD_WEBHOOK, {
+    method: "POST",
+    body: JSON.stringify({
+      embeds: [{
+        color: 1752220,
+        title: title,
+        description: content,
+      }],
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then((res) => res);
+}
+
 // Move AFK player to bottom of the Spectators list
 function reorderPlayers() {
   room.reorderPlayers(Array.from(afkList), false);
@@ -198,21 +222,16 @@ function reorderPlayers() {
 function getPlayerByName(value) {
   // Find player by tag
   if ( value.startsWith("@") ) {
-    return room.getPlayerList().find((player) => getTag(player.name) == value);
+    return players.find((player) => getTag(player.name) == value);
   };
   // Find player by part of the name
   value = value.toLowerCase();
-  return room.getPlayerList().find((player) => player.name.toLowerCase().includes(value));
+  return players.find((player) => player.name.toLowerCase().includes(value));
 }
 
 // Get a player by position in Spectators list
 function getPlayerByPos(number) {
-  return getNonAfkPlayers().filter((player) => player.team == 0)[number - 1];
-}
-
-// Exclude AFK players from player list
-function getNonAfkPlayers() {
-  return room.getPlayerList().filter((player) => !afkList.has(player.id));
+  return nonAfkPlayers.filter((player) => player.team == 0)[number - 1];
 }
 
 function isCaptain(id) {
@@ -230,7 +249,6 @@ function setRandomColors() {
 // Set avatars for players of a specific team
 async function teamAvatarEffect(teamId, avatar) {
   let flickerDelay = 200;
-  let players = room.getPlayerList().filter((player) => player.team == teamId);
   for (let i = 0; i < 4; i++) {
     for (player of players) {
       await room.setPlayerAvatar(player.id, avatar);
@@ -244,9 +262,7 @@ async function teamAvatarEffect(teamId, avatar) {
 }
 
 function showSpecTable() {
-  let playerList = room.getPlayerList()
-    .filter((player) => (player.team == 0) && !afkList.has(player.id))
-    .map((player, index) => `${player.name} (#${index + 1})`);
+  let playerList = specPlayers.map((player, index) => `${player.name} (#${index + 1})`);
   let table = " ".repeat(85) + "DANH SÁCH DỰ BỊ\n" + "_".repeat(150) + "\n" + playerList.join("  •  ") + "\n" + "_".repeat(150);
   room.sendAnnouncement(table, captains[pickTurn], BLUE, "small-bold");
   room.sendAnnouncement("Hướng dẫn: dùng !pick <số> hoặc !pick <tên> hoặc !pick <tag> để chọn người chơi (VD: !pick 2 / !pick paul / !pick @De_Paul)", captains[pickTurn], YELLOW, "small", 0);
@@ -261,7 +277,7 @@ function validatePlayer(player) {
   };
   // Duplicate tag
   let tag = getTag(player.name.trim());
-  if ( room.getPlayerList().some((_player) => (_player.id != player.id) && (getTag(_player.name.trim()) == tag)) ) {
+  if ( players.some((_player) => (_player.id != player.id) && (getTag(_player.name.trim()) == tag)) ) {
     room.kickPlayer(player.id, "Vui lòng đổi tên");
   };
 }
@@ -316,21 +332,23 @@ function getPenaltyLoser() {
 }
 
 // Move a player to a team (if needed)
-async function updateTeamPlayers(specPlayer) {
+async function updateTeamPlayers(subPlayer) {
   if ( (room.getScores() === null) || isTakingPenalty ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
     let players = getNonAfkPlayers();
     // Find team that needs new player the most
-    let redPlayersCount = players.filter((player) => player.team == 1).length;
+    let redPlayers = players.filter((player) => player.team == 1);
     let bluePlayersCount = players.filter((player) => player.team == 2).length;
     if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) return; // Enough players for 2 teams
     let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
 
-    if ( !specPlayer ) {
+    if ( !subPlayer ) {
+      if ( Math.abs(redPlayersCount - bluePlayersCount) >= 2 ) {
+        subPlayer = 
       // Get a bench player (like Penaldo)
-      specPlayer = players.find((player) => player.team == 0);
-      if ( !specPlayer ) return; // No players left in the Spectators
+      subPlayer = players.find((player) => player.team == 0);
+      if ( !subPlayer ) return; // No players left in the Spectators
     }
 
     await room.setPlayerTeam(specPlayer.id, missingTeam);
@@ -442,23 +460,7 @@ async function pick(pickedPlayer, teamId) {
 
 // Under certain conditions, automatically pick, start the game and return true
 function autoPick() {
-  let specPlayers = [];
-  let redPlayersCount = 0;
-  let bluePlayersCount = 0;
-  room.getPlayerList().forEach(function(player) {
-    if ( afkList.has(player.id) ) return;
-    switch ( player.team ) {
-      case 0:
-        specPlayers.push(player);
-        break;
-      case 1:
-        redPlayersCount++;
-        break;
-      case 2:
-        bluePlayersCount++;
-    };
-  });
-  if ( (specPlayers.length > 1) && (Math.abs(redPlayersCount - bluePlayersCount) < specPlayers.length) ) return false;
+  if ( (specPlayers.length > 1) && (Math.abs(redPlayers.length - bluePlayers.length) < specPlayers.length) ) return false;
 
   // Move all players to the missing team
   for (player of specPlayers) {
@@ -471,15 +473,12 @@ function autoPick() {
 // Request a pick from the most needed team
 function requestPick() {
   if ( room.getScores() !== null ) return; // Game started
-  let players = room.getPlayerList();
-  let redPlayersCount = players.filter((player) => player.team == 1).length;
-  let bluePlayersCount = players.filter((player) => player.team == 2).length;
   // Enough players for 2 teams
-  if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) {
+  if ( (redPlayers.length >= 5) && (bluePlayers.length >= 5) ) {
     room.startGame();
     return;
   };
-  pickTurn = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
+  pickTurn = ( redPlayers.length > bluePlayers.length ) ? 2 : 1;
   if ( autoPick() ) return;
 
   room.sendAnnouncement(`${TEAM_NAMES[pickTurn]} đang chọn người chơi...`, null, YELLOW);
@@ -948,6 +947,7 @@ function reportStats() {
   stats = stats.concat("\n", `Chuỗi bất bại: ${winningStreak} trận`);
 
   room.sendAnnouncement(stats, null, YELLOW, "small-bold", 0);
+  sendWebhook(`🔥 ${scoreline} 🔥`, stats)
 }
 
 function celebrateGoal(team) {
@@ -1001,8 +1001,7 @@ async function checkSpam(player, message) {
 // Track all players on the pitch to find and kick AFK players
 function trackAfk() {
   // Track every player on the pitch
-  room.getPlayerList().forEach(function(player) {
-    if ( player.team == 0 ) return;
+  nonSpecPlayers.forEach(function(player) {
     let id = player.id;
     if ( timeouts.toAct[id] !== undefined ) return; // Player has already been monitored
     timeouts.toAct[id] = setTimeout(afkCallback.bind(null, id), AFK_DEADLINE * 1000);
@@ -1035,7 +1034,7 @@ async function startPenaltyShootout() {
   prevScore = Array(2).fill(room.getScores().red).join("-");
   // Store players' team and role (GK or not) for the penalty shootout
   let deepestPositions = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER];
-  room.getPlayerList().forEach(function(player) {
+  nonSpecPlayers.forEach(function(player) {
     switch ( player.team ) {
       case 1:
         penalty.red[0].push(player.id);
@@ -1089,8 +1088,7 @@ async function takePenalty() {
   };
 
   // Put previous penalty taker and goalkeeper back to the Spectators
-  for (player of room.getPlayerList()) {
-    if (player.team == 0) continue;
+  for (player of nonSpecPlayers) {
     await room.setPlayerTeam(player.id, 0);
   };
   // Switch to the next team to take the penalty
@@ -1150,7 +1148,7 @@ async function randPlayers() {
   }, []);
   let prevWinner = ( prevLoser == 1 ) ? 2 : 1;
   // Get player list and suffle it
-  let idList = getNonAfkPlayers().sort(function(player1, player2) {
+  let idList = nonAfkPlayers.sort(function(player1, player2) {
     // Sort players of the winning team to be on top of the list so they will be picked up in the same team  
     if ( player1.team == prevWinner ) return -1;
     if ( player2.team == prevWinner ) return 1;
@@ -1184,9 +1182,9 @@ async function pickPlayers() {
   // Change captain of the losing team
   await updateCaptain(prevLoser);
   // Move players to Spectators
-  let players = room.getPlayerList();
-  for (let player of players) {
-    if ( (player.team != prevLoser) || isCaptain(player.id) ) continue;
+  let losers = ( prevLoser == 1 ) ? redPlayers : bluePlayer;
+  for (let player of losers) {
+    if ( isCaptain(player.id) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
   requestPick();
@@ -1342,6 +1340,7 @@ room.onPositionsReset = function() {
 }
 
 room.onPlayerChat = function(player, message) {
+  clearAfkRecord(player.id);
   // Perform some validations on the message
   if ( !player.admin && ALLOWED_COMMANDS.every((command) => !message.startsWith(command)) ) {
     // Disallow Spectators from messaging when 2 teams are picking or taking penalty
