@@ -124,10 +124,10 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   clearbans: [clearBansFunc, 2, ["rand", "pick"]],
   assigncap: [assignCaptainFunc, 2, ["pick"]],
 };
+var allPlayers = [];
 var players = [];
-var nonAfkPlayers = [];
 var specPlayers = [];
-var nonSpecPlayers = [];
+var teamPlayers = [];
 var redPlayers = [];
 var bluePlayers = [];
 var connectionIds = {}; // Store connection IDs of players (this ID is consistent for each network)
@@ -196,7 +196,31 @@ function getDistance(x, y) {
   return Math.sqrt(x ** 2 + y ** 2);
 }
 
-// Send message to Discord Webhook
+// Update variables about players
+function updateVariables() {
+  allPlayers = room.getPlayerList();
+  let newPlayers = [];
+  let newSpecPlayers = [];
+  let newRedPlayers = [];
+  let newBluePlayers = [];
+  for (let player of allPlayers) {
+    if ( afkList.has(player.id) ) continue;
+    newPlayers.push(player);
+    switch ( player.team ) {
+      case 0:
+        newSpecPlayers.push(player);
+        break;
+      case 1:
+        newRedPlayers.push(player);
+        break;
+      case 2:
+        newBluePlayers.push(player);
+    };
+  };
+  [players, specPlayers, redPlayers, bluePlayers] = [newPlayers, specPlayers, redPlayers, bluePlayers];
+}
+
+// Send a message to Discord Webhook
 function sendWebhook(title, content) {
   fetch(DISCORD_WEBHOOK, {
     method: "POST",
@@ -222,16 +246,16 @@ function reorderPlayers() {
 function getPlayerByName(value) {
   // Find player by tag
   if ( value.startsWith("@") ) {
-    return players.find((player) => getTag(player.name) == value);
+    return allPlayers.find((player) => getTag(player.name) == value);
   };
   // Find player by part of the name
   value = value.toLowerCase();
-  return players.find((player) => player.name.toLowerCase().includes(value));
+  return allPlayers.find((player) => player.name.toLowerCase().includes(value));
 }
 
 // Get a player by position in Spectators list
 function getPlayerByPos(number) {
-  return nonAfkPlayers.filter((player) => player.team == 0)[number - 1];
+  return specPlayers[number - 1];
 }
 
 function isCaptain(id) {
@@ -259,6 +283,11 @@ async function teamAvatarEffect(teamId, avatar) {
     };
     await new Promise(r => setTimeout(r, flickerDelay));
   };
+}
+
+function getMissingTeam() {
+  if ( (redPlayers.length >= 5) && (bluePlayers.length >= 5) ) return 0;
+  return ( redPlayers.length > bluePlayers.length ) ? 2 : 1;
 }
 
 function showSpecTable() {
@@ -332,27 +361,23 @@ function getPenaltyLoser() {
 }
 
 // Move a player to a team (if needed)
-async function updateTeamPlayers(subPlayer) {
+async function updateTeamPlayers() {
   if ( (room.getScores() === null) || isTakingPenalty ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
-    let players = getNonAfkPlayers();
-    // Find team that needs new player the most
-    let redPlayers = players.filter((player) => player.team == 1);
-    let bluePlayersCount = players.filter((player) => player.team == 2).length;
-    if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) return; // Enough players for 2 teams
-    let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
+    let missingTeam = getMissingTeam();
+    if ( missingTeam == 0 ) return;
 
-    if ( !subPlayer ) {
-      if ( Math.abs(redPlayersCount - bluePlayersCount) >= 2 ) {
-        subPlayer = 
-      // Get a bench player (like Penaldo)
-      subPlayer = players.find((player) => player.team == 0);
-      if ( !subPlayer ) return; // No players left in the Spectators
-    }
+    if ( specPlayers.length != 0 ) { // Get a player from the Spectators
+      var subPlayer = specPlayers[0];
+    } else if ( Math.abs(redPlayers.length - bluePlayer.length) >= 2 ) { // Balance players from 2 teams
+      var subPlayer = ( missingTeam == 1 ) ? bluePlayers[0] : redPlayers[0];
+    } else {
+      return;
+    };
 
     await room.setPlayerTeam(specPlayer.id, missingTeam);
-    if ( MODE == "pick" ) {
+    if ( (MODE == "pick") && (specPlayers.length != 0) ) {
       room.sendAnnouncement(`${specPlayer.name} đã được tự động thay vào đội, dùng !sub để thay người`, captains[missingTeam], YELLOW);
     };
   });
@@ -419,7 +444,6 @@ async function updateCaptain(teamId, newCaptain) {
     // Choose a random captain from the current team
     if ( !newCaptain ) {
       // Exclude former captain and AFK players
-      let players = getNonAfkPlayers().filter((player) => player.id != captains[teamId]);
       newCaptain = (
         players.find((player) => player.team == teamId) || // Find someone who is in the team
         players.find((player) => player.team == 0) // If there is no one else, pick someone from the Spectators
@@ -473,12 +497,11 @@ function autoPick() {
 // Request a pick from the most needed team
 function requestPick() {
   if ( room.getScores() !== null ) return; // Game started
-  // Enough players for 2 teams
-  if ( (redPlayers.length >= 5) && (bluePlayers.length >= 5) ) {
+  pickTurn = getMissingTeam();
+  if ( pickTurn == 0 ) {
     room.startGame();
     return;
   };
-  pickTurn = ( redPlayers.length > bluePlayers.length ) ? 2 : 1;
   if ( autoPick() ) return;
 
   room.sendAnnouncement(`${TEAM_NAMES[pickTurn]} đang chọn người chơi...`, null, YELLOW);
@@ -527,7 +550,7 @@ function specFunc(value, player) {
     if ( isPicking && !isCaptain(player.id) ) {
       showSpecTable();
     } else { // Replace with another player
-      let newPlayer = getNonAfkPlayers().find((_player) => _player.team == 0);
+      let newPlayer = specPlayers[0];
       if ( newPlayer ) {
         await room.setPlayerTeam(newPlayer.id, player.team);
       };
@@ -778,8 +801,8 @@ function afkFunc(value, player) {
     afkList.delete(player.id);
     room.sendAnnouncement(`${player.name} đã thoát chế độ AFK`, null, GREEN);
   } else {
-    // Only allows 3 AFK players including the host
-    if ( afkList.size == 3 ) {
+    // Only allows 4 AFK players including the host
+    if ( afkList.size == 4 ) {
       room.sendAnnouncement("Đã có quá nhiều người chơi AFK, bạn không thể AFK", player.id, RED);
       return false;
     }
@@ -1148,7 +1171,7 @@ async function randPlayers() {
   }, []);
   let prevWinner = ( prevLoser == 1 ) ? 2 : 1;
   // Get player list and suffle it
-  let idList = nonAfkPlayers.sort(function(player1, player2) {
+  let idList = players.sort(function(player1, player2) {
     // Sort players of the winning team to be on top of the list so they will be picked up in the same team  
     if ( player1.team == prevWinner ) return -1;
     if ( player2.team == prevWinner ) return 1;
@@ -1179,14 +1202,14 @@ async function randPlayers() {
 async function pickPlayers() {
   isPicking = true;
   pickTurn = 0; // Prevent `updateCaptain` calling `requestPick` when players haven't been moved to the Spectators yet
-  // Change captain of the losing team
-  await updateCaptain(prevLoser);
   // Move players to Spectators
   let losers = ( prevLoser == 1 ) ? redPlayers : bluePlayer;
   for (let player of losers) {
     if ( isCaptain(player.id) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
+  // Change captain of the losing team
+  await updateCaptain(prevLoser);
   requestPick();
 }
 
@@ -1208,6 +1231,7 @@ function handlePostGame(loser) {
 
 room.onPlayerJoin = async function(player) {
   validatePlayer(player);
+  updateVariables();
   initiateChat(player);
   saveConn(player);
   await updateTeamPlayers(player);
@@ -1226,6 +1250,7 @@ room.onPlayerJoin = async function(player) {
 }
 
 room.onPlayerLeave = async function(player) {
+  updateVariables();
   delete connectionIds[player.id]; // Delete unused record
   if ( player.team != 0 ) {
     await updateTeamPlayers();
