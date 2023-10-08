@@ -150,7 +150,7 @@ var predictions = {};
 var lastKicked = [null, null, null]; // Last players who kicked the ball
 var lastMessage = [null, null]; // Last message and the player ID of the sender
 var prevShootedTeam = 0;
-var ballProperties = null;
+var ballProperties = [null, null]; // Ball properties in the last 2 kicks
 var yellowCards = [];
 var game = null;
 var penalty = null;
@@ -373,26 +373,25 @@ function updateBallKick(player) {
   // Update information about last players who kicked the ball
   lastKicked.unshift(player);
   lastKicked.pop();
+  ballProperties[0].unshift(room.getDiscProperties(0));
+  ballProperties[0].pop();
   // Get the previous kicker
   let prevKicker = lastKicked[1];
-  // Get properties of the ball
-  let newBallProperties = room.getDiscProperties(0);
   // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
-  if ( prevShootedTeam != 0 && prevShootedTeam != player.team ) {
-    if ( getDistance(newBallProperties.x - ballProperties.x, newBallProperties.y - ballProperties.y) < BALL_RADIUS * 2 ) {
+  if ( (prevShootedTeam != 0) && (prevShootedTeam != player.team) ) {
+    if ( getDistance(ballProperties[0].x - ballProperties[1].x, ballProperties[0].y - ballProperties[1].y) < BALL_RADIUS * 2 ) {
       game.teams[prevShootedTeam].shotsOnTarget--;
     };
     prevShootedTeam = 0;
   };
-  ballProperties = newBallProperties;
 
   // The x position value of the opponent's goal
   let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE[0] : -GOAL_LINE[0];
-  if ( xOpponentGoal * ballProperties.xspeed > 0 ) { // It's a kick toward the opponent goal
+  if ( xOpponentGoal * ballProperties[0].xspeed > 0 ) { // It's a kick toward the opponent goal
     // Check if it's shot on target
     if (
-      (Math.abs(ballProperties.x + ballProperties.xspeed * 99.762) > GOAL_LINE[0]) && // At this speed, the ball would cross the goal line
-      (Math.abs(ballProperties.y + ballProperties.yspeed / ballProperties.xspeed * (xOpponentGoal - ballProperties.x)) < GOAL_LINE[1]) // It's on target (not really accurate because it might hit the post)
+      (Math.abs(ballProperties[0].x + ballProperties[0].xspeed * 99.762) > GOAL_LINE[0]) && // At this speed, the ball would cross the goal line
+      (Math.abs(ballProperties[0].y + ballProperties[0].yspeed / ballProperties[0].xspeed * (xOpponentGoal - ballProperties[0].x)) < GOAL_LINE[1]) // It's on target (not really accurate because it might hit the post)
     ) {
       game.teams[player.team].shotsOnTarget++;
       prevShootedTeam = player.team;
@@ -873,15 +872,17 @@ function updateStats(team) {
   var [scorer, assister, preAssister] = lastKicked;
   if ( scorer === null ) return;
 
+  let ball = ballProperties[0];
   // Not an own goal but probably a clearing/goalkeeping effort
   if (
-    (scorer.team != team) &&
-    (assister !== null) &&
-    (assister.team == team) &&
-    (Math.abs(ballProperties.x) > GOAL_LINE[0] - BALL_RADIUS * 4)
+    (scorer.team != team) && // It was an own goal
+    (assister !== null) && // Someone's kick resulted in this goal
+    (assister.team == team) && // The previous kick came from an opponent player
+    (Math.abs(ball.x) > GOAL_LINE[0] - BALL_RADIUS * 4) // The gap between the ball and the goal-line was too small that it probably was an effort to clear the ball
   ) {
     // Correct the credits
     [scorer, assister] = [assister, preAssister];
+    ball = ballProperties[1];
   };
 
   if ( scorer.team != team ) { // Own goal
@@ -914,12 +915,12 @@ function updateStats(team) {
 
   room.sendChat(comment);
   // Calculate goal stats
-  let speed = convertToMeters(getDistance(ballProperties.xspeed, ballProperties.yspeed) * 60); // There are 60 frames per second
-  if ( Math.abs(ballProperties.y) <= GOAL_LINE[1] ) {
-    var distance = GOAL_LINE[0] - Math.abs(ballProperties.x);
+  let speed = convertToMeters(getDistance(ball.xspeed, ball.yspeed) * 60); // There are 60 frames per second
+  if ( Math.abs(ball.y) <= GOAL_LINE[1] ) {
+    var distance = GOAL_LINE[0] - Math.abs(ball.x);
   } else {
     // Get the distance between the ball and the nearest post
-    var distance = getDistance(GOAL_LINE[0] - Math.abs(ballProperties.x), Math.abs(ballProperties.y) - GOAL_LINE[1]);
+    var distance = getDistance(GOAL_LINE[0] - Math.abs(ball.x), Math.abs(ball.y) - GOAL_LINE[1]);
   };
   distance = convertToMeters(distance);
   room.sendAnnouncement(`Khoảng cách: ${distance || "dưới 1"}m | Lực sút: ${speed} (m/s)`, null, GREEN, "small");
@@ -1402,7 +1403,7 @@ room.onPositionsReset = function() {
   };
 
   isPlaying = true;
-  ballProperties = null;
+  ballProperties = [null, null];
   prevShootedTeam = 0;
   lastKicked = [null, null, null];
   // Allows captains to pause the game before kick-off
