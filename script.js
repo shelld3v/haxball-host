@@ -79,6 +79,7 @@ const BALL_RADIUS = parsedStadium.ballPhysics.radius || 10;
 delete parsedStadium; // Free the memory
 
 const playerStats = {
+  name: null,
   goals: 0,
   assists: 0,
   ownGoals: 0,
@@ -174,6 +175,88 @@ room.setTeamsLock(1);
 room.setKickRateLimit(7, 15, 3);
 room.startGame();
 setInterval(room.sendAnnouncement.bind(null, `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`, null, YELLOW, "small-italic", 0), NOTIFICATION_INTERVAL * 1000);
+
+if ( new Date().getDate() == 1 ) resetStorage();
+
+// Reset data saved in the localStorage
+function resetStorage() {
+  let month = new Date().getMonth();
+  let playerList = [];
+  for (var i = 0; i < localStorage.length; i++) {
+    var key = localStorage.key(i);
+    if ( key.length != 43 ) continue;
+    playerList.push(JSON.parse(localStorage.getItem(key)));
+  }
+
+  let topScorers = playerList.sort(function (player1, player2) {
+    if ( player1.goals == player2.goals ) {
+      return player2.assists - player1.assists;
+    };
+    return player2.goals - player1.goals;
+  }).slice(0, 5);
+  let topAssisters = playerList.sort(function (player1, player2) {
+    if ( player1.assists == player2.assists ) {
+      return player2.goals - player1.goals;
+    };
+    return player2.assists - player1.assists;
+  }).slice(0, 5);
+  let topOwnGoalScorers = playerList.sort((player1, player2) => player2.ownGoals - player1.ownGoals).slice(0, 5);
+
+  let msg = `Danh sách vua phá lưới tháng ${month}:
+${topScorers.map((player, index) => `${index}. ${player.name} - ${player.goals} bàn thắng (${player.assists} kiến tạo)`).join("\n")}`;
+  setInterval(room.sendAnnouncement.bind(null, msg, null, BLUE, "small-bold", 0), 10 * 1000);
+
+  let discordFields = [
+    {
+      name: "Vua phá lưới",
+      value: `============================\n\n**${topScorers.map((player, index) => `${index}. ${player.name}**`).join("\n")}`,
+      inline: true,
+    },
+    {
+      name: "Số bàn thắng",
+      value: `================\n\n${topScorers.map((player, index) => player.goals).join("\n")}`,
+      inline: true,
+    },
+    {
+      name: '\u200B',
+      value: '\u200B',
+      inline: true
+    },
+    {
+      name: "Vua kiến tạo",
+      value: `============================\n\n**${topAssisters.map((player, index) => `${index}. ${player.name}`).join("\n")}**`,
+      inline: true,
+    },
+    {
+      name: "Số kiến tạo",
+      value: `================\n\n${topAssisters.map((player, index) => player.assists).join("\n")}`,
+      inline: true,
+    },
+    {
+      name: '\u200B',
+      value: '\u200B',
+      inline: true
+    },
+    {
+      name: "Vua báo",
+      value: `============================\n\n**${topOwnGoalScorers.map((player, index) => `${index}. ${player.name}`).join("\n")}**`,
+      inline: true,
+    },
+    {
+      name: "Số bàn phản lưới",
+      value: `================\n\n${topOwnGoalScorers.map((player, index) => player.ownGoals).join("\n")}`,
+      inline: true,
+    },
+    {
+      name: '\u200B',
+      value: '\u200B',
+      inline: true
+    },
+  ];
+  sendWebhook(`✨ Số liệu thống kê trong tháng ${month}`, null, discordFields);
+
+  localStorage.clear();
+}
 
 // Get a chat-pingable tag from player's name
 function getTag(name) {
@@ -533,8 +616,8 @@ function byeFunc(value, player) {
 }
 
 function showStatsFunc(value, player) {
-  let item = ( localStorage.getItem(identities[player.id][0]) || { ...playerStats } );
-  room.sendAnnouncement(`Thống kê của ${player.name}:`, player.id, BLUE, "bold");
+  let item = ( JSON.parse(localStorage.getItem(identities[player.id][0])) || { ...playerStats } );
+  room.sendAnnouncement(`Thống kê trong tháng của ${player.name}:`, player.id, BLUE, "bold");
   room.sendAnnouncement(`★ Bàn thắng: ${item.goals}
  ↑ Kiến tạo: ${item.assists}
  ⁈ Bàn thắng phản lưới nhà: ${item.ownGoals}`, player.id, BLUE, "small-bold");
@@ -849,6 +932,7 @@ function processCommand(player, input) {
 }
 
 function updatePlayerStats(player, type) {
+  if ( identities[player.id] === undefined ) return; 
   // If player hasn't had stats yet, initialize an object
   let auth = identities[player.id][0];
   game.players[auth] = ( game.players[auth] || { ...playerReport } );
@@ -928,11 +1012,12 @@ function updateStats(team) {
 
 function saveStats() {
   for (const [auth, info] of Object.entries(game.players)) {
-    let item = ( localStorage.getItem(auth) || { ...playerStats } );
+    let item = ( JSON.parse(localStorage.getItem(auth)) || { ...playerStats } );
+    item.name = info.name;
     item.goals += info.goals;
     item.assists += info.assists;
     item.ownGoals += info.ownGoals;
-    localStorage.setItem(auth, item);
+    localStorage.setItem(auth, JSON.stringify(item));
   };
 }
 
@@ -1100,7 +1185,7 @@ function initiateChat(player) {
 Discord: ${DISCORD_LINK}`;
   room.sendAnnouncement(msg, player.id, GREEN, "normal", 0);
   room.sendAnnouncement(`Số người chơi đang AFK: ${afkList.size - 1}`, player.id, YELLOW, "normal", 0);
-  room.sendAnnouncement(`MỚI: Người chơi từ này có thể xem thống kê trong tháng của họ bằng lệnh !stats`, player.id, YELLOW, "small-bold", 0);
+  room.sendAnnouncement(`MỚI: Người chơi từ này có thể xem thống kê trong tháng của họ bằng lệnh !stats`, player.id, YELLOW, "small-italic", 0);
 }
 
 async function startPenaltyShootout() {
@@ -1473,6 +1558,7 @@ room.onGameStart = function(byPlayer) {
 
 room.onGameStop = async function(byPlayer) {
   clearAfkRecords(); // Stop monitoring AFK when the game is stopped
+  saveStats(); // Save stats of the previous game
   if ( (byPlayer !== null) && (byPlayer.id != 0) ) { // It wasn't a game over or stopped by host player
     isPlaying = false;
     room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
