@@ -456,8 +456,8 @@ function updateBallKick(player) {
   // Update information about last players who kicked the ball
   lastKicked.unshift(player);
   lastKicked.pop();
-  ballProperties[0].unshift(room.getDiscProperties(0));
-  ballProperties[0].pop();
+  ballProperties.unshift(room.getDiscProperties(0));
+  ballProperties.pop();
   // Get the previous kicker
   let prevKicker = lastKicked[1];
   // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
