@@ -1558,7 +1558,7 @@ room.onGameStart = function(byPlayer) {
 
 room.onGameStop = async function(byPlayer) {
   clearAfkRecords(); // Stop monitoring AFK when the game is stopped
-  saveStats(); // Save stats of the previous game
+  if ( getNonAfkPlayers().length >= 8 ) saveStats(); // Save stats of the previous game
   if ( (byPlayer !== null) && (byPlayer.id != 0) ) { // It wasn't a game over or stopped by host player
     isPlaying = false;
     room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
