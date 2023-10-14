@@ -1514,7 +1514,7 @@ room.onPlayerChat = function(player, message) {
   };
 
   if ( isPicking && isCaptain(player.id) && Number.isInteger(Number(message)) ) {
-    pickFunc(message, player);
+    return pickFunc(message, player);
   };
   if ( message.startsWith("!") ) { // Indicating a command
     return processCommand(player, message.slice(1));
