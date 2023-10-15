@@ -1346,9 +1346,9 @@ async function pickPlayers() {
     if ( (player.team != prevLoser) || isCaptain(player.id) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
-  requestPick();
   // Change captain of the losing team
   await updateCaptain(prevLoser);
+  requestPick();
 }
 
 function reset() {
