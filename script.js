@@ -872,7 +872,7 @@ function muteFunc(value, player) {
       room.sendAnnouncement("Vui lòng cung cấp một thời hạn cấm chat hợp lệ (VD: !mute @De_Paul 3)", player.id, RED);
       return false;
     };
-    room.sendAnnouncement(`Bạn đã bị cấm chat trong ${period} phút bởi ${player.id}`, targetPlayer.id, RED, "bold", 2);
+    room.sendAnnouncement(`Bạn đã bị cấm chat trong ${period} phút bởi ${player.name}`, targetPlayer.id, RED, "bold", 2);
     setTimeout(unmuteCallback.bind(null, identities[targetPlayer.id][1]), period * 60000);
   } else {
     room.sendAnnouncement(`Bạn đã bị cấm chat bởi ${player.id}`, targetPlayer.id, RED, "bold", 2);
