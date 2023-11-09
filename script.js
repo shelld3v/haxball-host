@@ -204,13 +204,14 @@ function resetStorage() {
   let topOwnGoalScorers = playerList.sort((player1, player2) => player2.ownGoals - player1.ownGoals).slice(0, 5);
 
   let msg = `Danh sách vua phá lưới tháng ${month}:
-${topScorers.map((player, index) => `${index}. ${player.name} - ${player.goals} bàn thắng (${player.assists} kiến tạo)`).join("\n")}`;
-  setInterval(room.sendAnnouncement.bind(null, msg, null, BLUE, "small-bold", 0), 10 * 1000);
+
+${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goals} bàn thắng (${player.assists} kiến tạo)`).join("\n")}`;
+  setInterval(room.sendAnnouncement.bind(null, msg, null, BLUE, "small-bold", 0), 3.5 * 60 * 1000);
 
   let discordFields = [
     {
       name: "Vua phá lưới",
-      value: `============================\n\n**${topScorers.map((player, index) => `${index}. ${player.name}**`).join("\n")}`,
+      value: `============================\n\n**${topScorers.map((player, index) => `${index + 1}. ${player.name}`).join("\n")}**`,
       inline: true,
     },
     {
@@ -225,7 +226,7 @@ ${topScorers.map((player, index) => `${index}. ${player.name} - ${player.goals} 
     },
     {
       name: "Vua kiến tạo",
-      value: `============================\n\n**${topAssisters.map((player, index) => `${index}. ${player.name}`).join("\n")}**`,
+      value: `============================\n\n**${topAssisters.map((player, index) => `${index + 1}. ${player.name}`).join("\n")}**`,
       inline: true,
     },
     {
@@ -240,7 +241,7 @@ ${topScorers.map((player, index) => `${index}. ${player.name} - ${player.goals} 
     },
     {
       name: "Vua báo",
-      value: `============================\n\n**${topOwnGoalScorers.map((player, index) => `${index}. ${player.name}`).join("\n")}**`,
+      value: `============================\n\n**${topOwnGoalScorers.map((player, index) => `${index + 1}. ${player.name}`).join("\n")}**`,
       inline: true,
     },
     {
