@@ -129,6 +129,7 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   resume: [resumeFunc, 1, ["pick"]],
   yellow: [yellowCardFunc, 2, ["rand", "pick"]],
   mute: [muteFunc, 2, ["rand", "pick"]],
+  unmute: [unmuteFunc, 2, ["rand", "pick"]],
   clearmutes: [clearMutesFunc, 2, ["rand", "pick"]],
   clearbans: [clearBansFunc, 2, ["rand", "pick"]],
   assigncap: [assignCaptainFunc, 2, ["pick"]],
@@ -614,7 +615,7 @@ function discordFunc(value, player) {
 
 function byeFunc(value, player) {
   room.kickPlayer(player.id, "Bye, sớm quay lại room nha 👋🏻🥺");
-  return true;
+  return false;
 }
 
 function showStatsFunc(value, player) {
@@ -877,9 +878,25 @@ function muteFunc(value, player) {
   } else {
     room.sendAnnouncement(`Bạn đã bị cấm chat bởi ${player.id}`, targetPlayer.id, RED, "bold", 2);
   };
-  room.sendAnnouncement(`Đã cấm chat ${targetPlayer.name}`, player.id, GREEN);
+  room.sendAnnouncement(`${targetPlayer.name} đã bị cấm chat`, null, RED);
   muteList.add(identities[targetPlayer.id][1]);
   return false;
+}
+
+function unmuteFunc(value, player) {
+  if ( !value ) {
+    room.sendAnnouncement("Vui lòng cung cấp một người chơi hợp lệ (VD: !unmute @De_Paul hoặc !unmute paul)", player.id, RED);
+    return false;
+  };
+
+  let targetPlayer = getPlayerByName(value);
+  if ( !targetPlayer ) {
+    room.sendAnnouncement(`Không thể tìm thấy người chơi "${value}"`, player.id, RED);
+    return false;
+  };
+
+  muteList.delete(identities[targetPlayer.id][1]);
+  room.sendAnnouncement(`${targetPlayer.name} đã có thể chat trở lại`, null, GREEN);
 }
 
 function clearMutesFunc(value, player) {
