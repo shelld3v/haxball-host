@@ -9,6 +9,7 @@ const PREDICTION_PERIOD = 30;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 300;
 const MAX_DUPE_MESSAGES = 2;
+const MAX_PLAYER_RADIUS_REDUCTION = 2;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
 const BLUE = 0x00BFFF;
@@ -77,6 +78,7 @@ const NEW_UPDATE_MESSAGE = 'MỚI: Đội trưởng có thể lựa chọn ngư�
 let parsedStadium = JSON.parse(STADIUM);
 const GOAL_LINE = parsedStadium.goals[0].p0.map((coordinate) => Math.abs(coordinate)); // Both x and y values are positive numbers
 const BALL_RADIUS = parsedStadium.ballPhysics.radius || 10;
+const PLAYER_RADIUS = parsedStadium.playerPhysics.radius || 15;
 delete parsedStadium; // Free the memory
 
 const playerStats = {
@@ -123,6 +125,7 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   afk: [afkFunc, 0, ["rand", "pick"]],
   captains: [listCaptainsFunc, 0, ["pick"]],
   predict: [predictFunc, 0, ["rand", "pick"]],
+  reducesize: [reduceSizeFunc, 0, ["rand", "pick"]],
   sub: [subFunc, 1, ["pick"]],
   pause: [pauseFunc, 1, ["pick"]],
   resume: [resumeFunc, 1, ["pick"]],
@@ -729,6 +732,21 @@ function predictFunc(prediction, player) {
   };
   
   room.sendAnnouncement(`${player.name} đã dự đoán tỉ số RED ${prediction} BLUE`, null, GREEN);
+  return false;
+}
+
+function reduceSizeFunc(value, player) {
+  if ( player.team == 0 ) {
+    room.sendAnnouncement("Bạn đang ở ngoài sân", player.id, RED);
+    return false;
+  };
+
+  let playerRadius = room.getPlayerDiscProperties(player.id).radius;
+  if ( PLAYER_RADIUS - playerRadius >= MAX_PLAYER_RADIUS_REDUCTION ) {
+    room.sendAnnouncement("Đã giảm đến kích thước tối đa", player.id, RED);
+    return false;
+  };
+  room.setPlayerDiscProperties(player.id, { radius: playerRadius - 1 });
   return false;
 }
 
