@@ -123,7 +123,6 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   afk: [afkFunc, 0, ["rand", "pick"]],
   captains: [listCaptainsFunc, 0, ["pick"]],
   predict: [predictFunc, 0, ["rand"]],
-  pick: [pickFunc, 1, ["pick"]],
   sub: [subFunc, 1, ["pick"]],
   pause: [pauseFunc, 1, ["pick"]],
   resume: [resumeFunc, 1, ["pick"]],
@@ -168,7 +167,7 @@ var room = HBInit({
   roomName: `💥 [De Paul's auto room] 5v5 (${MODE})`,
   maxPlayers: 30,
   playerName: "BLV Trông Anh Ngược",
-  public: false,
+  public: true,
 });
 room.setScoreLimit(5);
 room.setTimeLimit(5);
@@ -176,13 +175,27 @@ room.setCustomStadium(STADIUM);
 room.setTeamsLock(1);
 room.setKickRateLimit(7, 15, 3);
 room.startGame();
-setInterval(room.sendAnnouncement.bind(null, `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`, null, YELLOW, "small-italic", 0), NOTIFICATION_INTERVAL * 1000);
 
-if ( new Date().getDate() == 1 ) resetStorage();
+setInterval(room.sendAnnouncement.bind(null, `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`, null, YELLOW, "small-italic", 0), NOTIFICATION_INTERVAL * 1000);
+updateMetadata();
+
+function updateMetadata() {
+  let month = new Date().getMonth() + 1;
+  let lastPlayedMonth = localStorage.getItem("last_played_month");
+  // Assign missing metadata items (inaccurately)
+  lastPlayedMonth || (lastPlayedMonth = month); // This also prevents `month != lastPlayedMonth` condition below, which is good because calling `resetStorage()` would cause bugs as it uses "last_played_month" from localStorage
+  localStorage.getItem("starting_month") || localStorage.setItem("starting_month", lastPlayedMonth);
+
+  if (
+    (month != lastPlayedMonth) && // New month has come, should we summarize and reset local storage?
+    confirm("Đã sang tháng mới, bạn có muốn tổng kết thống kê?")
+  ) resetStorage();
+
+  localStorage.setItem("last_played_month", month);
+}
 
 // Reset data saved in the localStorage
 function resetStorage() {
-  let month = new Date().getMonth();
   let playerList = [];
   for (var i = 0; i < localStorage.length; i++) {
     var key = localStorage.key(i);
@@ -204,7 +217,7 @@ function resetStorage() {
   }).slice(0, 5);
   let topOwnGoalScorers = playerList.sort((player1, player2) => player2.ownGoals - player1.ownGoals).slice(0, 5);
 
-  let msg = `Danh sách vua phá lưới tháng ${month}:
+  let msg = `Danh sách vua phá lưới tháng ${getMonths()}:
 
 ${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goals} bàn thắng (${player.assists} kiến tạo)`).join("\n")}`;
   setInterval(room.sendAnnouncement.bind(null, msg, null, BLUE, "small-bold", 0), 3.5 * 60 * 1000);
@@ -256,9 +269,18 @@ ${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goa
       inline: true
     },
   ];
-  sendWebhook(`✨ Số liệu thống kê trong tháng ${month}`, null, discordFields);
+  sendWebhook(`✨ Số liệu thống kê trong tháng ${getMonths()}`, null, discordFields);
 
   localStorage.clear();
+  localStorage.setItem("starting_month", new Date().getMonth() + 1);
+}
+
+// Get months that are being monitored for statistics
+function getMonths() {
+  let starting_month = localStorage.getItem("starting_month");
+  let ending_month = localStorage.getItem("last_played_month");
+  if ( starting_month != ending_month ) return `${starting_month}-${ending_month}`;
+  return starting_month;
 }
 
 // Get a chat-pingable tag from player's name
@@ -362,7 +384,7 @@ function showSpecTable() {
     .map((player, index) => `${player.name} (#${index + 1})`);
   let table = " ".repeat(85) + "DANH SÁCH DỰ BỊ\n" + "_".repeat(150) + "\n" + playerList.join("  •  ") + "\n" + "_".repeat(150);
   room.sendAnnouncement(table, captains[pickTurn], BLUE, "small-bold");
-  room.sendAnnouncement("Hướng dẫn: dùng !pick <số> hoặc !pick <tên> hoặc !pick <tag> để chọn người chơi (VD: !pick 2 / !pick paul / !pick @De_Paul)", captains[pickTurn], YELLOW, "small", 0);
+  room.sendAnnouncement("Hướng dẫn: nhập số hoặc tag để chọn người chơi, dùng '0' để tự động chọn người chơi thông minh (VD: 2 hoặc @De_Paul)", captains[pickTurn], YELLOW, "small", 0);
 }
 
 // Kick player if violates any rule
@@ -381,6 +403,11 @@ function validatePlayer(player) {
 
 function saveIdentities(player) {
   identities[player.id] = [player.auth, player.conn];
+}
+
+// Return player's statistics in the room
+function getStats(playerId) {
+  return JSON.parse(localStorage.getItem(identities[playerId][0])) || { ...playerStats };
 }
 
 function canUseCommand(command, player) {
@@ -545,14 +572,7 @@ async function updateCaptain(teamId, newCaptain) {
   };
 }
 
-async function pick(pickedPlayer, teamId) {
-  // Pick the player
-  await room.setPlayerTeam(pickedPlayer.id, teamId);
-  room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${TEAM_NAMES[teamId]}`, null, GREEN);
-  requestPick();
-}
-
-// Under certain conditions, automatically pick, start the game and return true
+// Under certain circumstances, automatically pick, start the game and return true
 function autoPick() {
   let specPlayers = [];
   let redPlayersCount = 0;
@@ -619,8 +639,8 @@ function byeFunc(value, player) {
 }
 
 function showStatsFunc(value, player) {
-  let item = ( JSON.parse(localStorage.getItem(identities[player.id][0])) || { ...playerStats } );
-  room.sendAnnouncement(`Thống kê trong tháng của ${player.name}:`, player.id, BLUE, "bold");
+  let item = getStats(player.id);
+  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${player.name}:`, player.id, BLUE, "bold");
   room.sendAnnouncement(`★ Bàn thắng: ${item.goals}
  ↑ Kiến tạo: ${item.assists}
  ⁈ Bàn thắng phản lưới nhà: ${item.ownGoals}`, player.id, BLUE, "small-bold");
@@ -662,40 +682,6 @@ function specFunc(value, player) {
 function listCaptainsFunc(value, player) {
   (captains[1] != 0) && room.sendAnnouncement(`Đội trưởng của RED: ${room.getPlayer(captains[1]).name}`, null, GREEN, "normal", 0);
   (captains[2] != 0) && room.sendAnnouncement(`Đội trưởng của BLUE: ${room.getPlayer(captains[2]).name}`, null, GREEN, "normal", 0);
-}
-
-function pickFunc(value, player) {
-  if ( !value ) {
-    room.sendAnnouncement("Vui lòng cung cấp một mã số, tên hoặc tag hợp lệ (VD: !pick 2 hoặc !pick paul hoặc pick @De_Paul)", player.id, RED);
-    return false;
-  } else if ( !isPicking ) {
-    room.sendAnnouncement("Lệnh không khả dụng ngay lúc này", player.id, RED);
-    return false;
-  } else if ( player.team != pickTurn ) {
-    room.sendAnnouncement("Chưa đến lượt bạn chọn", player.id, RED);
-    return false;
-  };
-
-  if ( isNaN(value) ) {
-    var pickedPlayer = getPlayerByName(value);
-  } else {
-    var pickedPlayer = getPlayerByPos(value);
-  };
-  if ( pickedPlayer === undefined ) {
-    room.sendAnnouncement("Người chơi không tồn tại hoặc đã rời đi", player.id, RED);
-    return false;
-  };
-  if ( afkList.has(pickedPlayer.id) ) {
-    room.sendAnnouncement("Người chơi đang ở trạng thái AFK", player.id, RED);
-    return false;
-  };
-  if ( pickedPlayer.team != 0 ) {
-    room.sendAnnouncement("Người chơi không ở Spectators", player.id, RED);
-    return false;
-  };
-  clearTimeout(timeouts.toPick);
-  pick(pickedPlayer, player.team);
-  return false;
 }
 
 function predictFunc(prediction, player) {
@@ -935,6 +921,25 @@ function afkFunc(value, player) {
   reorderPlayers();
   return false;
 };
+
+// Pick a player from the Spectators to move to a team
+async function pick(player, team) {
+  if ( !player ) { // No player provided, therefore select player with the best statistics
+    let highest_ga = -1;
+    for (spectator of getNonAfkPlayers().filter((_player) => _player.team == 0)) {
+      let stats = getStats(spectator.id);
+      if ( stats.goals + stats.assists <= highest_ga ) continue;
+      player = spectator;
+      highest_ga = stats.goals + stats.assists;
+    };
+  };
+  if ( !player ) return; // Just in case there is any weird race condition bug:/
+
+  clearTimeout(timeouts.toPick);
+  await room.setPlayerTeam(player.id, team);
+  room.sendAnnouncement(`${player.name} đã được chọn vào ${TEAM_NAMES[team]}`, null, GREEN);
+  requestPick();
+}
 
 function processCommand(player, input) {
   // Get alias and value from command
@@ -1360,7 +1365,7 @@ async function pickPlayers() {
   pickTurn = 0; // Prevent `updateCaptain` calling `requestPick` when players haven't been moved to the Spectators yet
   // Move players to Spectators
   let players = room.getPlayerList();
-  for (const player of players) {
+  for (player of players) {
     if ( (player.team != prevLoser) || isCaptain(player.id) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
@@ -1531,11 +1536,37 @@ room.onPlayerChat = function(player, message) {
     checkSpam(player, message);
   };
 
-  if ( isPicking && isCaptain(player.id) && Number.isInteger(Number(message)) ) {
-    return pickFunc(message, player);
-  };
   if ( message.startsWith("!") ) { // Indicating a command
     return processCommand(player, message.slice(1));
+  };
+  if ( isPicking && isCaptain(player.id) && !message.includes(" ") && (Number.isInteger(+message) || message.startsWith("@")) ) { // Captain picks someone
+    if ( player.team != pickTurn ) {
+      room.sendAnnouncement("Chưa đến lượt bạn chọn", player.id, RED);
+      return false;
+    };
+
+    if ( message.startsWith("@") ) {
+      var pickedPlayer = getPlayerByName(message);
+    } else {
+      if ( message === "0" ) {
+        pick(null, player.team); // Smart auto-pick
+        return false;
+      };
+  
+      var pickedPlayer = getPlayerByPos(message);
+    };
+
+    if ( pickedPlayer === undefined ) {
+      room.sendAnnouncement("Người chơi không tồn tại hoặc đã rời đi", player.id, RED);
+    } else if ( afkList.has(pickedPlayer.id) ) {
+      room.sendAnnouncement("Người chơi đang ở trạng thái AFK", player.id, RED);
+    } else if ( pickedPlayer.team != 0 ) {
+      room.sendAnnouncement("Người chơi không ở Spectators", player.id, RED);
+    } else {
+      pick(pickedPlayer, player.team);
+    };
+
+    return false;
   };
   if ( muteList.has(identities[player.id][1]) ) {
     room.sendAnnouncement("Không thể chat, bạn đã bị cấm", player.id, RED);
