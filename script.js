@@ -354,7 +354,7 @@ function getNonAfkPlayers() {
 }
 
 function getPredictionWinners() {
-  (predictions[prevScore] || []).filter(function(id) {
+  return (predictions[prevScore] || []).filter(function(id) {
     let player = room.getPlayer(id);
     return (player !== null) && ((player.team == 0) || (player.team == prevLoser));
   });
