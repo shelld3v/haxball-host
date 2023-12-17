@@ -5,7 +5,7 @@ const PICK_DEADLINE = 20;
 const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
-const PREDICTION_PERIOD = 20;
+const PREDICTION_PERIOD = 30;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 300;
 const MAX_DUPE_MESSAGES = 2;
@@ -122,7 +122,7 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   login: [loginFunc, 0, ["rand", "pick"]],
   afk: [afkFunc, 0, ["rand", "pick"]],
   captains: [listCaptainsFunc, 0, ["pick"]],
-  predict: [predictFunc, 0, ["rand"]],
+  predict: [predictFunc, 0, ["rand", "pick"]],
   sub: [subFunc, 1, ["pick"]],
   pause: [pauseFunc, 1, ["pick"]],
   resume: [resumeFunc, 1, ["pick"]],
@@ -350,6 +350,13 @@ function getNonAfkPlayers() {
   return room.getPlayerList().filter((player) => !afkList.has(player.id));
 }
 
+function getPredictionWinners() {
+  (predictions[prevScore] || []).filter(function(id) {
+    let player = room.getPlayer(id);
+    return (player !== null) && ((player.team == 0) || (player.team == prevLoser));
+  });
+}
+
 function isCaptain(id) {
   return Object.values(captains).includes(id);
 }
@@ -406,8 +413,8 @@ function saveIdentities(player) {
 }
 
 // Return player's statistics in the room
-function getStats(playerId) {
-  return JSON.parse(localStorage.getItem(identities[playerId][0])) || { ...playerStats };
+function getStats(auth) {
+  return JSON.parse(localStorage.getItem(auth)) || { ...playerStats };
 }
 
 function canUseCommand(command, player) {
@@ -639,7 +646,7 @@ function byeFunc(value, player) {
 }
 
 function showStatsFunc(value, player) {
-  let item = getStats(player.id);
+  let item = getStats(identities[player.id][0]);
   room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${player.name}:`, player.id, BLUE, "bold");
   room.sendAnnouncement(`★ Bàn thắng: ${item.goals}
  ↑ Kiến tạo: ${item.assists}
@@ -709,11 +716,18 @@ function predictFunc(prediction, player) {
     room.sendAnnouncement(`Mỗi đội không thế ghi được nhiều hơn ${scoreLimit} bàn`, player.id, RED);
     return false;
   };
-  if ( Object.values(predictions).filter((_prediction) => _prediction == prediction).length == 5 ) { // 5 people have already predicted this
+  if ( predictions[prediction] === undefined ) {
+    predictions[prediction] = [player.id];
+  } else if ( MODE == "pick" ) { // There is only 1 winner per match in pick mode
+    room.sendAnnouncement("Đã có người dự đoán tỉ số này, vui lòng dự đoán tỉ số khác", player.id, RED);
+    return false;
+  } else if ( predictions[prediction].length <= 5 ) {
+    predictions[prediction].push(player.id);
+  } else { // There are maximum 5 winners per match in rand mode
     room.sendAnnouncement("Đã có 5 người dự đoán tỉ số này, vui lòng dự đoán tỉ số khác", player.id, RED);
     return false;
   };
-  predictions[player.id] = prediction;
+  
   room.sendAnnouncement(`${player.name} đã dự đoán tỉ số RED ${prediction} BLUE`, null, GREEN);
   return false;
 }
@@ -927,7 +941,7 @@ async function pick(player, team) {
   if ( !player ) { // No player provided, therefore select player with the best statistics
     let highest_ga = -1;
     for (spectator of getNonAfkPlayers().filter((_player) => _player.team == 0)) {
-      let stats = getStats(spectator.id);
+      let stats = getStats(identities[spectator.id][0]);
       if ( stats.goals + stats.assists <= highest_ga ) continue;
       player = spectator;
       highest_ga = stats.goals + stats.assists;
@@ -1036,7 +1050,7 @@ function updateStats(team) {
 
 function saveStats() {
   for (const [auth, info] of Object.entries(game.players)) {
-    let item = ( JSON.parse(localStorage.getItem(auth)) || { ...playerStats } );
+    let item = getStats(auth);
     item.name = info.name;
     item.goals += info.goals;
     item.assists += info.assists;
@@ -1323,13 +1337,11 @@ async function takePenalty() {
 
 async function randPlayers() {
   // Prediction winners
-  let predictionWinners = Object.keys(predictions).reduce(function(winners, id) {
-    if ( predictions[id] == prevScore ) {
-      winners.push(parseInt(id));
-      room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", id, GREEN, "bold", 2);
-    };
-    return winners;
-  }, []);
+  let predictionWinners = getPredictionWinners();
+  for (playerId of predictionWinners) {
+    room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", playerId, GREEN, "bold", 2);
+  };
+
   let prevWinner = ( prevLoser == 1 ) ? 2 : 1;
   // Get player list and suffle it
   let idList = getNonAfkPlayers().sort(function(player1, player2) {
@@ -1370,7 +1382,13 @@ async function pickPlayers() {
     await room.setPlayerTeam(player.id, 0);
   };
   // Change captain of the losing team
-  await updateCaptain(prevLoser);
+  let predictionWinner = getPredictionWinners()[0];
+  if ( predictionWinner !== undefined ) {
+    room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được chiếc băng đội trưởng", predictionWinner, GREEN, "bold", 2);
+    await updateCaptain(prevLoser, room.getPlayer(predictionWinner));
+  } else {
+    await updateCaptain(prevLoser);
+  };
   requestPick();
 }
 
@@ -1604,9 +1622,7 @@ room.onGameStart = function(byPlayer) {
   setRandomColors();
   trackAfk();
   room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
-  if ( MODE == "rand" ) {
-    room.sendChat(`Các quý vị khán giả có ${PREDICTION_PERIOD} giây đầu trận để dự đoán tỉ số và được đá trận sau nếu đoán đúng, cú pháp "!predict RED-BLUE" (VD: !predict 1-2)`);
-  };
+  room.sendChat(`Quý vị khán giả có ${PREDICTION_PERIOD} giây để dự đoán tỉ số và có cơ hội nhận được phần thưởng, cú pháp "!predict RED-BLUE" (VD: !predict 1-2)`);
 }
 
 room.onGameStop = async function(byPlayer) {
