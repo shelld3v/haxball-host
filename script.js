@@ -736,17 +736,17 @@ function predictFunc(prediction, player) {
 }
 
 function reduceSizeFunc(value, player) {
-  if ( player.team == 0 ) {
+  let playerDiscProperties = room.getPlayerDiscProperties(player.id);
+  if ( playerDiscProperties === null ) {
     room.sendAnnouncement("Bạn đang ở ngoài sân", player.id, RED);
     return false;
   };
 
-  let playerRadius = room.getPlayerDiscProperties(player.id).radius;
-  if ( PLAYER_RADIUS - playerRadius >= MAX_PLAYER_RADIUS_REDUCTION ) {
+  if ( PLAYER_RADIUS - playerDiscProperties.radius >= MAX_PLAYER_RADIUS_REDUCTION ) {
     room.sendAnnouncement("Đã giảm đến kích thước tối đa", player.id, RED);
     return false;
   };
-  room.setPlayerDiscProperties(player.id, { radius: playerRadius - 1 });
+  room.setPlayerDiscProperties(player.id, { radius: playerDiscProperties.radius - 1 });
   return false;
 }
 
