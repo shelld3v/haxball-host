@@ -1562,19 +1562,6 @@ room.onPositionsReset = function() {
 
 room.onPlayerChat = function(player, message) {
   clearAfkRecord(player.id);
-  // Perform some validations on the message
-  if ( !player.admin && ALLOWED_COMMANDS.every((command) => !message.startsWith(command)) ) {
-    // Disallow Spectators from messaging when 2 teams are picking or taking penalty
-    if ( (isPicking || isTakingPenalty) && (player.team == 0) ) {
-      room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
-      return false;
-    };
-    checkSpam(player, message);
-  };
-
-  if ( message.startsWith("!") ) { // Indicating a command
-    return processCommand(player, message.slice(1));
-  };
   if ( isPicking && isCaptain(player.id) && !message.includes(" ") && (Number.isInteger(+message) || message.startsWith("@")) ) { // Captain picks someone
     if ( player.team != pickTurn ) {
       room.sendAnnouncement("Chưa đến lượt bạn chọn", player.id, RED);
@@ -1603,6 +1590,18 @@ room.onPlayerChat = function(player, message) {
     };
 
     return false;
+  };
+  // Perform some validations on the message
+  if ( !player.admin && ALLOWED_COMMANDS.every((command) => !message.startsWith(command)) ) {
+    // Disallow Spectators from messaging when 2 teams are picking or taking penalty
+    if ( (isPicking || isTakingPenalty) && (player.team == 0) ) {
+      room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
+      return false;
+    };
+    checkSpam(player, message);
+  };
+  if ( message.startsWith("!") ) { // Indicating a command
+    return processCommand(player, message.slice(1));
   };
   if ( muteList.has(identities[player.id][1]) ) {
     room.sendAnnouncement("Không thể chat, bạn đã bị cấm", player.id, RED);
