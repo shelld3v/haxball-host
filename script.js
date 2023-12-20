@@ -398,17 +398,19 @@ function showSpecTable() {
 }
 
 // Kick player if violates any rule
-function validatePlayer(player) {
+function isPlayerValid(player) {
   // 2 players have the same connection ID
   if ( Object.values(identities).map((identity) => identity[1]).includes(player.conn) ) {
     room.kickPlayer(player.id, "Người chơi có cùng địa chỉ IP với một người chơi khác trong phòng");
-    return;
+    return false;
   };
   // Duplicate tag
   let tag = getTag(player.name.trim());
   if ( room.getPlayerList().some((_player) => (_player.id != player.id) && (getTag(_player.name.trim()) == tag)) ) {
     room.kickPlayer(player.id, "Vui lòng đổi tên");
+    return false;
   };
+  return true;
 }
 
 function saveIdentities(player) {
@@ -1427,7 +1429,7 @@ function handlePostGame(loser) {
 }
 
 room.onPlayerJoin = async function(player) {
-  validatePlayer(player);
+  !isPlayerValid(player) && return;
   saveIdentities(player);
   initiateChat(player);
   await updateTeamPlayers(player);
