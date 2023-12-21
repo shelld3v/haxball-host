@@ -5,7 +5,7 @@ const PICK_DEADLINE = 20;
 const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
-const PREDICTION_PERIOD = 30;
+const PREDICTION_PERIOD = 60;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 300;
 const MAX_DUPE_MESSAGES = 2;
@@ -156,7 +156,6 @@ var lastKicked = [null, null, null]; // Last players who kicked the ball
 var lastMessage = [null, null]; // Last message and the player ID of the sender
 var prevShootedTeam = 0;
 var ballProperties = [null, null]; // Ball properties in the last 2 kicks
-var yellowCards = [];
 var game = null;
 var penalty = null;
 var timeouts = {
@@ -706,7 +705,7 @@ function predictFunc(prediction, player) {
     return false;
   };
   let scores = room.getScores();
-  if ( (scores === null) || (scores.time > PREDICTION_PERIOD) ) {
+  if ( (scores === null) || (scores.time > PREDICTION_PERIOD) || (scores.red + scores.blue != 0) ) {
     room.sendAnnouncement("Đã hết thời hạn dự đoán tỉ số", player.id, RED);
     return false;
   };
@@ -853,53 +852,62 @@ function loginFunc(password, player) {
 
 function yellowCardFunc(value, player) {
   if ( !value ) {
-    room.sendAnnouncement("Vui lòng cung cấp một người chơi hợp lệ (VD: !yellow @De_Paul hoặc !yellow paul)", player.id, RED);
+    room.sendAnnouncement("Vui lòng cung cấp một người chơi hợp lệ và lý do phạt nếu có (VD: !yellow @De_Paul hoặc !yellow paul Láo)", player.id, RED);
     return false;
   };
 
-  let targetPlayer = getPlayerByName(value);
-  if ( !targetPlayer ) {
-    room.sendAnnouncement(`Không thể tìm thấy người chơi "${value}"`, player.id, RED);
-    return false;
-  };
-
-  let index = yellowCards.indexOf(identities[targetPlayer.id][1]);
-  if ( index != -1 ) { // Player has already received a yellow card
-    yellowCards.splice(index, 1); // Clear the card
-    room.kickPlayer(targetPlayer.id, "Bạn đã nhận 2 thẻ vàng", true);
-    room.sendAnnouncement(`🟨🟨 ${targetPlayer.name} đã nhận thẻ vàng thứ 2 từ ${player.name} (BAN)`, null, YELLOW);
-  } else {
-    yellowCards.push(identities[targetPlayer.id][1]);
-    room.sendAnnouncement(`🟨 ${targetPlayer.name} đã nhận một thẻ vàng từ ${player.name}, nhận 2 thẻ vàng người chơi sẽ bị ban`, null, YELLOW);
-  };
-  return false;
-}
-
-function muteFunc(value, player) {
-  if ( !value ) {
-    room.sendAnnouncement("Vui lòng cung cấp người chơi và thời hạn cấm chat (phút), bỏ trống hạn cấm nếu bạn muốn cấm vĩnh viễn (VD: !mute @ân 1 hoặc !mute paul)", player.id, RED);
-    return false;
-  };
-
-  let [name, period] = value.split(" ", 2);
+  value = value.split(" ");
+  let [name, reason] = [value.shift(), ": " + value.join(" ")];
   let targetPlayer = getPlayerByName(name);
   if ( !targetPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
     return false;
   };
 
-  if ( period !== undefined ) {
-    if ( isNaN(period) || period <= 0 ) {
-      room.sendAnnouncement("Vui lòng cung cấp một thời hạn cấm chat hợp lệ (VD: !mute @De_Paul 3)", player.id, RED);
-      return false;
-    };
-    room.sendAnnouncement(`Bạn đã bị cấm chat trong ${period} phút bởi ${player.name}`, targetPlayer.id, RED, "bold", 2);
-    setTimeout(unmuteCallback.bind(null, identities[targetPlayer.id][1]), period * 60000);
+  let yellowCards = JSON.parse(localStorage.getItem("yellow_cards")) || [];
+  let index = yellowCards.indexOf(identities[targetPlayer.id][1]);
+  if ( index != -1 ) { // Player has already received a yellow card
+    yellowCards.splice(index, 1); // Clear the card
+    room.kickPlayer(targetPlayer.id, "Bạn đã nhận 2 thẻ vàng", true);
+    var msg = `🟨🟨 ${targetPlayer.name} đã nhận thẻ vàng thứ 2 từ ${player.name}`;
   } else {
-    room.sendAnnouncement(`Bạn đã bị cấm chat bởi ${player.id}`, targetPlayer.id, RED, "bold", 2);
+    yellowCards.push(identities[targetPlayer.id][1]);
+    var msg = `🟨 ${targetPlayer.name} đã nhận một thẻ vàng từ ${player.name} (2 thẻ vàng = ban)`;
   };
-  room.sendAnnouncement(`${targetPlayer.name} đã bị cấm chat`, null, RED);
+  reason && (msg += `: ${reason}`);
+  room.sendAnnouncement(msg, null, YELLOW);
+  localStorage.setItem("yellow_cards", JSON.stringify(yellowCards));
+  return false;
+}
+
+function muteFunc(value, player) {
+  if ( !value ) {
+    room.sendAnnouncement("Vui lòng cung cấp người chơi, thời hạn cấm chat (đơn vị phút, để 0 để cấm vĩnh viễn) và lý do nếu có (VD: !mute @ân 1 / !mute paul 0 Ngu)", player.id, RED);
+    return false;
+  };
+
+  value = value.split(" ");
+  let [name, period, reason] = [value.shift(), value.shift(), value.join(" ")];
+  let targetPlayer = getPlayerByName(name);
+  if ( !targetPlayer ) {
+    room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
+    return false;
+  };
+
+  if ( isNaN(period) || period < 0 ) {
+    room.sendAnnouncement("Vui lòng cung cấp một thời hạn cấm chat hợp lệ (VD: !mute @De_Paul 3)", player.id, RED);
+    return false;
+  };
+
   muteList.add(identities[targetPlayer.id][1]);
+  if ( period == 0 ) {
+    var msg = `${targetPlayer.name} đã bị cấm chat bởi ${player.id}`;
+  } else {
+    setTimeout(unmuteCallback.bind(null, identities[targetPlayer.id][1]), period * 60 * 1000);
+    var msg = `${targetPlayer.name} đã bị cấm chat trong ${period} phút bởi ${player.name}`;
+  };
+  reason && (msg += `: ${reason}`);
+  room.sendAnnouncement(msg, null, RED, "bold");
   return false;
 }
 
@@ -1209,7 +1217,7 @@ async function checkSpam(player, message) {
 
   duplicateMessagesCount++;
   if ( duplicateMessagesCount >= MAX_DUPE_MESSAGES ) {
-    muteFunc(`${player.name} 1`, room.getPlayer(0));
+    muteFunc(`${getTag(player.name)} 1 Spam`, room.getPlayer(0));
   };
 }
 
@@ -1570,14 +1578,12 @@ room.onPlayerChat = function(player, message) {
       return false;
     };
 
-    if ( message.startsWith("@") ) {
+    if ( message == "0" ) { // Smart auto-pick
+      pick(null, player.team);
+      return false;
+    } else if ( message.startsWith("@") ) {
       var pickedPlayer = getPlayerByName(message);
     } else {
-      if ( message === "0" ) {
-        pick(null, player.team); // Smart auto-pick
-        return false;
-      };
-  
       var pickedPlayer = getPlayerByPos(message);
     };
 
