@@ -704,6 +704,10 @@ function predictFunc(prediction, player) {
     room.sendAnnouncement("Vui lòng cung cấp một tỉ số hợp lệ, có dạng RED-BLUE (VD: 3-1)", player.id, RED);
     return false;
   };
+  if ( Object.values(predictions).some((predictors) => predictors.includes(player.id)) ) { // Has already had a prediction
+    room.sendAnnouncement("Bạn chỉ có thể thực hiện một dự đoán trong một trận đấu", player.id, RED);
+    return false;
+  };
   let scores = room.getScores();
   if ( (scores === null) || (scores.time > PREDICTION_PERIOD) || (scores.red + scores.blue != 0) ) {
     room.sendAnnouncement("Đã hết thời hạn dự đoán tỉ số", player.id, RED);
