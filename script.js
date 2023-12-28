@@ -1191,7 +1191,10 @@ function celebrateGoal(team) {
   var avatar = "⚽";
   var comment = "bàn thắng mang lại không nhiều giá trị";
   // Design a good comment :P
-  if ( (scores.timeLimit != 0) && (scores.time > scores.timeLimit) ) { // Overtime goal
+  if (
+    ((scores.scoreLimit != 0) && [scores.red, scores.blue].includes(scores.scoreLimit)) || // Maximum goals reached
+    ((scores.timeLimit != 0) && (scores.time > scores.timeLimit)) // Overtime goal
+  ) {
     scream = "VÀOOOOOOOO";
     // Pick a random comment
     comment = randomChoice(WINNING_GOAL_COMMENTARIES);
