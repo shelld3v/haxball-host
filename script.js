@@ -965,6 +965,7 @@ function afkFunc(value, player) {
 
   updateTeamPlayers();
   reorderPlayers();
+  isPicking && !autoPick() && showSpecTable();
   return false;
 };
 
