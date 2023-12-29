@@ -991,7 +991,7 @@ function processCommand(player, input) {
   // Get alias and value from command
   let splitIndex = input.indexOf(" ");
   splitIndex = ( splitIndex != -1 ) ? splitIndex : input.length;
-  let [alias, value] = [input.slice(0, splitIndex), input.slice(splitIndex + 1).trimRight()];
+  let [alias, value] = [input.slice(0, splitIndex).toLowerCase(), input.slice(splitIndex + 1).trimRight()];
   let command = commands[alias];
   if ( !command || !canUseCommand(command, player) ) {
     room.sendAnnouncement(`Không thể xác định lệnh !${alias}, dùng !help để xem các lệnh`, player.id, RED);
