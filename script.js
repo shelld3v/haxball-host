@@ -960,14 +960,13 @@ function afkFunc(value, player) {
     // Move the AFK player to Spectators
     if ( player.team != 0 ) {
       room.setPlayerTeam(player.id, 0);
-    } else if ( isPicking ) {
+    } else if ( isPicking && !autoPick() ) {
       showSpecTable();
     };
   };
 
   updateTeamPlayers();
   reorderPlayers();
-  isPicking && !autoPick() && showSpecTable();
   return false;
 };
 
@@ -1588,6 +1587,7 @@ room.onPositionsReset = function() {
 }
 
 room.onPlayerChat = function(player, message) {
+  if ( player.id == 0 ) return;
   clearAfkRecord(player.id);
 
   message = message.trimEnd();
@@ -1624,7 +1624,7 @@ room.onPlayerChat = function(player, message) {
   // Perform some validations on the message
   if ( !player.admin && ALLOWED_COMMANDS.every((command) => !message.startsWith(command)) ) {
     // Disallow Spectators from messaging when 2 teams are picking or taking penalty
-    if ( (isPicking || isTakingPenalty) && (player.team == 0) && (message != "!afk")) {
+    if ( isTakingPenalty && (player.team == 0) ) {
       room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
       return false;
     };
