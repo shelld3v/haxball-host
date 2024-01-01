@@ -1095,6 +1095,7 @@ function saveStats() {
   for (player of room.getPlayerList()) {
     if ( (player.team == 0) || (player.team == prevLoser) ) continue;
     let item = getStats(identities[player.id][0]);
+    item.name = player.name;
     item.wins += 1;
     localStorage.setItem(identities[player.id][0], JSON.stringify(item));
   };
