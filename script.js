@@ -86,6 +86,7 @@ const playerStats = {
   goals: 0,
   assists: 0,
   ownGoals: 0,
+  wins: 0,
 };
 const playerReport = {
   name: null,
@@ -652,9 +653,10 @@ function byeFunc(value, player) {
 function showStatsFunc(value, player) {
   let item = getStats(identities[player.id][0]);
   room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${player.name}:`, player.id, BLUE, "bold");
-  room.sendAnnouncement(`★ Bàn thắng: ${item.goals}
- ↑ Kiến tạo: ${item.assists}
- ⁈ Bàn thắng phản lưới nhà: ${item.ownGoals}`, player.id, BLUE, "small-bold");
+  room.sendAnnouncement(`⚽ Bàn thắng: ${item.goals}
+🤝🏻 Kiến tạo: ${item.assists}
+❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
+👑 Chiến thắng: ${item.wins}`, player.id, BLUE, "small-bold");
   return false;
 }
 
@@ -1089,6 +1091,12 @@ function saveStats() {
     item.assists += info.assists;
     item.ownGoals += info.ownGoals;
     localStorage.setItem(auth, JSON.stringify(item));
+  };
+  for (player of room.getPlayerList()) {
+    if ( (player.team == 0) || (player.team == prevLoser) ) continue;
+    let item = getStats(identities[player.id][0]);
+    item.wins += 1;
+    localStorage.setItem(identities[player.id][0], JSON.stringify(item));
   };
 }
 
