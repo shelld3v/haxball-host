@@ -863,7 +863,7 @@ function yellowCardFunc(value, player) {
   };
 
   value = value.split(" ");
-  let [name, reason] = [value.shift(), ": " + value.join(" ")];
+  let [name, reason] = [value.shift(), value.join(" ")];
   let targetPlayer = getPlayerByName(name);
   if ( !targetPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
