@@ -146,7 +146,7 @@ var isPicking = false;
 var isTakingPenalty = false;
 var canPause = false;
 var winningStreak = 0;
-var prevLoser = 1;
+var prevWinner = 1;
 var pickTurn = 0;
 var pausedBy = 0;
 var captains = {1: 0, 2: 0};
@@ -356,7 +356,7 @@ function getNonAfkPlayers() {
 function getPredictionWinners() {
   return (predictions[prevScore] || []).filter(function(id) {
     let player = room.getPlayer(id);
-    return (player !== null) && ((player.team == 0) || (player.team == prevLoser));
+    return (player !== null) && (player.team !== prevWinner);
   });
 }
 
@@ -450,19 +450,19 @@ function penaltyTimeoutCallback() {
   takePenalty();
 }
 
-// Returns the team that lost the penalty shootout (if there is one)
-function getPenaltyLoser() {
+// Returns the team that wins the penalty shootout
+function getPenaltyWinner() {
   if ( penalty.index >= 5 ) { // "Sudden Death" round
     if ( penalty.results[0].length != penalty.results[1].length ) return null;
     if ( penalty.results[0].at(-1) == penalty.results[1].at(-1) ) return null;
-    return penalty.results[0].at(-1) ? 2 : 1;
+    return penalty.results[0].at(-1) ? 1 : 2;
   };
 
   // One team has more penalties scored than the other team even if the other team scores all the remaining penalties
   if ( penalty.results[0].filter((result) => result).length > 5 - penalty.results[1].filter((result) => !result).length ) {
-    return 2;
-  } else if ( penalty.results[1].filter((result) => result).length > 5 - penalty.results[0].filter((result) => !result).length ) {
     return 1;
+  } else if ( penalty.results[1].filter((result) => result).length > 5 - penalty.results[0].filter((result) => !result).length ) {
+    return 2;
   };
   return null;
 }
@@ -1092,7 +1092,7 @@ function saveStats() {
     localStorage.setItem(auth, JSON.stringify(item));
   };
   for (player of room.getPlayerList()) {
-    if ( (player.team == 0) || (player.team == prevLoser) ) continue;
+    if ( player.team != prevWinner ) continue;
     let item = getStats(identities[player.id][0]);
     item.name = player.name;
     item.wins += 1;
@@ -1302,9 +1302,9 @@ async function startPenaltyShootout() {
   takePenalty();
 }
 
-async function endPenaltyShootout(loser) {
+async function endPenaltyShootout(winner) {
   isTakingPenalty = false;
-  handlePostGame(loser);
+  handlePostGame(winner);
   room.stopGame();
   room.setTimeLimit(5);
   room.setScoreLimit(5);
@@ -1319,12 +1319,11 @@ async function endPenaltyShootout(loser) {
 }
 
 async function takePenalty() {
-  let loser = getPenaltyLoser();
+  let winner = getPenaltyWinner();
   // Found the winner in this penalty shootout
-  if ( loser !== null ) {
-    let winner = ( loser == 1 ) ? 2 : 1;
+  if ( winner !== null ) {
     room.sendChat(`Và đó cũng là dấu chấm hết, ${TEAM_NAMES[winner]} là những người chiến thắng, sau màn trình diễn đáng kinh ngạc của họ`);
-    endPenaltyShootout(loser);
+    endPenaltyShootout(winner);
     return;
   };
 
@@ -1386,7 +1385,7 @@ async function randPlayers() {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", playerId, GREEN, "bold", 2);
   };
 
-  let prevWinner = ( prevLoser == 1 ) ? 2 : 1;
+  let prevLoser = ( prevWinner == 1 ) ? 2 : 1;
   // Get player list and suffle it
   let idList = getNonAfkPlayers().sort(function(player1, player2) {
     // Sort players of the winning team to be on top of the list so they will be picked up in the same team  
@@ -1419,19 +1418,21 @@ async function randPlayers() {
 async function pickPlayers() {
   isPicking = true;
   pickTurn = 0; // Prevent `updateCaptain` calling `requestPick` when players haven't been moved to the Spectators yet
-  // Move players to Spectators
   let players = room.getPlayerList();
-  for (player of players) {
-    if ( (player.team != prevLoser) || isCaptain(player.id) ) continue;
-    await room.setPlayerTeam(player.id, 0);
-  };
   // Change captain of the losing team
+  let prevLoser = ( prevWinner == 1 ) ? 2 : 1;
   let predictionWinner = getPredictionWinners()[0];
   if ( predictionWinner !== undefined ) {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được chiếc băng đội trưởng", predictionWinner, GREEN, "bold", 2);
     await updateCaptain(prevLoser, room.getPlayer(predictionWinner));
   } else {
-    await updateCaptain(prevLoser);
+    // Choose a random player who is not from the winning team to give the captain armband
+    await updateCaptain(prevLoser, randomChoice(players.filter((player) => player.team != prevWinner)));
+  };
+  // Move players to Spectators
+  for (player of players) {
+    if ( (player.team != prevLoser) || isCaptain(player.id) ) continue;
+    await room.setPlayerTeam(player.id, 0);
   };
   requestPick();
 }
@@ -1442,12 +1443,12 @@ function reset() {
   predictions = {};
 }
 
-function handlePostGame(loser) {
-  if ( loser == prevLoser ) {
+function handlePostGame(winner) {
+  if ( winner == prevWinner ) {
     winningStreak++;
   } else {
     winningStreak = 1;
-    prevLoser = loser;
+    prevWinner = winner;
   };
   reportStats();
 }
@@ -1494,7 +1495,7 @@ room.onPlayerLeave = async function(player) {
   if ( index != -1 ) {
     if ( penalty.red[0].length == 1 ) {
       room.sendChat(`Toàn bộ cầu thủ sút luân lưu của RED đã rời phòng, RED đã bị xử thua`);
-      endPenaltyShootout(1);
+      endPenaltyShootout(2);
       return;
     };
     penalty.red[0].splice(index, 1);
@@ -1506,7 +1507,7 @@ room.onPlayerLeave = async function(player) {
     if ( index == -1 ) return;
     if ( penalty.blue[0].length == 1 ) {
       room.sendChat(`Toàn bộ cầu thủ sút luân lưu của BLUE đã rời phòng, BLUE đã bị xử thua`);
-      endPenaltyShootout(2);
+      endPenaltyShootout(1);
       return;
     };
     penalty.blue[0].splice(index, 1);
@@ -1652,9 +1653,8 @@ room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
 
 room.onTeamVictory = function(scores) {
   isPlaying = false;
-  let loser = (scores.red > scores.blue) ? 2 : 1;
   prevScore = `${scores.red}-${scores.blue}`;
-  handlePostGame(loser);
+  handlePostGame((scores.red > scores.blue) ? 1 : 2);
 }
 
 room.onGameStart = function(byPlayer) {
