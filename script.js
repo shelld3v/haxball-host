@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "pula";
+const ADMIN_PASSWORD = "palu";
 const MODE = "pick"; // can be "rand" or "pick"
 const AFK_DEADLINE = 10;
 const PICK_DEADLINE = 20;
