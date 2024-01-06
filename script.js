@@ -308,6 +308,11 @@ function getDistance(x, y) {
   return Math.sqrt(x ** 2 + y ** 2);
 }
 
+// Return the opposite team ID of a team ID
+function getOpposideTeamId(id) {
+  return ( id == 1 ) ? 2 : ( id == 2 ) ? 1 : 0;
+}
+
 // Send a message to Discord Webhook
 function sendWebhook(title, content, fields) {
   if ( !DISCORD_WEBHOOK ) return;
@@ -467,8 +472,7 @@ function getPenaltyWinner() {
   return null;
 }
 
-// Move a player to a team (if needed)
-async function updateTeamPlayers(specPlayer) {
+async function updateTeamPlayers(subPlayer) {
   if ( (room.getScores() === null) || isTakingPenalty ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
@@ -479,15 +483,19 @@ async function updateTeamPlayers(specPlayer) {
     if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) return; // Enough players for 2 teams
     let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
 
-    if ( !specPlayer ) {
-      // Get a bench player (like Penaldo)
-      specPlayer = players.find((player) => player.team == 0);
-      if ( !specPlayer ) return; // No players left in the Spectators
+    if ( !subPlayer ) {
+      // Get a bench player
+      subPlayer = players.find((player) => player.team == 0);
+      if ( !subPlayer ) { // No player left in the Spectators
+        if ( Math.abs(redPlayersCount - bluePlayersCount) < 2 ) return;
+        // Move a player from one team to another because of the gap in player count between 2 teams
+        subPlayer = players.filter((player) => player.team == getOpposideTeamId(missingTeam)).at(-1); // Take player from the last to avoid moving captains
+      }
     }
 
-    await room.setPlayerTeam(specPlayer.id, missingTeam);
+    await room.setPlayerTeam(subPlayer.id, missingTeam);
     if ( MODE == "pick" ) {
-      room.sendAnnouncement(`${specPlayer.name} đã được tự động thay vào đội, dùng !sub để thay người`, captains[missingTeam], YELLOW);
+      room.sendAnnouncement(`${subPlayer.name} đã được tự động thay vào đội, dùng !sub để thay người`, captains[missingTeam], YELLOW);
     };
   });
 }
@@ -1385,7 +1393,6 @@ async function randPlayers() {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", playerId, GREEN, "bold", 2);
   };
 
-  let prevLoser = ( prevWinner == 1 ) ? 2 : 1;
   // Get player list and suffle it
   let idList = getNonAfkPlayers().sort(function(player1, player2) {
     // Sort players of the winning team to be on top of the list so they will be picked up in the same team  
@@ -1406,7 +1413,7 @@ async function randPlayers() {
     if ( index < winnerMaxIndex ) {
       room.setPlayerTeam(id, prevWinner);
     } else if ( index < maxIndex ) {
-      room.setPlayerTeam(id, prevLoser);
+      room.setPlayerTeam(id, getOpposideTeamId(prevWinner));
     } else {
       room.setPlayerTeam(id, 0);
     };
@@ -1420,18 +1427,17 @@ async function pickPlayers() {
   pickTurn = 0; // Prevent `updateCaptain` calling `requestPick` when players haven't been moved to the Spectators yet
   let players = room.getPlayerList();
   // Change captain of the losing team
-  let prevLoser = ( prevWinner == 1 ) ? 2 : 1;
   let predictionWinner = getPredictionWinners()[0];
   if ( predictionWinner !== undefined ) {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được chiếc băng đội trưởng", predictionWinner, GREEN, "bold", 2);
-    await updateCaptain(prevLoser, room.getPlayer(predictionWinner));
+    await updateCaptain(getOpposideTeamId(prevWinner), room.getPlayer(predictionWinner));
   } else {
     // Choose a random player who is not from the winning team to give the captain armband
-    await updateCaptain(prevLoser, randomChoice(players.filter((player) => player.team != prevWinner)));
+    await updateCaptain(getOpposideTeamId(prevWinner), randomChoice(players.filter((player) => player.team != prevWinner)));
   };
   // Move players to Spectators
   for (player of players) {
-    if ( (player.team != prevLoser) || isCaptain(player.id) ) continue;
+    if ( (player.team == 0) || (player.team == prevWinner) || isCaptain(player.id) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
   requestPick();
