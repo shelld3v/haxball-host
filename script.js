@@ -732,8 +732,8 @@ function predictFunc(prediction, player) {
     return false;
   };
   let scoreLimit = room.getScores().scoreLimit;
-  if ( (scoreLimit != 0) && score.some((goals) => goals > scoreLimit) ) {
-    room.sendAnnouncement(`Mỗi đội không thế ghi được nhiều hơn ${scoreLimit} bàn`, player.id, RED);
+  if ( (scoreLimit != 0) && (score.some((goals) => goals > scoreLimit) || (score[0] + score[1] == scoreLimit * 2)) ) {
+    room.sendAnnouncement("Tỉ số không thể xảy ra", player.id, RED);
     return false;
   };
   if ( predictions[prediction] === undefined ) {
