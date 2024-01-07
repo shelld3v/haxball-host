@@ -1,13 +1,15 @@
 const ADMIN_PASSWORD = "palu";
 const MODE = "pick"; // can be "rand" or "pick"
 const AFK_DEADLINE = 10;
+const MAX_AFK_PLAYERS = 4;
+const MAX_AFK_PERIOD = 10 * 60;
 const PICK_DEADLINE = 20;
 const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 60;
 const MAX_ADDED_TIME = 90;
-const NOTIFICATION_INTERVAL = 300;
+const NOTIFICATION_INTERVAL = 5 * 60;
 const MAX_DUPE_MESSAGES = 2;
 const MAX_PLAYER_RADIUS_REDUCTION = 2;
 const RED = 0xFF0000;
@@ -163,6 +165,7 @@ var timeouts = {
   toPick: null,
   toResume: null,
   toTakePenalty: null,
+  toPlay: {},
   toAct: {},
 };
 
@@ -440,8 +443,10 @@ function afkCallback(id) {
   delete timeouts.toAct[id];
 }
 
-function unmuteCallback(conn) {
-  muteList.delete(conn);
+function oversleptCallback(id) {
+  // Kick player if player "sleeps" too long
+  room.kickPlayer(id, "Bạn đã AFK quá lâu 😴");
+  delete timeouts.toPlay[id];
 }
 
 function penaltyTimeoutCallback() {
@@ -917,7 +922,7 @@ function muteFunc(value, player) {
   if ( period == 0 ) {
     var msg = `${targetPlayer.name} đã bị cấm chat bởi ${player.id}`;
   } else {
-    setTimeout(unmuteCallback.bind(null, identities[targetPlayer.id][1]), period * 60 * 1000);
+    setTimeout(muteList.delete.bind(muteList, identities[targetPlayer.id][1]), period * 60 * 1000);
     var msg = `${targetPlayer.name} đã bị cấm chat trong ${period} phút bởi ${player.name}`;
   };
   reason && (msg += `: ${reason}`);
@@ -956,10 +961,11 @@ function clearBansFunc(value, player) {
 function afkFunc(value, player) {
   if ( afkList.has(player.id) ) { // Escape AFK mode
     afkList.delete(player.id);
+    clearTimeout(timeouts.toPlay[player.id]);
+    
     room.sendAnnouncement(`${player.name} đã thoát chế độ AFK`, null, GREEN);
   } else {
-    // Only allows 3 AFK players including the host
-    if ( afkList.size == 3 ) {
+    if ( afkList.size == MAX_AFK_PLAYERS ) {
       room.sendAnnouncement("Đã có quá nhiều người chơi AFK, bạn không thể AFK", player.id, RED);
       return false;
     }
