@@ -474,15 +474,16 @@ function getPenaltyWinner() {
 }
 
 async function updateTeamPlayers(subPlayer) {
-  if ( (room.getScores() === null) || isTakingPenalty ) return;
+  let scores = room.getScores();
+  if ( (scores === null) || isTakingPenalty ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
     let players = getNonAfkPlayers();
-    // Find team that needs new player the most
     let redPlayersCount = players.filter((player) => player.team == 1).length;
     let bluePlayersCount = players.filter((player) => player.team == 2).length;
     if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) return; // Enough players for 2 teams
-    let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
+    // Find team that needs new player the most, if both have the same number of players, choose team who is worse in scores, or RED if neither is
+    let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : ( redPlayersCount < bluePlayersCount ) ? 1 : Number(scores.red > scores.blue) + 1;
 
     if ( !subPlayer ) {
       // Get a bench player
@@ -1438,7 +1439,7 @@ async function randPlayers() {
 async function pickPlayers() {
   isPicking = true;
   pickTurn = 0; // Prevent `updateCaptain` calling `requestPick` when players haven't been moved to the Spectators yet
-  let players = room.getPlayerList();
+  let players = getNonAfkPlayers();
   // Change captain of the losing team
   let predictionWinner = getPredictionWinners()[0];
   if ( predictionWinner !== undefined ) {
