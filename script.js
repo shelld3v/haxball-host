@@ -310,7 +310,7 @@ function getDistance(x, y) {
 }
 
 // Return the opposite team ID of a team ID
-function getOpposideTeamId(id) {
+function getOppositeTeamId(id) {
   return ( id == 1 ) ? 2 : ( id == 2 ) ? 1 : 0;
 }
 
@@ -491,7 +491,7 @@ async function updateTeamPlayers(subPlayer) {
       if ( !subPlayer ) { // No player left in the Spectators
         if ( Math.abs(redPlayersCount - bluePlayersCount) < 2 ) return;
         // Move a player from one team to another because of the gap in player count between 2 teams
-        subPlayer = players.filter((player) => player.team == getOpposideTeamId(missingTeam)).at(-1); // Take player from the last to avoid moving captains
+        subPlayer = players.filter((player) => player.team == getOppositeTeamId(missingTeam)).at(-1); // Take player from the last to avoid moving captains
       }
     }
 
@@ -1427,7 +1427,7 @@ async function randPlayers() {
     if ( index < winnerMaxIndex ) {
       room.setPlayerTeam(id, prevWinner);
     } else if ( index < maxIndex ) {
-      room.setPlayerTeam(id, getOpposideTeamId(prevWinner));
+      room.setPlayerTeam(id, getOppositeTeamId(prevWinner));
     } else {
       room.setPlayerTeam(id, 0);
     };
@@ -1444,10 +1444,10 @@ async function pickPlayers() {
   let predictionWinner = getPredictionWinners()[0];
   if ( predictionWinner !== undefined ) {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được chiếc băng đội trưởng", predictionWinner, GREEN, "bold", 2);
-    await updateCaptain(getOpposideTeamId(prevWinner), room.getPlayer(predictionWinner));
+    await updateCaptain(getOppositeTeamId(prevWinner), room.getPlayer(predictionWinner));
   } else {
     // Choose a random player who is not from the winning team to give the captain armband
-    await updateCaptain(getOpposideTeamId(prevWinner), randomChoice(players.filter((player) => player.team != prevWinner)));
+    await updateCaptain(getOppositeTeamId(prevWinner), randomChoice(players.filter((player) => player.team != prevWinner)));
   };
   // Move players to Spectators
   for (player of players) {
