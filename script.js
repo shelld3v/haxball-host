@@ -888,21 +888,21 @@ function yellowCardFunc(value, player) {
 
   value = value.split(" ");
   let [name, reason] = [value.shift(), value.join(" ")];
-  let targetPlayer = getPlayerByName(name);
-  if ( !targetPlayer ) {
+  let toPlayer = getPlayerByName(name);
+  if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
     return false;
   };
 
   let yellowCards = JSON.parse(localStorage.getItem("yellow_cards")) || [];
-  let index = yellowCards.indexOf(identities[targetPlayer.id][1]);
+  let index = yellowCards.indexOf(identities[toPlayer.id][1]);
   if ( index != -1 ) { // Player has already received a yellow card
     yellowCards.splice(index, 1); // Clear the card
-    room.kickPlayer(targetPlayer.id, "Bạn đã nhận 2 thẻ vàng", true);
-    var msg = `🟨🟨 ${targetPlayer.name} đã nhận thẻ vàng thứ 2 từ ${player.name}`;
+    room.kickPlayer(toPlayer.id, "Bạn đã nhận 2 thẻ vàng", true);
+    var msg = `🟨🟨 ${toPlayer.name} đã nhận thẻ vàng thứ 2 từ ${player.name}`;
   } else {
-    yellowCards.push(identities[targetPlayer.id][1]);
-    var msg = `🟨 ${targetPlayer.name} đã nhận một thẻ vàng từ ${player.name} (2 thẻ vàng = ban)`;
+    yellowCards.push(identities[toPlayer.id][1]);
+    var msg = `🟨 ${toPlayer.name} đã nhận một thẻ vàng từ ${player.name} (2 thẻ vàng = ban)`;
   };
   reason && (msg += `: ${reason}`);
   room.sendAnnouncement(msg, null, YELLOW);
@@ -918,8 +918,8 @@ function muteFunc(value, player) {
 
   value = value.split(" ");
   let [name, period, reason] = [value.shift(), value.shift(), value.join(" ")];
-  let targetPlayer = getPlayerByName(name);
-  if ( !targetPlayer ) {
+  let toPlayer = getPlayerByName(name);
+  if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
     return false;
   };
@@ -929,12 +929,12 @@ function muteFunc(value, player) {
     return false;
   };
 
-  muteList.add(identities[targetPlayer.id][1]);
+  muteList.add(identities[toPlayer.id][1]);
   if ( period == 0 ) {
-    var msg = `${targetPlayer.name} đã bị cấm chat bởi ${player.id}`;
+    var msg = `${toPlayer.name} đã bị cấm chat bởi ${player.id}`;
   } else {
-    setTimeout(unmuteCallback.bind(null, identities[targetPlayer.id][1]), period * 60 * 1000);
-    var msg = `${targetPlayer.name} đã bị cấm chat trong ${period} phút bởi ${player.name}`;
+    setTimeout(unmuteCallback.bind(null, identities[toPlayer.id][1]), period * 60 * 1000);
+    var msg = `${toPlayer.name} đã bị cấm chat trong ${period} phút bởi ${player.name}`;
   };
   reason && (msg += `: ${reason}`);
   room.sendAnnouncement(msg, null, RED, "bold");
@@ -947,14 +947,14 @@ function unmuteFunc(value, player) {
     return false;
   };
 
-  let targetPlayer = getPlayerByName(value);
-  if ( !targetPlayer ) {
+  let toPlayer = getPlayerByName(value);
+  if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${value}"`, player.id, RED);
     return false;
   };
 
-  muteList.delete(identities[targetPlayer.id][1]);
-  room.sendAnnouncement(`${targetPlayer.name} đã có thể chat trở lại`, null, GREEN);
+  muteList.delete(identities[toPlayer.id][1]);
+  room.sendAnnouncement(`${toPlayer.name} đã có thể chat trở lại`, null, GREEN);
 }
 
 function clearMutesFunc(value, player) {
@@ -995,21 +995,21 @@ function afkFunc(value, player) {
 };
 
 // Pick a player from the Spectators to move to a team
-async function pick(player, team) {
-  if ( !player ) { // No player provided, therefore select player with the best statistics
+async function pick(pickedPlayer, team) {
+  if ( !pickedPlayer ) { // No player provided, therefore select player with the best statistics
     let highest_ga = -1;
-    for (spectator of getNonAfkPlayers().filter((_player) => _player.team == 0)) {
+    for (spectator of getNonAfkPlayers().filter((player) => player.team == 0)) {
       let stats = getStats(identities[spectator.id][0]);
       if ( stats.goals + stats.assists <= highest_ga ) continue;
-      player = spectator;
+      pickedPlayer = spectator;
       highest_ga = stats.goals + stats.assists;
     };
   };
-  if ( !player ) return; // Just in case there is any weird race condition bug:/
+  if ( !pickedPlayer ) return; // Just in case there is any weird race condition bug:/
 
   clearTimeout(timeouts.toPick);
-  await room.setPlayerTeam(player.id, team);
-  room.sendAnnouncement(`${player.name} đã được chọn vào ${TEAM_NAMES[team]}`, null, GREEN);
+  await room.setPlayerTeam(pickedPlayer.id, team);
+  room.sendAnnouncement(`${pickedPlayer.name} đã được chọn vào ${TEAM_NAMES[team]}`, null, GREEN);
   requestPick();
 }
 
@@ -1723,4 +1723,9 @@ room.onGamePause = function(byPlayer) {
 room.onGameUnpause = function(byPlayer) {
   isPlaying = true;
   canPause = false;
+}
+
+room.onTeamsLockChange = function(locked, byPlayer) {
+  // Make sure teams are always locked
+  !locked && room.setTeamsLock(true);
 }
