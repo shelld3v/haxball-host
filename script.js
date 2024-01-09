@@ -124,9 +124,9 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   spec: [specFunc, 0, ["rand", "pick"]],
   login: [loginFunc, 0, ["rand", "pick"]],
   afk: [afkFunc, 0, ["rand", "pick"]],
-  captains: [listCaptainsFunc, 0, ["pick"]],
   predict: [predictFunc, 0, ["rand", "pick"]],
   reducesize: [reduceSizeFunc, 0, ["rand", "pick"]],
+  captains: [listCaptainsFunc, 0, ["pick"]],
   surrender: [surrenderFunc, 1, ["pick"]],
   sub: [subFunc, 1, ["pick"]],
   pause: [pauseFunc, 1, ["pick"]],
@@ -158,6 +158,7 @@ var lastKicked = [null, null, null]; // Last players who kicked the ball
 var lastMessage = [null, null]; // Last message and the player ID of the sender
 var prevShootedTeam = 0;
 var ballProperties = [null, null]; // Ball properties in the last 2 kicks
+var showTableInterval = null;
 var game = null;
 var penalty = null;
 var timeouts = {
@@ -394,6 +395,7 @@ async function teamAvatarEffect(teamId, avatar) {
   };
 }
 
+// Show spectators with their assigned numbers to captains for them to pick by number
 function showSpecTable() {
   let playerList = room.getPlayerList()
     .filter((player) => (player.team == 0) && !afkList.has(player.id))
@@ -957,7 +959,7 @@ function unmuteFunc(value, player) {
 
 function clearMutesFunc(value, player) {
   muteList.clear();
-  room.sendAnnouncement("Đã xóa các lệnh cấm chat", null, GREEN);
+  room.sendAnnouncement("Đã xóa các lượt cấm chat", null, GREEN);
   return false;
 }
 
@@ -1454,6 +1456,8 @@ async function pickPlayers() {
     if ( (player.team == 0) || (player.team == prevWinner) || isCaptain(player.id) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
+  // Resend Spectators table once every 3 seconds to prevent it from being faded away by other messages
+  showTableInterval = setInterval(showSpecTable.bind(null), 3 * 1000);
   requestPick();
 }
 
@@ -1686,6 +1690,8 @@ room.onGameStart = function(byPlayer) {
   reset();
   // Stop forcing captain to pick
   clearTimeout(timeouts.toPick);
+  // Stop showing Spectators table
+  clearInterval(showTableInterval);
   setRandomColors();
   trackAfk();
   room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
