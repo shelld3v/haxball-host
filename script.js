@@ -7,7 +7,7 @@ const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 60;
 const MAX_ADDED_TIME = 90;
-const NOTIFICATION_INTERVAL = 300;
+const NOTIFICATION_INTERVAL = 5 * 60;
 const MAX_DUPE_MESSAGES = 2;
 const MAX_PLAYER_RADIUS_REDUCTION = 2;
 const RED = 0xFF0000;
@@ -441,10 +441,6 @@ function afkCallback(id) {
   // Kick player if player doesn't act in time
   room.kickPlayer(id, "AFK");
   delete timeouts.toAct[id];
-}
-
-function unmuteCallback(conn) {
-  muteList.delete(conn);
 }
 
 function penaltyTimeoutCallback() {
@@ -933,7 +929,7 @@ function muteFunc(value, player) {
   if ( period == 0 ) {
     var msg = `${toPlayer.name} đã bị cấm chat bởi ${player.id}`;
   } else {
-    setTimeout(unmuteCallback.bind(null, identities[toPlayer.id][1]), period * 60 * 1000);
+    setTimeout(muteList.delete.bind(muteList, identities[toPlayer.id][1]), period * 60 * 1000);
     var msg = `${toPlayer.name} đã bị cấm chat trong ${period} phút bởi ${player.name}`;
   };
   reason && (msg += `: ${reason}`);
@@ -1439,8 +1435,6 @@ async function randPlayers() {
 }
 
 async function pickPlayers() {
-  isPicking = true;
-  pickTurn = 0; // Prevent `updateCaptain` calling `requestPick` when players haven't been moved to the Spectators yet
   let players = getNonAfkPlayers();
   // Change captain of the losing team
   let predictionWinner = getPredictionWinners()[0];
@@ -1458,6 +1452,7 @@ async function pickPlayers() {
   };
   // Resend Spectators table once every 5 seconds to prevent it from being faded away by other messages
   showTableInterval = setInterval(showSpecTable.bind(null), 5 * 1000);
+  isPicking = true;
   requestPick();
 }
 
