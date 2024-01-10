@@ -1456,8 +1456,8 @@ async function pickPlayers() {
     if ( (player.team == 0) || (player.team == prevWinner) || isCaptain(player.id) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
-  // Resend Spectators table once every 3 seconds to prevent it from being faded away by other messages
-  showTableInterval = setInterval(showSpecTable.bind(null), 3 * 1000);
+  // Resend Spectators table once every 5 seconds to prevent it from being faded away by other messages
+  showTableInterval = setInterval(showSpecTable.bind(null), 5 * 1000);
   requestPick();
 }
 
