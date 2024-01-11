@@ -724,8 +724,8 @@ function predictFunc(prediction, player) {
     return false;
   };
 
-  let score = prediction.split("-").map((goals) => parseInt(goals));
-  if ( (score.length != 2) || score.includes(NaN) ) {
+  let score = prediction.split("-").map((goals) => Number(goals));
+  if ( (score.length != 2) || score.some((goals) => goals % 1 !== 0) ) {
     room.sendAnnouncement("Tỉ số không hợp lệ, vui lòng đảm bảo tỉ số có dạng RED-BLUE (VD: 2-1)", player.id, RED);
     return false;
   };
@@ -734,6 +734,7 @@ function predictFunc(prediction, player) {
     room.sendAnnouncement("Tỉ số không thể xảy ra", player.id, RED);
     return false;
   };
+  prediction = score.join("-"); // Re-format weird scores like "0x01-0x02", even though I don't know why I should even care
   if ( predictions[prediction] === undefined ) {
     predictions[prediction] = [player.id];
   } else if ( MODE == "pick" ) { // There is only 1 winner per match in pick mode
@@ -1013,7 +1014,7 @@ function processCommand(player, input) {
   // Get alias and value from command
   let splitIndex = input.indexOf(" ");
   splitIndex = ( splitIndex != -1 ) ? splitIndex : input.length;
-  let [alias, value] = [input.slice(0, splitIndex).toLowerCase(), input.slice(splitIndex + 1).trimRight()];
+  let [alias, value] = [input.slice(0, splitIndex).toLowerCase(), input.slice(splitIndex + 1).trim()];
   let command = commands[alias];
   if ( !command || !canUseCommand(command, player) ) {
     room.sendAnnouncement(`Không thể xác định lệnh !${alias}, dùng !help để xem các lệnh`, player.id, RED);
