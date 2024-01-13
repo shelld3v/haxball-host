@@ -1321,17 +1321,14 @@ async function startPenaltyShootout() {
 async function endPenaltyShootout(winner) {
   isTakingPenalty = false;
   handlePostGame(winner);
+  // Put winners back to where they were before the penalty shootout
+  for (id of ( winner == 1 ) ? penalty.red[0] : penalty.blue[0] ) {
+    room.setPlayerTeam(id, winner);
+  };
   room.stopGame();
   room.setTimeLimit(5);
   room.setScoreLimit(5);
   room.setCustomStadium(STADIUM);
-  // Put players back to where they were before the penalty shootout
-  for (id of penalty.red[0]) {
-    room.setPlayerTeam(id, 1);
-  };
-  for (id of penalty.blue[0]) {
-    room.setPlayerTeam(id, 2);
-  };
 }
 
 async function takePenalty() {
@@ -1381,7 +1378,7 @@ async function takePenalty() {
     });
     if ( penResults[i].length < 5 ) {
       penResults[i].push("⚪".repeat(5 - penResults[i].length));
-    } else if ( penResults[i].length < Math.max(...penResults.map((results) => results.length)) ) {
+    } else if ( penResults.flat(1).length % 2 + 1 == i ) {
       penResults[i].push("⚪");
     };
   };
