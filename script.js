@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "palu";
+const ADMIN_PASSWORD = "pulapula";
 const MODE = "pick"; // can be "rand" or "pick"
 const AFK_DEADLINE = 10;
 const PICK_DEADLINE = 20;
@@ -362,6 +362,7 @@ function getNonAfkPlayers() {
 
 function getPredictionWinners() {
   return (predictions[prevScore] || []).filter(function(id) {
+    if afkList.has(id) return false;
     let player = room.getPlayer(id);
     return (player !== null) && (player.team !== prevWinner);
   });
@@ -556,35 +557,35 @@ function updateBallKick(player) {
 
 // Change captain of a specific team
 async function updateCaptain(teamId, newCaptain) {
-  await navigator.locks.request("update_captain", async lock => {
-    // Choose a random captain from the current team
+  // Choose a random captain from the current team
+  if ( !newCaptain ) {
+    // Exclude former captain and AFK players
+    let players = getNonAfkPlayers().filter((player) => player.id != captains[teamId]);
+    newCaptain = (
+      players.find((player) => player.team == teamId) || // Find someone who is in the team
+      players.find((player) => player.team == 0) // If there is no one else, pick someone from the Spectators
+    );
+    // No player left to assign
     if ( !newCaptain ) {
-      // Exclude former captain and AFK players
-      let players = getNonAfkPlayers().filter((player) => player.id != captains[teamId]);
-      newCaptain = (
-        players.find((player) => player.team == teamId) || // Find someone who is in the team
-        players.find((player) => player.team == 0) // If there is no one else, pick someone from the Spectators
-      );
-      // No player left to assign
-      if ( !newCaptain ) {
-        // Clear captain slot
-        captains[teamId] = 0;
-        return;
-      };
-    }
-    let oldCaptainId = captains[teamId];
-    captains[teamId] = newCaptain.id;
-    if ( newCaptain.team != teamId ) {
-      // Move new captain to team
-      await room.setPlayerTeam(newCaptain.id, teamId);
-      // Move old captain to Spectators
-      await room.setPlayerTeam(oldCaptainId, 0);
-    } else {
-      // Move old captain to the bottom of the team list to prevent being re-selected as the captain next time
-      room.reorderPlayers([oldCaptainId], false);
+      // Clear captain slot
+      captains[teamId] = 0;
+      return;
     };
-    room.sendAnnouncement(`${newCaptain.name} đã được chọn làm đội trưởng của ${TEAM_NAMES[teamId]}`, null, GREEN, "bold");
-  });
+  }
+
+  let oldCaptainId = captains[teamId];
+  captains[teamId] = newCaptain.id;
+  if ( newCaptain.team != teamId ) {
+    // Move new captain to team
+    await room.setPlayerTeam(newCaptain.id, teamId);
+    // Move old captain to Spectators
+    await room.setPlayerTeam(oldCaptainId, 0);
+  } else {
+    // Move old captain to the bottom of the team list to prevent being re-selected as the captain next time
+    room.reorderPlayers([oldCaptainId], false);
+  };
+  room.sendAnnouncement(`${newCaptain.name} đã được chọn làm đội trưởng của ${TEAM_NAMES[teamId]}`, null, GREEN, "bold");
+
   // Reset pick timeout for the new captain
   if ( isPicking && (pickTurn == teamId) ) {
     clearTimeout(timeouts.toPick);
@@ -683,20 +684,14 @@ function specFunc(value, player) {
   if ( player.team == 0 ) {
     room.sendAnnouncement("Bạn đã ở Spectators", player.id, RED);
     return false;
+  } else if ( !getNonAfkPlayers().some((_player) => _player.team == 0) ) {
+    room.sendAnnouncement("Đã hết người chơi để thay vào", player.id, RED);
+    return false;
   };
 
+  room.setPlayerTeam(player.id, 0);
   room.sendAnnouncement("Bạn đã được di chuyển ra Spectators", player.id, GREEN);
-  navigator.locks.request("update_captain", async lock => {
-    if ( isPicking && !isCaptain(player.id) ) {
-      showSpecTable();
-    } else { // Replace with another player
-      let newPlayer = getNonAfkPlayers().find((_player) => _player.team == 0);
-      if ( newPlayer ) {
-        await room.setPlayerTeam(newPlayer.id, player.team);
-      };
-    };
-    await room.setPlayerTeam(player.id, 0);
-  });
+  updateTeamPlayers();
   return true;
 }
 
@@ -1501,13 +1496,11 @@ room.onPlayerLeave = async function(player) {
     afkList.delete(player.id);
   };
 
-  if ( MODE == "pick" ) {
-    // A captain left, assign another one
-    if ( isCaptain(player.id) ) {
-      await updateCaptain(player.team);
-    };
-    isPicking && !autoPick() && showSpecTable();
+  // A captain left, assign another one
+  if ( isCaptain(player.id) ) {
+    await updateCaptain(player.team);
   };
+  isPicking && !autoPick() && showSpecTable();
 
   if ( !isTakingPenalty ) return;
   // A penalty taker left the room
@@ -1559,6 +1552,9 @@ room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
           break;
         case captains[2]:
           updateCaptain(2);
+          break;
+        default:
+          isPicking && showSpecTable();
       };
     };
   } else if ( afkList.has(changedPlayer.id) ) { // Move AFK players back to Spectators
