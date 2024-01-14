@@ -1323,7 +1323,7 @@ async function endPenaltyShootout(winner) {
   handlePostGame(winner);
   // Put winners back to where they were before the penalty shootout
   for (id of ( winner == 1 ) ? penalty.red[0] : penalty.blue[0] ) {
-    room.setPlayerTeam(id, winner);
+    await room.setPlayerTeam(id, winner);
   };
   room.stopGame();
   room.setTimeLimit(5);
