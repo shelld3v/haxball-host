@@ -362,7 +362,7 @@ function getNonAfkPlayers() {
 
 function getPredictionWinners() {
   return (predictions[prevScore] || []).filter(function(id) {
-    if afkList.has(id) return false;
+    if ( afkList.has(id) ) return false;
     let player = room.getPlayer(id);
     return (player !== null) && (player.team !== prevWinner);
   });
