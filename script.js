@@ -111,8 +111,6 @@ const gameDefault = {
 const penaltyDefault = {
   red: [[], null], // RED penalty takers and goalkeeper against them
   blue: [[], null], // BLUE penalty takers and goalkeeper against them
-  turn: 0, // Which team to take penalty (starts from RED)
-  index: -1, // Index of the current penalty taker
   results: [[], []], // Results of taken penalties (first array for RED, second for BLUE)
 };
 var commands = { // Format: "alias: [function, minimumRole, availableModes]"
@@ -368,6 +366,11 @@ function getPredictionWinners() {
   });
 }
 
+// Return the index (0 or 1) of the team that will take the penalty
+function getPenaltyTurn() {
+  return penalty.results.flat(1).length % 2;
+}
+
 function isCaptain(id) {
   return Object.values(captains).includes(id);
 }
@@ -448,7 +451,7 @@ function penaltyTimeoutCallback() {
   if ( !isTakingPenalty ) return;
   room.sendChat("Cầu thủ đã không thực hiện penalty trong thời gian quy định");
   // Count as a miss if player doesn't perform the penalty in time
-  penalty.results[penalty.turn - 1].push(false);
+  penalty.results[getPenaltyTurn()].push(false);
   // Stop and start the game again to reset the ball position
   room.stopGame();
   room.startGame();
@@ -457,7 +460,7 @@ function penaltyTimeoutCallback() {
 
 // Returns the team that wins the penalty shootout
 function getPenaltyWinner() {
-  if ( penalty.index >= 5 ) { // "Sudden Death" round
+  if ( penalty.results[0].length > 5 ) { // "Sudden Death" round
     if ( penalty.results[0].length != penalty.results[1].length ) return null;
     if ( penalty.results[0].at(-1) == penalty.results[1].at(-1) ) return null;
     return penalty.results[0].at(-1) ? 1 : 2;
@@ -1118,7 +1121,7 @@ function saveStats() {
 
 function reportStats() {
   let scoreline = ` RED ${prevScore} BLUE`;
-  if ( penalty.index > 0 ) {
+  if ( penalty.results.flat(1).length != 0 ) {
     scoreline += ` (Luân lưu: ${penalty.results[0].filter((result) => result).length}-${penalty.results[1].filter((result) => result).length})`;
   }
   room.sendAnnouncement(scoreline, null, YELLOW, "bold");
@@ -1319,12 +1322,12 @@ async function startPenaltyShootout() {
 }
 
 async function endPenaltyShootout(winner) {
-  isTakingPenalty = false;
   handlePostGame(winner);
   // Put winners back to where they were before the penalty shootout
   for (id of ( winner == 1 ) ? penalty.red[0] : penalty.blue[0] ) {
     await room.setPlayerTeam(id, winner);
   };
+  isTakingPenalty = false;
   room.stopGame();
   room.setTimeLimit(5);
   room.setScoreLimit(5);
@@ -1345,21 +1348,19 @@ async function takePenalty() {
     if (player.team == 0) continue;
     await room.setPlayerTeam(player.id, 0);
   };
-  // Switch to the next team to take the penalty
-  if ( penalty.turn == 1 ) {
-    penalty.turn = 2;
-    var group = penalty.blue;
-    room.setTeamColors(1, ...kits.blue);
-    room.setTeamColors(2, ...GOALKEEPER_COLORS.red);
-  } else {
-    penalty.index++;
-    penalty.turn = 1;
-    var group = penalty.red;
-    room.setTeamColors(1, ...kits.red);
-    room.setTeamColors(2, ...GOALKEEPER_COLORS.blue);
+  switch ( getPenaltyTurn() ) {
+    case 0:
+      var group = penalty.red;
+      room.setTeamColors(1, ...kits.red);
+      room.setTeamColors(2, ...GOALKEEPER_COLORS.blue);
+      break;
+    case 1:
+      var group = penalty.blue;
+      room.setTeamColors(1, ...kits.blue);
+      room.setTeamColors(2, ...GOALKEEPER_COLORS.red);
   };
 
-  let penaltyTaker = room.getPlayer(group[0][penalty.index % group[0].length]);
+  let penaltyTaker = room.getPlayer(group[0][penalty.results[1].length % group[0].length]);
   if ( !penaltyTaker ) {
     return;
   };
@@ -1378,12 +1379,12 @@ async function takePenalty() {
     });
     if ( penResults[i].length < 5 ) {
       penResults[i].push("⚪".repeat(5 - penResults[i].length));
-    } else if ( penResults.flat(1).length % 2 + 1 == i ) {
+    } else if ( getPenaltyTurn() <= i ) {
       penResults[i].push("⚪");
     };
   };
   room.sendAnnouncement(` RED ${penResults[0].reverse().join("")} - ${penResults[1].join("")} BLUE`, null, BLUE, "bold");
-  if ( (penalty.index == 5) && (penalty.turn == 1) ) {
+  if ( penalty.results.flat(1).length == 10 ) {
     room.sendChat('Giờ ta sẽ đến loạt sút "Sudden Death", một đội thực hiện thành công và đội còn lại đá trượt thì kết quả sẽ được định đoạt');
   };
   room.sendChat(`Bây giờ ${getTag(penaltyTaker.name)} sẽ bước lên để thức hiện quả penalty`);
@@ -1557,9 +1558,11 @@ room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
   } else if ( afkList.has(changedPlayer.id) ) { // Move AFK players back to Spectators
     room.setPlayerTeam(changedPlayer.id, 0);
     room.sendAnnouncement("Người chơi đang ở trạng thái AFK", byPlayer.id, RED);
-  } else if ( room.getScores() !== null) {
+  } else if ( room.getScores() !== null ) {
     room.sendAnnouncement("Bạn đã được thay vào sân", changedPlayer.id, BLUE, "small", 2);
-    timeouts.toAct[changedPlayer.id] = setTimeout(afkCallback.bind(null, changedPlayer.id), AFK_DEADLINE * 1000);
+    if ( isPlaying ) {
+      timeouts.toAct[changedPlayer.id] = setTimeout(afkCallback.bind(null, changedPlayer.id), AFK_DEADLINE * 1000);
+    };
   };
 }
 
@@ -1571,7 +1574,7 @@ room.onPlayerBallKick = function(player) {
 room.onTeamGoal = function(team) {
   if ( isTakingPenalty ) {
     clearTimeout(timeouts.toTakePenalty);
-    penalty.results[penalty.turn - 1].push(team == 1);
+    penalty.results[getPenaltyTurn()].push(team == 1);
     celebratePenalty(team);
     return;
   };
