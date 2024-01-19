@@ -8,6 +8,7 @@ const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 60;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 5 * 60;
+const MIN_TIME_FOR_SURRENDER = 3 * 60;
 const MAX_DUPE_MESSAGES = 2;
 const MAX_PLAYER_RADIUS_REDUCTION = 2;
 const RED = 0xFF0000;
@@ -765,8 +766,13 @@ function reduceSizeFunc(value, player) {
 }
 
 function surrenderFunc(value, player) {
-  if ( isTakingPenalty || (room.getScores() === null) ) {
+  let scores = room.getScores();
+  if ( isTakingPenalty || (scores === null) ) {
     room.sendAnnouncement("Lệnh không khả dụng lúc này", player.id, RED);
+    return false;
+  };
+  if ( scores.time < MIN_TIME_FOR_SURRENDER ) {
+    room.sendAnnouncement("Chưa đủ thời gian chơi tối thiểu để có thể đầu hàng, vui lòng đợi thêm", player.id, RED);
     return false;
   };
 
@@ -1441,7 +1447,7 @@ async function pickPlayers() {
   };
   // Move players to Spectators
   for (player of players) {
-    if ( (player.team == 0) || (player.team == prevWinner) || isCaptain(player.id) ) continue;
+    if ( isCaptain(player.id) || ((players.length > 10) && (player.team == prevWinner)) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
   // Resend Spectators table once every 5 seconds to prevent it from being faded away by other messages
