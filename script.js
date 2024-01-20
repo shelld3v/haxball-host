@@ -1,7 +1,8 @@
 const ADMIN_PASSWORD = "pulapula";
 const MODE = "pick"; // can be "rand" or "pick"
 const AFK_DEADLINE = 10;
-const PICK_DEADLINE = 20;
+const PICK_DEADLINE = 25;
+const FIRST_PICK_DEADLINE = 15;
 const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
@@ -564,9 +565,9 @@ async function updateCaptain(teamId, newCaptain) {
   // Choose a random captain from the current team
   if ( !newCaptain ) {
     // Exclude former captain and AFK players
-    let players = getNonAfkPlayers().filter((player) => player.id != captains[teamId]);
+    let players = getNonAfkPlayers();
     newCaptain = (
-      players.find((player) => player.team == teamId) || // Find someone who is in the team
+      players.find((player) => (player.team == teamId) && !isCaptain(player.id)) || // Find someone who is in the team
       players.find((player) => player.team == 0) // If there is no one else, pick someone from the Spectators
     );
     // No player left to assign
@@ -642,8 +643,11 @@ function requestPick() {
   room.sendAnnouncement(`${TEAM_NAMES[pickTurn]} đang chọn người chơi...`, null, YELLOW);
   showSpecTable();
   room.sendAnnouncement("Đã đến lượt bạn chọn người chơi", captains[pickTurn], YELLOW, "bold", 2);
-  // If captain doesn't pick in time, change captain
-  timeouts.toPick = setTimeout(updateCaptain.bind(null, pickTurn), PICK_DEADLINE * 1000);
+  // Kick if captain doesn't pick in time
+  timeouts.toPick = setTimeout(
+    room.kickPlayer.bind(null, captains[pickTurn], "AFK"),
+    ((min(redPlayersCount, bluePlayersCount) > 1) ? PICK_DEADLINE : FIRST_PICK_DEADLINE) * 1000,
+  );
 }
 
 function helpFunc(value, player) {
@@ -1450,8 +1454,8 @@ async function pickPlayers() {
     if ( isCaptain(player.id) || ((players.length > 10) && (player.team == prevWinner)) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
-  // Resend Spectators table once every 5 seconds to prevent it from being faded away by other messages
-  showTableInterval = setInterval(showSpecTable.bind(null), 5 * 1000);
+  // Resend Spectators table once every 7 seconds to prevent it from being faded away by other messages
+  showTableInterval = setInterval(showSpecTable.bind(null), 7 * 1000);
   isPicking = true;
   requestPick();
 }
