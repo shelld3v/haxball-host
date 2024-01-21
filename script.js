@@ -111,8 +111,10 @@ const gameDefault = {
   },
 };
 const penaltyDefault = {
-  red: [[], null], // RED penalty takers and goalkeeper against them
-  blue: [[], null], // BLUE penalty takers and goalkeeper against them
+  groups: {
+    1: [], // RED penalty takers and goalkeeper against them
+    2: [], // BLUE penalty takers and goalkeeper against them
+  },
   results: [[], []], // Results of taken penalties (first array for RED, second for BLUE)
 };
 var commands = { // Format: "alias: [function, minimumRole, availableModes]"
@@ -580,14 +582,14 @@ async function updateCaptain(teamId, newCaptain) {
 
   let oldCaptainId = captains[teamId];
   captains[teamId] = newCaptain.id;
-  if ( newCaptain.team != teamId ) {
+  if ( newCaptain.team == teamId ) {
+    // Move old captain to the bottom of the team list to prevent being re-selected as the captain next time
+    room.reorderPlayers([oldCaptainId], false);
+  } else if ( !isTakingPenalty ) {
     // Move new captain to team
     await room.setPlayerTeam(newCaptain.id, teamId);
     // Move old captain to Spectators
     await room.setPlayerTeam(oldCaptainId, 0);
-  } else {
-    // Move old captain to the bottom of the team list to prevent being re-selected as the captain next time
-    room.reorderPlayers([oldCaptainId], false);
   };
   room.sendAnnouncement(`${newCaptain.name} đã được chọn làm đội trưởng của ${TEAM_NAMES[teamId]}`, null, GREEN, "bold");
 
@@ -628,7 +630,7 @@ function autoPick() {
 
 // Request a pick from the most needed team
 function requestPick() {
-  if ( room.getScores() !== null ) return; // Game started
+  if ( !isPicking ) return; // Game started
   let players = room.getPlayerList();
   let redPlayersCount = players.filter((player) => player.team == 1).length;
   let bluePlayersCount = players.filter((player) => player.team == 2).length;
@@ -646,7 +648,7 @@ function requestPick() {
   // Kick if captain doesn't pick in time
   timeouts.toPick = setTimeout(
     room.kickPlayer.bind(null, captains[pickTurn], "AFK"),
-    ((min(redPlayersCount, bluePlayersCount) > 1) ? PICK_DEADLINE : FIRST_PICK_DEADLINE) * 1000,
+    (( Math.min(redPlayersCount, bluePlayersCount) > 1 ) ? PICK_DEADLINE : FIRST_PICK_DEADLINE) * 1000,
   );
 }
 
@@ -1131,7 +1133,7 @@ function saveStats() {
 
 function reportStats() {
   let scoreline = ` RED ${prevScore} BLUE`;
-  if ( penalty.results.flat(1).length != 0 ) {
+  if ( penalty.results[0].length != 0 ) {
     scoreline += ` (Luân lưu: ${penalty.results[0].filter((result) => result).length}-${penalty.results[1].filter((result) => result).length})`;
   }
   room.sendAnnouncement(scoreline, null, YELLOW, "bold");
@@ -1303,22 +1305,13 @@ async function startPenaltyShootout() {
   isTakingPenalty = true;
   prevScore = Array(2).fill(room.getScores().red).join("-");
   // Store players' team and role (GK or not) for the penalty shootout
-  let deepestPositions = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER];
+  let deepestPositions = [-1, -1];
   room.getPlayerList().forEach(function(player) {
-    switch ( player.team ) {
-      case 1:
-        penalty.red[0].push(player.id);
-        if ( player.position.x < deepestPositions[0] ) {
-          penalty.blue[1] = player.id;
-          deepestPositions[0] = player.position.x;
-        };
-        break;
-      case 2:
-        penalty.blue[0].push(player.id);
-        if ( player.position.x > deepestPositions[1] ) {
-          penalty.red[1] = player.id;
-          deepestPositions[1] = player.position.x;
-        };
+    if ( Math.abs(player.position.x) > deepestPositions[player.team - 1] ) {
+      penalty.groups[player.team].push(player.id); // GK is the player in the last index of the array
+      deepestPositions[player.team - 1] = Math.abs(player.position.x);
+    } else {
+      penalty.groups[player.team].unshift(player.id);
     };
   });
   room.stopGame();
@@ -1332,14 +1325,13 @@ async function startPenaltyShootout() {
 }
 
 async function endPenaltyShootout(winner) {
-  handlePostGame(winner);
   // Put players back to where they were before the penalty shootout
-  for (id of penalty.red[0]) {
-    await room.setPlayerTeam(id, 1);
+  for (teamId = 1; teamId < 3; teamId++) {
+    for (id of penalty.groups[i]) {
+      await room.setPlayerTeam(id, teamId);
+    };
   };
-  for (id of penalty.blue[0]) {
-    await room.setPlayerTeam(id, 2);
-  };
+  handlePostGame(winner);
   isTakingPenalty = false;
   room.stopGame();
   room.setTimeLimit(5);
@@ -1358,29 +1350,25 @@ async function takePenalty() {
 
   // Put previous penalty taker and goalkeeper back to the Spectators
   for (player of room.getPlayerList()) {
-    if (player.team == 0) continue;
+    if ( player.team == 0 ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
-  switch ( getPenaltyTurn() ) {
+  let turn = getPenaltyTurn();
+  switch ( turn ) {
     case 0:
-      var group = penalty.red;
       room.setTeamColors(1, ...kits.red);
       room.setTeamColors(2, ...GOALKEEPER_COLORS.blue);
       break;
     case 1:
-      var group = penalty.blue;
       room.setTeamColors(1, ...kits.blue);
       room.setTeamColors(2, ...GOALKEEPER_COLORS.red);
   };
 
-  let penaltyTaker = room.getPlayer(group[0][penalty.results[1].length % group[0].length]);
-  if ( !penaltyTaker ) {
-    return;
-  };
+  let penaltyTaker = room.getPlayer(penalty.groups[turn].at(penalty.results[1].length % penalty.groups[turn].length));
   await room.setPlayerTeam(penaltyTaker.id, 1);
-  await room.setPlayerTeam(group[1], 2);
+  await room.setPlayerTeam(penalty.groups[getOpposideTeamId(turn)].at(-1), 2);
   let penResults = [[], []];
-  for (let i = 0; i < 2; i++) {
+  for (i = 0; i < 2; i++) {
     penalty.results[i].forEach(function(result) {
       switch ( result ) {
         case ( true ):
@@ -1392,7 +1380,7 @@ async function takePenalty() {
     });
     if ( penResults[i].length < 5 ) {
       penResults[i].push("⚪".repeat(5 - penResults[i].length));
-    } else if ( getPenaltyTurn() <= i ) {
+    } else if ( turn <= i ) {
       penResults[i].push("⚪");
     };
   };
@@ -1507,44 +1495,35 @@ room.onPlayerLeave = async function(player) {
     afkList.delete(player.id);
   };
 
+  if ( isTakingPenalty ) {
+    // A penalty taker left the room
+    for (teamId = 1; teamId < 3; teamId++) {
+      let index = penalty.groups[teamId].indexOf(player.id);
+      if ( index == -1 ) continue;
+      penalty.groups[teamId].splice(index, 1);
+      if ( penalty.groups[teamId].length == 0 ) {
+        room.sendChat(`Toàn bộ cầu thủ sút luân lưu của ${TEAM_NAMES[teamId]} đã rời phòng, RED đã bị xử thua`);
+        await endPenaltyShootout(getOpposideTeamId(teamId));
+        break;
+      };
+    };
+  };
+
   // A captain left, assign another one
   if ( isCaptain(player.id) ) {
-    await updateCaptain(player.team);
+    if ( isTakingPenalty ) {
+      await updateCaptain(player.team, room.getPlayer(penalty.groups[player.team][0]));
+    } else {
+      await updateCaptain(player.team);
+    };
   };
   isPicking && !autoPick() && showSpecTable();
-
-  if ( !isTakingPenalty ) return;
-  // A penalty taker left the room
-  let index = penalty.red[0].indexOf(player.id);
-  if ( index != -1 ) {
-    if ( penalty.red[0].length == 1 ) {
-      room.sendChat(`Toàn bộ cầu thủ sút luân lưu của RED đã rời phòng, RED đã bị xử thua`);
-      endPenaltyShootout(2);
-      return;
-    };
-    penalty.red[0].splice(index, 1);
-    if ( penalty.blue[1] == player.id ) { // Player was RED's penalty goalkeeper
-      penalty.blue[1] = penalty.red[0][0];
-    };
-  } else {
-    index = penalty.blue[0].indexOf(player.id);
-    if ( index == -1 ) return;
-    if ( penalty.blue[0].length == 1 ) {
-      room.sendChat(`Toàn bộ cầu thủ sút luân lưu của BLUE đã rời phòng, BLUE đã bị xử thua`);
-      endPenaltyShootout(1);
-      return;
-    };
-    penalty.blue[0].splice(index, 1);
-    if ( penalty.red[1] == player.id ) { // Player was BLUE's penalty goalkeeper
-      penalty.red[1] = penalty.blue[0][0];
-    };
-  };
 }
 
 room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
   if ( isTakingPenalty ) {
-    // The current penalty taker was moved to the Spectators, consider it a failed penalty
-    if ( (changedPlayer.team == 0) && (byPlayer.id != 0) && penalty.red[0].concat(penalty.blue[0]).includes(changedPlayer.id) ) {
+    // The current penalty taker was moved to the Spectators by an admin, consider it a failed penalty
+    if ( (changedPlayer.team == 0) && (byPlayer.id != 0) && Object.values(penalty.groups).some((group) => group.includes(changedPlayer.id)) ) {
       clearTimeout(timeouts.toTakePenalty);
       penaltyTimeoutCallback();
     };
@@ -1580,7 +1559,10 @@ room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
 }
 
 room.onPlayerBallKick = function(player) {
-  if ( isTakingPenalty ) return;
+  if ( isTakingPenalty ) {
+    clearTimeout(timeouts.toTakePenalty);
+    return;
+  };
   updateBallKick(player);
 }
 
@@ -1683,7 +1665,7 @@ room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
 room.onTeamVictory = function(scores) {
   isPlaying = false;
   prevScore = `${scores.red}-${scores.blue}`;
-  handlePostGame((scores.red > scores.blue) ? 1 : 2);
+  handlePostGame(( scores.red > scores.blue ) ? 1 : 2);
 }
 
 room.onGameStart = function(byPlayer) {
