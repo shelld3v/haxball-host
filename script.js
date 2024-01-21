@@ -1333,9 +1333,12 @@ async function startPenaltyShootout() {
 
 async function endPenaltyShootout(winner) {
   handlePostGame(winner);
-  // Put winners back to where they were before the penalty shootout
-  for (id of ( winner == 1 ) ? penalty.red[0] : penalty.blue[0] ) {
-    await room.setPlayerTeam(id, winner);
+  // Put players back to where they were before the penalty shootout
+  for (id of penalty.red[0]) {
+    await room.setPlayerTeam(id, 1);
+  };
+  for (id of penalty.blue[0]) {
+    await room.setPlayerTeam(id, 2);
   };
   isTakingPenalty = false;
   room.stopGame();
