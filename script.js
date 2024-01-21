@@ -156,10 +156,8 @@ var captains = {1: 0, 2: 0};
 var kits = {red: null, blue: null};
 var prevScore = null;
 var predictions = {};
-var lastKicked = [null, null, null]; // Last players who kicked the ball
 var lastMessage = [null, null]; // Last message and the player ID of the sender
-var prevShootedTeam = 0;
-var ballProperties = [null, null]; // Ball properties in the last 2 kicks
+var ballRecords = [null, null, null]; // Ball properties of the last 3 kicks
 var showTableInterval = null;
 var game = null;
 var penalty = null;
@@ -511,53 +509,52 @@ async function updateTeamPlayers(subPlayer) {
 // Update information to monitor last kickers, possession and passing accuracy
 function updateBallKick(player) {
   if ( !isPlaying ) return;
-  // Update information about last players who kicked the ball
-  lastKicked.unshift(player);
-  lastKicked.pop();
-  ballProperties.unshift(room.getDiscProperties(0));
-  ballProperties.pop();
-  // Get the previous kicker
-  let prevKicker = lastKicked[1];
-  // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
-  if ( (prevShootedTeam != 0) && (prevShootedTeam != player.team) ) {
-    if ( getDistance(ballProperties[0].x - ballProperties[1].x, ballProperties[0].y - ballProperties[1].y) < BALL_RADIUS * 2 ) {
-      game.teams[prevShootedTeam].shotsOnTarget--;
-    };
-    prevShootedTeam = 0;
-  };
+  let ballProperties = room.getDiscProperties(0);
+  ballProperties.byPlayer = player;
+  ballProperties.isAShot = false;
+  ballRecords.unshift(ballProperties);
+  ballRecords.pop();
 
-  // The x position value of the opponent's goal
-  let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE[0] : -GOAL_LINE[0];
-  if ( xOpponentGoal * ballProperties[0].xspeed > 0 ) { // It's a kick toward the opponent goal
-    // Check if it's shot on target
+  // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
+  if (
+    ballRecords[1].isAShot &&
+    (ballRecords[1].byPlayer.team != player.team) &&
+    (getDistance(ballProperties.x - ballRecords[1].x, ballProperties.y - ballRecords[1].y) < BALL_RADIUS * 2)
+  ) {
+    game.teams[ballRecords[1].byPlayer.team].shotsOnTarget--;
+  } else { // Check for shot on target
+    let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE[0] : -GOAL_LINE[0]; // The x position value of the opponent's goal
     if (
-      (Math.abs(ballProperties[0].x + ballProperties[0].xspeed * 99.762) > GOAL_LINE[0]) && // At this speed, the ball would cross the goal line
-      (Math.abs(ballProperties[0].y + ballProperties[0].yspeed / ballProperties[0].xspeed * (xOpponentGoal - ballProperties[0].x)) < GOAL_LINE[1]) // It's on target (not really accurate because it might hit the post)
+      (xOpponentGoal * ballProperties.xspeed > 0) && // It's a kick toward the opponent goal
+      (Math.abs(ballProperties.x + ballProperties.xspeed * 99.762) > GOAL_LINE[0]) // At this speed, the ball can cross the goal line
     ) {
-      game.teams[player.team].shotsOnTarget++;
-      prevShootedTeam = player.team;
-    };
-  } else {
-    // Switch to penalty shootout when it hits maximum added time
-    let scores = room.getScores();
-    if ( scores.time - scores.timeLimit > MAX_ADDED_TIME ) { // Maximum extra time exceeded
-      startPenaltyShootout();
-      return;
+      // Check if it's on target (not really accurate because it might hit the post)
+      if ( Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < GOAL_LINE[1] ) {
+        game.teams[player.team].shotsOnTarget++;
+        ballRecords[0].isAShot = true;
+      };
+    } else {
+      // Switch to penalty shootout when it hits maximum added time
+      let scores = room.getScores();
+      if ( scores.time - scores.timeLimit > MAX_ADDED_TIME ) { // Maximum extra time exceeded
+        startPenaltyShootout();
+        return;
+      };
     };
   };
 
   // Update total kicks
   game.teams[player.team].kicks++;
   // Update accurate kicks
-  if ( prevKicker === null ) { // Kick-off pass
+  if ( ballRecords[1] === null ) { // Kick-off pass
     // Disallow pausing after kick-off
     canPause = false;
     return;
   };
-  if ( player.team != prevKicker.team ) return; // Received the ball from an opponent player
+  if ( player.team != ballRecords[1].byPlayer.team ) return; // Received the ball from an opponent player
 
   // Received the ball from a teammate, so the previous kick was a pass
-  if ( player.id != prevKicker.id ) game.teams[player.team].passes++;
+  if ( player.id != ballRecords[1].byPlayer.id ) game.teams[player.team].passes++;
   // Received the ball from a teammate or from yourself, so the previous kick kept the possession
   game.teams[player.team].possessedKicks++;
 }
@@ -1056,60 +1053,53 @@ function updatePlayerStats(player, type) {
 
 // Update stats about goals, assists and own goals
 function updateStats(team) {
-  var [scorer, assister, preAssister] = lastKicked;
-  if ( scorer === null ) return;
+  var [shot, assist] = ballRecords;
+  if ( shot === null ) return;
 
-  let ball = ballProperties[0];
-  // Not an own goal but probably a clearing/goalkeeping effort
-  if (
-    (scorer.team != team) && // It was an own goal
-    (assister !== null) && // Someone's kick resulted in this goal
-    (assister.team == team) && // The previous kick came from an opponent player
-    (Math.abs(ball.x) > GOAL_LINE[0] - BALL_RADIUS * 4) // The gap between the ball and the goal-line was too small that it probably was an effort to clear the ball
-  ) {
-    // Correct the credits
-    [scorer, assister] = [assister, preAssister];
-    ball = ballProperties[1];
-  };
-
-  if ( scorer.team != team ) { // Own goal
-    updatePlayerStats(scorer, 0);
-    room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(scorer.name)}`);
-    return;
-  };
-
-  updatePlayerStats(scorer, 1);
-  // Counting this shot as a "possessed kick"
-  game.teams[scorer.team].possessedKicks++;
-  // Design celebrating comment
-  let hasScored = game.players[identities[scorer.id][0]].goals;
-  let comment = SCORER_COMMENTARIES[hasScored] || `Thật điên rồ, bàn thắng thứ ${hasScored} trong trận đấu này của`;
-  comment = comment.concat(" ", getTag(scorer.name));
-
-  if (
-    (assister !== null) &&
-    (assister.id != scorer.id) && // Not a solo goal
-    (assister.team == team) // Assisted by teammate
-  ) {
-    updatePlayerStats(assister, 2);
-    let hasAssisted = game.players[identities[assister.id][0]].assists;
-    if ( hasAssisted != 1 ) { // Multiple assists O_O
-      comment = comment.concat(", ", `${getTag(assister.name)} đã có cho mình kiến tạo thứ ${hasAssisted} trong trận đấu`);
+  if ( shot.byPlayer.team != team ) { // Own goal
+    // Not an own goal but probably a clearing/goalkeeping effort
+    if (
+      (assist !== null) && // Someone's kick resulted in this goal
+      assist.byPlayer.isAShot && // The previous kick was a shot on target
+      (assist.byPlayer.team == team) && // The previous kick came from an opponent player
+      (Math.abs(shot.x) > GOAL_LINE[0] - BALL_RADIUS * 6) // The gap between the ball and the goal-line was too small that it probably was an effort to clear the ball
+    ) {
+      // Correct the credits
+      [shot, assist] = ballRecords.slice(1);
     } else {
-      comment = comment.concat(", ", `đường kiến tạo từ ${getTag(assister.name)}`);
+      updatePlayerStats(shot.byPlayer.id, 0);
+      room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(shot.byPlayer.name)}`);
+      return;
+    };
+  };
+
+  updatePlayerStats(shot.byPlayer.id, 1);
+  // Counting this shot as a "possessed kick"
+  game.teams[shot.byPlayer.team].possessedKicks++;
+  // Design celebrating comment
+  let hasScored = game.players[identities[shot.byPlayer.id][0]].goals;
+  let comment = SCORER_COMMENTARIES[hasScored] || `Thật điên rồ, bàn thắng thứ ${hasScored} trong trận đấu này của`;
+  comment = comment.concat(" ", getTag(shot.byPlayer.name));
+
+  if (
+    (assist !== null) &&
+    (assist.byPlayer.team == team) && // Assisted by teammate
+    (assist.byPlayer.id != shot.byPlayer.id) // Not a solo goal
+  ) {
+    updatePlayerStats(assist.byPlayer.id, 2);
+    let hasAssisted = game.players[identities[assist.byPlayer.id][0]].assists;
+    if ( hasAssisted != 1 ) { // Multiple assists O_O
+      comment = comment.concat(", ", `${getTag(assist.byPlayer.name)} đã có cho mình kiến tạo thứ ${hasAssisted} trong trận đấu`);
+    } else {
+      comment = comment.concat(", ", `đường kiến tạo từ ${getTag(assist.byPlayer.name)}`);
     };
   };
 
   room.sendChat(comment);
   // Calculate goal stats
-  let speed = convertToMeters(getDistance(ball.xspeed, ball.yspeed) * 60); // There are 60 frames per second
-  if ( Math.abs(ball.y) <= GOAL_LINE[1] ) {
-    var distance = GOAL_LINE[0] - Math.abs(ball.x);
-  } else {
-    // Get the distance between the ball and the nearest post
-    var distance = getDistance(GOAL_LINE[0] - Math.abs(ball.x), Math.abs(ball.y) - GOAL_LINE[1]);
-  };
-  distance = convertToMeters(distance);
+  let ballProperties = room.getDiscProperties(0);
+  let speed = convertToMeters(getDistance(shot.xspeed, shot.yspeed) * 60); // There are 60 frames per second
+  let distance = convertToMeters(getDistance(Math.abs(shot.x - ballProperties.x), Math.abs(shot.y - ballProperties.y)));
   room.sendAnnouncement(`Khoảng cách: ${distance || "dưới 1"}m | Lực sút: ${speed} (m/s)`, null, GREEN, "small");
 }
 
@@ -1586,9 +1576,7 @@ room.onPositionsReset = function() {
   };
 
   isPlaying = true;
-  ballProperties = [null, null];
-  prevShootedTeam = 0;
-  lastKicked = [null, null, null];
+  ballRecords = [null, null,  null];
   // Allows captains to pause the game before kick-off
   if ( (MODE == "pick") && (room.getScores().time != 0) ) {
     canPause = true;
