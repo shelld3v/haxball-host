@@ -1680,7 +1680,7 @@ room.onTeamVictory = function(scores) {
 room.onGameStart = function(byPlayer) {
   isPlaying = true;
   isPicking = false;
-  if ( isTakingPenalty ) {
+  if ( isTakingPenalty || isTraining ) {
     return;
   };
   reset();
