@@ -114,10 +114,10 @@ const gameDefault = {
 };
 const penaltyDefault = {
   groups: {
-    1: [], // RED penalty takers and goalkeeper against them
-    2: [], // BLUE penalty takers and goalkeeper against them
+    1: [], // RED penalty takers
+    2: [], // BLUE penalty takers
   },
-  results: [[], []], // Results of taken penalties (first array for RED, second for BLUE)
+  results: [[], []], // Results of taken penalties (first for RED, second for BLUE)
 };
 var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   help: [helpFunc, 0, ["rand", "pick"]],
@@ -161,7 +161,6 @@ var prevScore = null;
 var predictions = {};
 var lastMessage = [null, null]; // Last message and the player ID of the sender
 var ballRecords = [null, null, null]; // Ball properties of the last 3 kicks
-var showTableInterval = null;
 var game = null;
 var penalty = null;
 var timeouts = {
@@ -185,6 +184,7 @@ room.setKickRateLimit(7, 15, 3);
 room.startGame();
 
 setInterval(room.sendAnnouncement.bind(null, `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`, null, YELLOW, "small-italic", 0), NOTIFICATION_INTERVAL * 1000);
+if ( MODE == "pick" ) setInterval(showSpecTable.bind(null), 7 * 1000); // Send Spectators table once every few seconds to prevent it from being faded away by other messages
 updateMetadata();
 
 function updateMetadata() {
@@ -406,6 +406,7 @@ async function teamAvatarEffect(teamId, avatar) {
 
 // Show spectators with their assigned numbers to captains for them to pick by number
 function showSpecTable() {
+  if ( !isPicking ) return;
   let playerList = room.getPlayerList()
     .filter((player) => (player.team == 0) && !afkList.has(player.id))
     .map((player, index) => `${player.name} (#${index + 1})`);
@@ -490,7 +491,7 @@ async function updateTeamPlayers(subPlayer) {
     let bluePlayersCount = players.filter((player) => player.team == 2).length;
     if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) return; // Enough players for 2 teams
     // Find team that needs new player the most, if both have the same number of players, choose team who is worse in scores, or RED if neither is
-    let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : ( redPlayersCount < bluePlayersCount ) ? 1 : Number(scores.red > scores.blue) + 1;
+    let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : ( redPlayersCount < bluePlayersCount ) ? 1 : 1 + scores.red > scores.blue | 0;
 
     if ( !subPlayer ) {
       // Get a bench player
@@ -602,7 +603,8 @@ async function updateCaptain(teamId, newCaptain) {
 }
 
 // Under certain circumstances, automatically pick, start the game and return true
-function autoPick() {
+function checkAutoPick() {
+  if ( !isPicking ) return;
   let specPlayers = [];
   let redPlayersCount = 0;
   let bluePlayersCount = 0;
@@ -623,7 +625,7 @@ function autoPick() {
 
   // Move all players to the missing team
   for (player of specPlayers) {
-    room.setPlayerTeam(player.id, pickTurn);
+    room.setPlayerTeam(player.id, 1 + redPlayersCount > bluePlayersCount | 0);
   };
   room.startGame();
   return true;
@@ -631,7 +633,7 @@ function autoPick() {
 
 // Request a pick from the most needed team
 function requestPick() {
-  if ( !isPicking ) return; // Game started
+  if ( !isPicking || checkAutoPick() ) return; // Game started
   let players = room.getPlayerList();
   let redPlayersCount = players.filter((player) => player.team == 1).length;
   let bluePlayersCount = players.filter((player) => player.team == 2).length;
@@ -641,7 +643,6 @@ function requestPick() {
     return;
   };
   pickTurn = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
-  if ( autoPick() ) return;
 
   room.sendAnnouncement(`${TEAM_NAMES[pickTurn]} đang chọn người chơi...`, null, YELLOW);
   showSpecTable();
@@ -992,13 +993,13 @@ function afkFunc(value, player) {
     // Move the AFK player to Spectators
     if ( player.team != 0 ) {
       room.setPlayerTeam(player.id, 0);
-    } else if ( isPicking && !autoPick() ) {
-      showSpecTable();
     };
+    checkAutoPick();
   };
 
   updateTeamPlayers();
   reorderPlayers();
+  showSpecTable();
   return false;
 };
 
@@ -1442,8 +1443,6 @@ async function pickPlayers() {
     if ( isCaptain(player.id) || ((players.length > 10) && (player.team == prevWinner)) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
-  // Resend Spectators table once every 7 seconds to prevent it from being faded away by other messages
-  showTableInterval = setInterval(showSpecTable.bind(null), 7 * 1000);
   isPicking = true;
   requestPick();
 }
@@ -1479,7 +1478,7 @@ room.onPlayerJoin = async function(player) {
       case captains[2]:
         updateCaptain(2, player);
     };
-    isPicking && showSpecTable();
+    showSpecTable();
   };
   if ( isTraining && getNonAfkPlayers().length >= 8 ) {
     isTraining = false;
@@ -1528,7 +1527,7 @@ room.onPlayerLeave = async function(player) {
       await updateCaptain(player.team);
     };
   };
-  isPicking && !autoPick() && showSpecTable();
+  checkAutoPick() || showSpecTable();
 }
 
 room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
@@ -1555,7 +1554,7 @@ room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
           updateCaptain(2);
           break;
         default:
-          isPicking && showSpecTable();
+          showSpecTable();
       };
     };
   } else if ( afkList.has(changedPlayer.id) ) { // Move AFK players back to Spectators
@@ -1686,8 +1685,6 @@ room.onGameStart = function(byPlayer) {
   reset();
   // Stop forcing captain to pick
   clearTimeout(timeouts.toPick);
-  // Stop showing Spectators table
-  clearInterval(showTableInterval);
   setRandomColors();
   trackAfk();
   room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
