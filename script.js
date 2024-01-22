@@ -1303,6 +1303,7 @@ async function startPenaltyShootout() {
   // Store players' team and role (GK or not) for the penalty shootout
   let deepestPositions = [-1, -1];
   room.getPlayerList().forEach(function(player) {
+    if ( player.team == 0 ) continue;
     if ( Math.abs(player.position.x) > deepestPositions[player.team - 1] ) {
       penalty.groups[player.team].push(player.id); // GK is the player in the last index of the array
       deepestPositions[player.team - 1] = Math.abs(player.position.x);
