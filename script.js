@@ -34,7 +34,7 @@ const GOALKEEPER_COLORS = {
   red: [0, 0xFFFFFF, [0x363636, 0x262626, 0x363636]],
   blue: [0, 0xFFFFFF, [0x13A720, 0x2FD835, 0x13A720]],
 };
-const TRAINING_COLOR = [60, 050505, [EDFFC2]];
+const TRAINING_COLOR = [60, 0x050505, [0xEDFFC2]];
 const GOAL_COMMENTARIES = {
   "-3": "một bàn thắng danh dự",
   "-2": "liệu sẽ có một cuộc lội ngược dòng xảy ra?",
@@ -1303,7 +1303,7 @@ async function startPenaltyShootout() {
   // Store players' team and role (GK or not) for the penalty shootout
   let deepestPositions = [-1, -1];
   room.getPlayerList().forEach(function(player) {
-    if ( player.team == 0 ) continue;
+    if ( player.team == 0 ) return;
     if ( Math.abs(player.position.x) > deepestPositions[player.team - 1] ) {
       penalty.groups[player.team].push(player.id); // GK is the player in the last index of the array
       deepestPositions[player.team - 1] = Math.abs(player.position.x);
