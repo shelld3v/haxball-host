@@ -491,7 +491,7 @@ async function updateTeamPlayers(subPlayer) {
     let bluePlayersCount = players.filter((player) => player.team == 2).length;
     if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) return; // Enough players for 2 teams
     // Find team that needs new player the most, if both have the same number of players, choose team who is worse in scores, or RED if neither is
-    let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : ( redPlayersCount < bluePlayersCount ) ? 1 : 1 + scores.red > scores.blue | 0;
+    let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : ( redPlayersCount < bluePlayersCount ) ? 1 : 1 + (scores.red > scores.blue) | 0;
 
     if ( !subPlayer ) {
       // Get a bench player
@@ -625,7 +625,7 @@ function checkAutoPick() {
 
   // Move all players to the missing team
   for (player of specPlayers) {
-    room.setPlayerTeam(player.id, 1 + redPlayersCount > bluePlayersCount | 0);
+    room.setPlayerTeam(player.id, 1 + (redPlayersCount > bluePlayersCount) | 0);
   };
   room.startGame();
   return true;
