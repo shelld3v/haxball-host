@@ -621,7 +621,10 @@ function checkAutoPick() {
         bluePlayersCount++;
     };
   });
-  if ( (specPlayers.length > 1) && (Math.abs(redPlayersCount - bluePlayersCount) < specPlayers.length) ) return false;
+  if (
+    ((redPlayersCount >= 5) && (bluePlayersCount >= 5)) ||
+    ((specPlayers.length > 1) && (Math.abs(redPlayersCount - bluePlayersCount) < specPlayers.length))
+  ) return false;
 
   // Move all players to the missing team
   for (player of specPlayers) {
@@ -783,8 +786,13 @@ function surrenderFunc(value, player) {
     room.sendAnnouncement("Chưa đủ thời gian chơi tối thiểu để có thể đầu hàng, vui lòng đợi thêm", player.id, RED);
     return false;
   };
+  if ( ( player.team == 1 ) ? (scores.red >= scores.blue) : (scores.blue >= scores.red) ) {
+    room.sendAnnouncement("Bạn chỉ có thể đầu hàng khi đội đang thua", player.id, RED);
+    return false;
+  };
 
   room.sendChat(`Đội trưởng của ${TEAM_NAMES[player.team]} đã lựa chọn đầu hàng, ${TEAM_NAMES[player.team]} đã bị xử thua`);
+  prevScore = `${scores.red}-${scores.blue}`;
   handlePostGame(getOppositeTeamId(player.team));
   room.stopGame();
   return false;
