@@ -1310,12 +1310,22 @@ async function startPenaltyShootout() {
   isTakingPenalty = true;
   prevScore = Array(2).fill(room.getScores().red).join("-");
   // Store players' team and role (GK or not) for the penalty shootout
-  let deepestPositions = [-1, -1];
+  let deepestPositions = [Number.MAX_VALUE, Number.MIN_VALUE];
   room.getPlayerList().forEach(function(player) {
-    if ( player.team == 0 ) return;
-    if ( Math.abs(player.position.x) > deepestPositions[player.team - 1] ) {
+    let isLowest = false;
+    switch ( player.team ) {
+      case 0:
+        return;
+      case 1:
+        isLowest = player.position.x < deepestPositions[0];
+        break;
+      case 2:
+        isLowest = player.position.x > deepestPositions[1];
+    }
+
+    if ( isLowest ) { // The lowest player will be assigned to the GK role
       penalty.groups[player.team].push(player.id); // GK is the player in the last index of the array
-      deepestPositions[player.team - 1] = Math.abs(player.position.x);
+      deepestPositions[player.team - 1] = player.position.x;
     } else {
       penalty.groups[player.team].unshift(player.id);
     };
