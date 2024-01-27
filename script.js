@@ -1626,11 +1626,8 @@ room.onPlayerTeamChange = function(changedPlayer, byPlayer) {
 }
 
 room.onPlayerBallKick = function(player) {
-  if ( !isTakingPenalty && !isTraining ) {
-    updateBallKick(player);
-    return;
-  };
-  if ( isTakingPenalty ) clearTimeout(timeouts.toTakePenalty);
+  if ( isTakingPenalty || isTraining ) return;
+  updateBallKick(player);
 }
 
 room.onTeamGoal = function(team) {
