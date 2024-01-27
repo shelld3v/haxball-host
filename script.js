@@ -211,7 +211,7 @@ async function randomAnnouncement() {
         };
         return player2.goals - player1.goals;
       }).slice(0, 5);
-      msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()}: ${topScorers.map((player, index) => `${index}. ${player.name} (${player.goals} ⚽)`).join("  •  ")}`;
+      msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()}: ${topScorers.map((player, index) => `${index + 1}. ${player.name} (${player.goals} ⚽)`).join("  •  ")}`;
       break;
     case 2: // Sends top assisters list
       let topAssisters = getPlayerStats().sort(function(player1, player2) {
@@ -220,7 +220,7 @@ async function randomAnnouncement() {
         };
         return player2.assists - player1.assists;
       }).slice(0, 5);
-      msg = `Danh sách kiến tạo hàng đầu tháng ${getMonths()}: ${topAssisters.map((player, index) => `${index}. ${player.name} (${player.assists} 👟)`).join("  •  ")}`;
+      msg = `Danh sách kiến tạo hàng đầu tháng ${getMonths()}: ${topAssisters.map((player, index) => `${index + 1}. ${player.name} (${player.assists} 👟)`).join("  •  ")}`;
       break;
     default:
       (quotes.length == 0) && await fetch("https://api.quotable.io/quotes/random?limit=50", { method: "GET" }) // Fetch new quotes
