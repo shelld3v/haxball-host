@@ -723,7 +723,7 @@ function showStatsFunc(value, player) {
 }
 
 function kickAfkFunc(value, player) {
-  if ( !isPlaying ) {
+  if ( !isPlaying || isTraining ) {
     room.sendAnnouncement("Chỉ có thể báo cáo AFK khi trận đấu đang diễn ra", player.id, RED);
     return false;
   };
@@ -1746,10 +1746,10 @@ room.onGameStart = function(byPlayer) {
 }
 
 room.onGameStop = async function(byPlayer) {
+  isPlaying = false;
   clearAfkRecords(); // Stop monitoring AFK when the game is stopped
   if ( getNonAfkPlayers().length >= 10 ) saveStats(); // Save stats of the previous game
   if ( (byPlayer !== null) && (byPlayer.id != 0) ) { // It wasn't a game over or stopped by host player
-    isPlaying = false;
     room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
     return;
   };
