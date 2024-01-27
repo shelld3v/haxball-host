@@ -8,7 +8,7 @@ const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 60;
 const MAX_ADDED_TIME = 90;
-const NOTIFICATION_INTERVAL = 60;
+const NOTIFICATION_INTERVAL = 2 * 60;
 const MIN_TIME_FOR_SURRENDER = 3 * 60;
 const MAX_DUPE_MESSAGES = 2;
 const MAX_PLAYER_RADIUS_REDUCTION = 2;
@@ -201,10 +201,10 @@ function getPlayerStats() {
 async function randomAnnouncement() {
   let msg = null;
   switch ( Math.floor(Math.random() * 5) ) {
-    case 0: // Sends Discord link
+    case 0: // Send Discord link
       msg = `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`;
       break;
-    case 1: // Sends top scorers list
+    case 1: // Send top scorers list
       let topScorers = getPlayerStats().sort(function(player1, player2) {
         if ( player1.goals == player2.goals ) {
           return player2.assists - player1.assists;
@@ -213,7 +213,7 @@ async function randomAnnouncement() {
       }).slice(0, 5);
       msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()}: ${topScorers.map((player, index) => `${index + 1}. ${player.name} (${player.goals} ⚽)`).join("  •  ")}`;
       break;
-    case 2: // Sends top assisters list
+    case 2: // Send top assisters list
       let topAssisters = getPlayerStats().sort(function(player1, player2) {
         if ( player1.assists == player2.assists ) {
           return player2.goals - player1.goals;
@@ -222,7 +222,7 @@ async function randomAnnouncement() {
       }).slice(0, 5);
       msg = `Danh sách kiến tạo hàng đầu tháng ${getMonths()}: ${topAssisters.map((player, index) => `${index + 1}. ${player.name} (${player.assists} 👟)`).join("  •  ")}`;
       break;
-    default:
+    default: // Send a random quote
       (quotes.length == 0) && await fetch("https://api.quotable.io/quotes/random?limit=50", { method: "GET" }) // Fetch new quotes
         .then( response => response.json() )
         .then( json => quotes = json.map((quote) => `"${quote.content}" - ${quote.author}`) );
