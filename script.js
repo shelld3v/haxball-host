@@ -856,7 +856,7 @@ function subFunc(value, player) {
     return false;
   };
   let sub = value.split(" ", 2);
-  if ( sub.length == 0 ) {
+  if ( sub[0] == "" ) {
     room.sendAnnouncement("Đặt cầu thủ muốn thay ra TRƯỚC cầu thủ muốn thay vào, bỏ trống vị trí thay vào nếu muốn tự động thay vào cầu thủ có thống kê tốt nhất trong room (VD: !sub @a @b hoặc !sub @a)", player.id, RED);
     return false;
   };
