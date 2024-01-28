@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "pulapula";
+const ADMIN_PASSWORD = "pulabel";
 const MODE = "pick"; // can be "rand" or "pick"
 const AFK_DEADLINE = 10;
 const PICK_DEADLINE = 25;
@@ -185,7 +185,7 @@ room.setKickRateLimit(7, 15, 3);
 room.startGame();
 
 setInterval(randomAnnouncement, NOTIFICATION_INTERVAL * 1000);
-if ( MODE == "pick" ) setInterval(showSpecTable.bind(null), 7 * 1000); // Send Spectators table once every few seconds to prevent it from being faded away by other messages
+if ( MODE == "pick" ) setInterval(showSpecTable.bind(null), 5 * 1000); // Send Spectators table once every few seconds to prevent it from being faded away by other messages
 updateMetadata();
 
 function getPlayerStats() {
