@@ -382,6 +382,7 @@ function reorderPlayers() {
 
 // Get a player by name or tag
 function getPlayerByName(value) {
+  if ( !value ) return null;
   // Find player by tag
   if ( value.startsWith("@") ) {
     return room.getPlayerList().find((player) => getTag(player.name) == value);
@@ -407,6 +408,19 @@ function getPredictionWinners() {
     let player = room.getPlayer(id);
     return (player !== null) && (player.team !== prevWinner);
   });
+}
+
+// Get the spectator with the highest number of G/A
+function getBestSpectatorByStats() {
+  let bestPlayer = null;
+  let highestGA = -1;
+  for (spectator of getNonAfkPlayers().filter((player) => player.team == 0)) {
+    let stats = getStats(identities[spectator.id][0]);
+    if ( stats.goals + stats.assists <= highestGA ) continue;
+    bestPlayer = spectator;
+    highestGA = stats.goals + stats.assists;
+  };
+  return bestPlayer;
 }
 
 // Return the index (0 or 1) of the team that will take the penalty
@@ -842,12 +856,12 @@ function subFunc(value, player) {
     return false;
   };
   let sub = value.split(" ", 2);
-  if ( sub.length != 2 ) {
-    room.sendAnnouncement("Đầu vào không hợp lệ, hãy đặt cầu thủ muốn thay vào ở TRƯỚC cầu thủ muốn thay ra (VD: !sub @b @a hoặc !sub b a)", player.id, RED);
+  if ( sub.length == 0 ) {
+    room.sendAnnouncement("Đặt cầu thủ muốn thay ra TRƯỚC cầu thủ muốn thay vào, bỏ trống vị trí thay vào nếu muốn tự động thay vào cầu thủ có thống kê tốt nhất trong room (VD: !sub @a @b hoặc !sub @a)", player.id, RED);
     return false;
   };
 
-  let [inPlayer, outPlayer] = sub.map((value) => getPlayerByName(value));
+  let [outPlayer, inPlayer] = [getPlayerByName(value[0]), getPlayerByName(value[1]) || getBestSpectatorByStats()];
   if ( !inPlayer || !outPlayer ) {
     room.sendAnnouncement("Một trong hai hoặc cả hai cầu thủ không tồn tại hoặc đã rời đi", player.id, RED);
     return false;
@@ -1052,15 +1066,9 @@ function afkFunc(value, player) {
 // Pick a player from the Spectators to move to a team
 async function pick(pickedPlayer, team) {
   if ( !pickedPlayer ) { // No player provided, therefore select player with the best statistics
-    let highest_ga = -1;
-    for (spectator of getNonAfkPlayers().filter((player) => player.team == 0)) {
-      let stats = getStats(identities[spectator.id][0]);
-      if ( stats.goals + stats.assists <= highest_ga ) continue;
-      pickedPlayer = spectator;
-      highest_ga = stats.goals + stats.assists;
-    };
+    pickedPlayer = getBestSpectatorByStats();
+    if ( !pickedPlayer ) return; // Just in case there is any weird race condition bug:/
   };
-  if ( !pickedPlayer ) return; // Just in case there is any weird race condition bug:/
 
   clearTimeout(timeouts.toPick);
   await room.setPlayerTeam(pickedPlayer.id, team);
