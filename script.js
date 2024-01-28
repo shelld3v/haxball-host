@@ -861,7 +861,7 @@ function subFunc(value, player) {
     return false;
   };
 
-  let [outPlayer, inPlayer] = [getPlayerByName(value[0]), getPlayerByName(value[1]) || getBestSpectatorByStats()];
+  let [outPlayer, inPlayer] = [getPlayerByName(sub[0]), getPlayerByName(sub[1]) || getBestSpectatorByStats()];
   if ( !inPlayer || !outPlayer ) {
     room.sendAnnouncement("Một trong hai hoặc cả hai cầu thủ không tồn tại hoặc đã rời đi", player.id, RED);
     return false;
