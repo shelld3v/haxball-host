@@ -7,6 +7,7 @@ const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 60;
+const MAX_SUBSTITUTIONS = 2;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
 const MIN_TIME_FOR_SURRENDER = 2 * 60;
@@ -100,6 +101,7 @@ const playerReport = {
   forTeam: 0,
 };
 const teamStats = {
+  substitutions: 0,
   kicks: 0,
   passes: 0,
   possessedKicks: 0,
@@ -855,6 +857,10 @@ function subFunc(value, player) {
     room.sendAnnouncement("Bạn chỉ có thể thay người khi trận đấu đang diễn ra", player.id, RED);
     return false;
   };
+  if ( game.teams[player.team].substitutions >= MAX_SUBSTITUTIONS ) {
+    room.sendAnnouncement("Bạn đã hết lượt thay người", player.id, RED);
+    return false;
+  };
   let sub = value.split(" ", 2);
   if ( sub[0] == "" ) {
     room.sendAnnouncement("Đặt cầu thủ muốn thay ra TRƯỚC cầu thủ muốn thay vào, bỏ trống vị trí thay vào nếu muốn tự động thay vào cầu thủ có thống kê tốt nhất trong room (VD: !sub @a @b hoặc !sub @a)", player.id, RED);
@@ -882,6 +888,7 @@ function subFunc(value, player) {
   room.sendAnnouncement(`🔺 ${inPlayer.name} đã được thay vào sân`, null, GREEN, "normal", 0);
   room.setPlayerTeam(inPlayer.id, player.team);
   room.setPlayerTeam(outPlayer.id, 0);
+  game.teams[player.team].substitutions++;
   return false;
 }
 
