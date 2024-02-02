@@ -1640,7 +1640,7 @@ room.onPositionsReset = function() {
   if ( (MODE == "pick") && (room.getScores().time != 0) ) {
     canPause = true;
     for (captain of Object.values(captains)) {
-      room.sendAnnouncement('Bạn có thể dừng game bằng lệnh !pause để thay người (dùng "!sub @thay_vào @thay_ra") trước khi kick-off', captain, YELLOW);
+      room.sendAnnouncement('Bạn có thể dừng game bằng lệnh !pause để thay người (dùng "!sub @thay_ra @thay_vào") trước khi kick-off', captain, YELLOW);
     };
   };
 }
