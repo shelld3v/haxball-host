@@ -1282,17 +1282,18 @@ function celebratePenalty(team) {
   };
 }
 
-async function checkSpam(player, message) {
+function checkSpam(player, message) {
   if ( (message != lastMessage[0]) || (player.id != lastMessage[1]) ) { // The message is not spammy
     lastMessage = [message, player.id];
     duplicateMessagesCount = 0;
-    return;
   };
 
   duplicateMessagesCount++;
   if ( duplicateMessagesCount >= MAX_DUPE_MESSAGES ) {
     muteFunc(`${getTag(player.name)} 1 Spam`, room.getPlayer(0));
+    return true;
   };
+  return false;
 }
 
 // Track all players on the pitch to find and kick AFK players
@@ -1690,7 +1691,7 @@ room.onPlayerChat = function(player, message) {
       room.sendAnnouncement("Không thể chat, bạn đã bị cấm", player.id, RED);
       return false;
     };
-    checkSpam(player, message);
+    if ( checkSpam(player, message) ) return false;
   };
   if ( message.startsWith("!") ) { // Indicating a command
     return processCommand(player, message.slice(1));
