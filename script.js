@@ -1566,8 +1566,9 @@ room.onPlayerLeave = async function(player) {
   // A captain left, assign another one
   if ( isCaptain(player.id) ) {
     if ( isTakingPenalty ) {
+      let playerTeam = ( player.id == captains[1] ) ? 1 : 2;
       // To assign another player who is from the same team, we have to pick up from `penalty.groups`
-      await updateCaptain(player.team, room.getPlayer(penalty.groups[1 + (captains[2] == player.id) | 0].at(0)));
+      await updateCaptain(playerTeam, room.getPlayer(penalty.groups[playerTeam].at(0)));
     } else {
       await updateCaptain(player.team);
     };
