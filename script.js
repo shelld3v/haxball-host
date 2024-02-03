@@ -127,6 +127,7 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   discord: [discordFunc, 0, ["rand", "pick"]],
   bye: [byeFunc, 0, ["rand", "pick"]],
   stats: [showStatsFunc, 0, ["rand", "pick"]],
+  rankings: [showRankingsFunc, 0 ["rand", "pick"]],
   kickafk: [kickAfkFunc, 0, ["rand", "pick"]],
   spec: [specFunc, 0, ["rand", "pick"]],
   login: [loginFunc, 0, ["rand", "pick"]],
@@ -202,6 +203,24 @@ function getPlayerStats() {
   return playerList;
 }
 
+function orderPlayerStatsByGoals(playerList) {
+  return playerList.sort(function(player1, player2) {
+    if ( player1.goals == player2.goals ) {
+      return player2.assists - player1.assists;
+    };
+    return player2.goals - player1.goals;
+  });
+}
+
+function orderPlayerStatsByAssists(playerList) {
+  return playerList.sort(function(player1, player2) {
+    if ( player1.assists == player2.assists ) {
+      return player2.goals - player1.goals;
+    };
+    return player2.assists - player1.assists;
+  });
+}
+
 async function randomAnnouncement() {
   let msg = null;
   switch ( Math.floor(Math.random() * 5) ) {
@@ -209,22 +228,12 @@ async function randomAnnouncement() {
       msg = `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`;
       break;
     case 1: // Send top scorers list
-      let topScorers = getPlayerStats().sort(function(player1, player2) {
-        if ( player1.goals == player2.goals ) {
-          return player2.assists - player1.assists;
-        };
-        return player2.goals - player1.goals;
-      }).slice(0, 5);
+      let topScorers = orderPlayerStatsByGoals(getPlayerStats()).slice(0, 5);
       if ( topScorers.length == 0 ) return;
       msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()}: ${topScorers.map((player, index) => `${index + 1}. ${player.name} (${player.goals} ⚽)`).join("  •  ")}`;
       break;
     case 2: // Send top assisters list
-      let topAssisters = getPlayerStats().sort(function(player1, player2) {
-        if ( player1.assists == player2.assists ) {
-          return player2.goals - player1.goals;
-        };
-        return player2.assists - player1.assists;
-      }).slice(0, 5);
+      let topAssisters = orderPlayerStatsByAssists(getPlayerStats()).slice(0, 5);
       if ( topAssisters.length == 0 ) return;
       msg = `Danh sách kiến tạo hàng đầu tháng ${getMonths()}: ${topAssisters.map((player, index) => `${index + 1}. ${player.name} (${player.assists} 👟)`).join("  •  ")}`;
       break;
