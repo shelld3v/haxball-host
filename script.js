@@ -127,6 +127,7 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   discord: [discordFunc, 0, ["rand", "pick"]],
   bye: [byeFunc, 0, ["rand", "pick"]],
   stats: [showStatsFunc, 0, ["rand", "pick"]],
+  rankings: [showRankingsFunc, 0, ["rand", "pick"]],
   kickafk: [kickAfkFunc, 0, ["rand", "pick"]],
   spec: [specFunc, 0, ["rand", "pick"]],
   login: [loginFunc, 0, ["rand", "pick"]],
@@ -197,36 +198,16 @@ function getPlayerStats() {
   for (var i = 0; i < localStorage.length; i++) {
     var key = localStorage.key(i);
     if ( key.length != 43 ) continue;
-    playerList.push(JSON.parse(localStorage.getItem(key)));
+    playerList.push({ ...JSON.parse(localStorage.getItem(key)), auth: key });
   };
   return playerList;
 }
 
 async function randomAnnouncement() {
   let msg = null;
-  switch ( Math.floor(Math.random() * 5) ) {
+  switch ( Math.floor(Math.random() * 3) ) {
     case 0: // Send Discord link
       msg = `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`;
-      break;
-    case 1: // Send top scorers list
-      let topScorers = getPlayerStats().sort(function(player1, player2) {
-        if ( player1.goals == player2.goals ) {
-          return player2.assists - player1.assists;
-        };
-        return player2.goals - player1.goals;
-      }).slice(0, 5);
-      if ( topScorers.length == 0 ) return;
-      msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()}: ${topScorers.map((player, index) => `${index + 1}. ${player.name} (${player.goals} ⚽)`).join("  •  ")}`;
-      break;
-    case 2: // Send top assisters list
-      let topAssisters = getPlayerStats().sort(function(player1, player2) {
-        if ( player1.assists == player2.assists ) {
-          return player2.goals - player1.goals;
-        };
-        return player2.assists - player1.assists;
-      }).slice(0, 5);
-      if ( topAssisters.length == 0 ) return;
-      msg = `Danh sách kiến tạo hàng đầu tháng ${getMonths()}: ${topAssisters.map((player, index) => `${index + 1}. ${player.name} (${player.assists} 👟)`).join("  •  ")}`;
       break;
     default: // Send a random quote
       (quotes.length == 0) && await fetch("https://api.quotable.io/quotes/random?limit=50", { method: "GET" }) // Fetch new quotes
@@ -706,6 +687,30 @@ function showStatsFunc(value, player) {
 🤝🏻 Kiến tạo: ${item.assists}
 ❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
 👑 Chiến thắng: ${item.wins}`, player.id, BLUE, "small-bold");
+  return false;
+}
+
+function showRankingsFunc(value, player) {
+  // Sort players by goals scored
+  let playerList = getPlayerStats().sort(function(player1, player2) {
+    if ( player1.goals == player2.goals ) {
+      return player2.assists - player1.assists;
+    };
+    return player2.goals - player1.goals;
+  })
+  if ( playerList.length == 0 ) return;
+  let msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()}: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals} ⚽)`).join("  •  ")}`;
+  msg += ` (Xếp hạng của bạn: ${1 + playerList.findIndex((stats) => stats.auth == identities[player.id][0]) || "Không có"}`;
+  // Sort players by assists made
+  let playerList = playerList.sort(function(player1, player2) {
+    if ( player1.assists == player2.assists ) {
+      return player2.goals - player1.goals;
+    };
+    return player2.assists - player1.assists;
+  });
+  msg += `\nDanh sách kiến tạo hàng đầu tháng ${getMonths()}: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists} 👟)`).join("  •  ")}`;
+  msg += ` (Xếp hạng của bạn: ${1 + playerList.findIndex((stats) => stats.auth == identities[player.id][0]) || "Không có"}`;
+  room.sendAnnouncement(msg, player.id, YELLOW, "small-italic");
   return false;
 }
 
