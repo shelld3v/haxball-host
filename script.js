@@ -691,8 +691,9 @@ function showStatsFunc(value, player) {
 }
 
 function showRankingsFunc(value, player) {
+  let playerList = getPlayerStats();
   // Sort players by goals scored
-  let playerList = getPlayerStats().sort(function(player1, player2) {
+  playerList.sort(function(player1, player2) {
     if ( player1.goals == player2.goals ) {
       return player2.assists - player1.assists;
     };
@@ -702,7 +703,7 @@ function showRankingsFunc(value, player) {
   let msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()}: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals} ⚽)`).join("  •  ")}`;
   msg += ` (Xếp hạng của bạn: ${1 + playerList.findIndex((stats) => stats.auth == identities[player.id][0]) || "Không có"}`;
   // Sort players by assists made
-  let playerList = playerList.sort(function(player1, player2) {
+  playerList.sort(function(player1, player2) {
     if ( player1.assists == player2.assists ) {
       return player2.goals - player1.goals;
     };
