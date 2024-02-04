@@ -704,8 +704,8 @@ function showRankingsFunc(value, player) {
     room.sendAnnouncement("Chưa có dữ liệu người chơi", player.id, RED);
     return false;
   };
-  let msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()}: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals} ⚽)`).join("  •  ")}`;
-  msg += ` (Xếp hạng của bạn: ${1 + playerList.findIndex((stats) => stats.auth == identities[player.id][0]) || "Không có"})`;
+  let msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()} ⚽: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals})`).join("  •  ")}`;
+  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex((stats) => stats.auth == identities[player.id][0]) || "Không có"})`;
 
   // Sort players by assists made
   playerList.sort(function(player1, player2) {
@@ -714,8 +714,8 @@ function showRankingsFunc(value, player) {
     };
     return player2.assists - player1.assists;
   });
-  msg += `\nDanh sách kiến tạo hàng đầu tháng ${getMonths()}: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists} 👟)`).join("  •  ")}`;
-  msg += ` (Xếp hạng của bạn: ${1 + playerList.findIndex((stats) => stats.auth == identities[player.id][0]) || "Không có"})`;
+  msg += `\nDanh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists})`).join("  •  ")}`;
+  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex((stats) => stats.auth == identities[player.id][0]) || "Không có"})`;
 
   room.sendAnnouncement(msg, player.id, YELLOW, "small-italic");
   return false;
