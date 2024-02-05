@@ -1607,8 +1607,9 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
     reorderPlayers();
     if ( MODE == "pick" ) {
       // Captain was moved to Spectators, assign captain
-      if ( isCaptain(changedPlayer.id) ) {
-        updateCaptain(changedPlayer.team);
+      let isCaptainOf = ( changedPlayer.id == captains[1] ) ? 1 : ( changedPlayer.id == captains[2] ) ? 2 : 0;
+      if ( isCaptainOf != 0 ) {
+        updateCaptain(isCaptainOf);
       } else {
         showSpecTable();
       };
