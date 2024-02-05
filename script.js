@@ -553,7 +553,7 @@ function updateBallKick(player) {
     let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE[0] : -GOAL_LINE[0]; // The x position value of the opponent's goal
     if (
       (xOpponentGoal * ballProperties.xspeed > 0) && // It's a kick toward the opponent goal
-      (Math.abs(ballProperties.x + ballProperties.xspeed * 99.762) > GOAL_LINE[0]) // At this speed, the ball can cross the goal line
+      (Math.abs(ballProperties.x + ballProperties.xspeed * 99) > GOAL_LINE[0]) // At this speed, the ball can cross the goal line
     ) {
       // Check if it's on target (not really accurate because it might hit the post)
       if ( Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < GOAL_LINE[1] ) {
@@ -1259,7 +1259,7 @@ Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} �
       inline: false,
     },
   ];
-  sendWebhook(`🌟 ${scoreline}`, discordMsg, discordFields, [`${redCaption}-${blueCaptain} (${new Date().toString().slice(0, 24)})`, room.stopRecording()]);
+  sendWebhook(`🌟 ${scoreline}`, discordMsg, discordFields, [`${redCaption}-${blueCaptain} ${new Date().toString().slice(0, 21).replace(":", "h")}.hbs`, room.stopRecording()]);
 }
 
 function celebrateGoal(team) {
