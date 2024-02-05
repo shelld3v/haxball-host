@@ -1119,7 +1119,7 @@ function updateStats(team) {
       assist.isAShot && // The previous kick was a shot on target
       (assist.byPlayer.team == team) && // The previous kick came from an opponent player
       (GOAL_LINE[0] - Math.abs(shot.x) < PLAYER_RADIUS * 3 ) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
-      (shot.time - assist.time < 1500) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
+      (shot.time - assist.time < 2000) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
     ) {
       // Correct the credits
       [shot, assist] = ballRecords.slice(1);
@@ -1236,7 +1236,7 @@ Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} �
   let redCaption = room.getPlayer(captains[1]).name;
   let blueCaptain = room.getPlayer(captains[2]).name;
   // Generate a Discord embed about game statistics
-  let discordMsg = `**RED (captain: ${redCaption})**\n\`\`\`ansi\n[2;31m${redPlayerStats.join("\n")}\`\`\`\n**BLUE (captain: ${blueCaptain})**\n\`\`\`ansi\n[2;34m${bluePlayerStats.join("\n")}\`\`\``;
+  let discordMsg = `**RED (captain: ${redCaption})**\n\`\`\`ansi\n[2;31m${redPlayerStats.join("\n")}\`\`\`\n**BLUE (captain: ${blueCaptain})**\n\`\`\`ansi\n[2;34m${bluePlayerStats.join("\n")}\`\`\``;
   let discordFields = [
     {
       name: "Thống kê",
