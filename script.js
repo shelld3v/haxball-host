@@ -1233,10 +1233,7 @@ Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} �
   room.sendAnnouncement(statsMsg, null, YELLOW, "small-bold", 0);
 
   // Generate a Discord embed about game statistics
-  let redCaption = room.getPlayer(captains[1]).name;
-  let blueCaptain = room.getPlayer(captains[2]).name;
-  // Generate a Discord embed about game statistics
-  let discordMsg = `**RED (captain: ${redCaption})**\n\`\`\`ansi\n[2;31m${redPlayerStats.join("\n")}\`\`\`\n**BLUE (captain: ${blueCaptain})**\n\`\`\`ansi\n[2;34m${bluePlayerStats.join("\n")}\`\`\``;
+  let discordMsg = `**RED (captain: ${room.getPlayer(captains[1]).name})**\n\`\`\`ansi\n[2;31m${redPlayerStats.join("\n")}\`\`\`\n**BLUE (captain: ${room.getPlayer(captains[2]).name})**\n\`\`\`ansi\n[2;34m${bluePlayerStats.join("\n")}\`\`\``;
   let discordFields = [
     {
       name: "Thống kê",
@@ -1259,7 +1256,7 @@ Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} �
       inline: false,
     },
   ];
-  sendWebhook(`🌟 ${scoreline}`, discordMsg, discordFields, [`${redCaption}-${blueCaptain} ${new Date().toString().slice(0, 21).replace(":", "h")}.hbs`, room.stopRecording()]);
+  sendWebhook(`🌟 ${scoreline}`, discordMsg, discordFields, [`${new Date().toString().slice(0, 21).replace(" ", "-").replace(":", "h")}.hbr2`, room.stopRecording()]);
 }
 
 function celebrateGoal(team) {
