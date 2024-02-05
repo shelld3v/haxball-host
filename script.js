@@ -104,9 +104,8 @@ const playerReport = {
 };
 const teamStats = {
   substitutions: 0,
-  kicks: 0,
   passes: 0,
-  possessedKicks: 0,
+  possession: 0,
   shotsOnTarget: 0,
 };
 const gameDefault = {
@@ -312,24 +311,28 @@ function getOppositeTeamId(id) {
 }
 
 // Send a message to Discord Webhook
-function sendWebhook(title, content, fields, attachment) {
+async function sendWebhook(title, content, fields, attachment) {
   if ( !DISCORD_WEBHOOK ) return;
-  let form = new FormData();
-  form.append("payload_json", JSON.stringify({
-    embeds: [{
-      color: 1752220,
-      title: title,
-      description: content,
-      fields: fields,
-    }]
-  }));
-  if ( attachment && attachment[1] ) form.append(null, new File([attachment[1]], attachment[0], { "type": "text/plain" }));
-  fetch(DISCORD_WEBHOOK, {
+  await fetch(DISCORD_WEBHOOK, {
     method: "POST",
-    body: form,
+    body: JSON.stringify({
+      embeds: [{
+        color: 1752220,
+        title: title,
+        description: content,
+        fields: fields,
+      }],
+    }),
     headers: {
       "Content-Type": "application/json",
     },
+  }).then((res) => res);
+  if ( !attachment || !attachment[1] ) return;
+  let form = new FormData();
+  form.append(null, new File([attachment[1]], attachment[0], { "type": "text/plain" }));
+  fetch(DISCORD_WEBHOOK, {
+    method: "POST",
+    body: form,
   }).then((res) => res);
 }
 
@@ -526,16 +529,18 @@ function updateBallKick(player) {
   let ballProperties = room.getDiscProperties(0);
   ballProperties.byPlayer = player;
   ballProperties.isAShot = false;
+  ballProperties.time = new Date().getTime();
   ballRecords.unshift(ballProperties);
   ballRecords.pop();
 
-  // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
+  let timeGap = ballRecords[0].time - ballRecords[1].time;
   if (
     ballRecords[1] &&
     ballRecords[1].isAShot &&
+    (timeGap < 1000) &&
     (ballRecords[1].byPlayer.team != player.team) &&
-    (getDistance(ballProperties.x - ballRecords[1].x, ballProperties.y - ballRecords[1].y) < BALL_RADIUS * 2)
-  ) {
+    (getDistance(ballProperties.x - ballRecords[1].x, ballProperties.y - ballRecords[1].y) < BALL_RADIUS * 4)
+  ) { // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
     game.teams[ballRecords[1].byPlayer.team].shotsOnTarget--;
   } else { // Check for shot on target
     let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE[0] : -GOAL_LINE[0]; // The x position value of the opponent's goal
@@ -558,8 +563,6 @@ function updateBallKick(player) {
     };
   };
 
-  // Update total kicks
-  game.teams[player.team].kicks++;
   // Update accurate kicks
   if ( ballRecords[1] === null ) { // Kick-off pass
     // Disallow pausing after kick-off
@@ -570,8 +573,8 @@ function updateBallKick(player) {
 
   // Received the ball from a teammate, so the previous kick was a pass
   if ( player.id != ballRecords[1].byPlayer.id ) game.teams[player.team].passes++;
-  // Received the ball from a teammate or from yourself, so the previous kick kept the possession
-  game.teams[player.team].possessedKicks++;
+  // Received the ball from a teammate or from yourself, so it's in possession
+  game.teams[player.team].possession += timeGap;
 }
 
 // Change captain of a specific team
@@ -1115,7 +1118,8 @@ function updateStats(team) {
       assist && // Someone's kick resulted in this goal
       assist.isAShot && // The previous kick was a shot on target
       (assist.byPlayer.team == team) && // The previous kick came from an opponent player
-      (Math.abs(shot.x) > GOAL_LINE[0] - BALL_RADIUS * 6) // The gap between the ball and the goal-line was too small that it probably was an effort to clear the ball
+      (Math.abs(shot.x) > GOAL_LINE[0] - BALL_RADIUS * 6) && // The gap between the ball and the goal-line was too small that it probably was an effort to clear the ball
+      (shot.time - assist.time < 3000) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
     ) {
       // Correct the credits
       [shot, assist] = ballRecords.slice(1);
@@ -1128,8 +1132,6 @@ function updateStats(team) {
 
   let ballPosition = room.getBallPosition();
   updatePlayerStats(shot.byPlayer, 1);
-  // Counting this shot as a "possessed kick"
-  game.teams[shot.byPlayer.team].possessedKicks++;
   if ( identities[shot.byPlayer.id] === undefined ) return; // Scorer left the game
   // Design celebrating comment
   let hasScored = game.players[identities[shot.byPlayer.id][0]].goals;
@@ -1183,12 +1185,8 @@ function reportStats() {
   }
   room.sendAnnouncement(scoreline, null, YELLOW, "bold");
 
-  // Possession stats
-  let totalPossessedKicks = game.teams[1].possessedKicks + game.teams[2].possessedKicks;
-  let redPossession = ~~(game.teams[1].possessedKicks / totalPossessedKicks * 100);
+  let redPossession = ~~(game.teams[1].possession / (game.teams[1].possession + game.teams[2].possession));
   let bluePossession = 100 - redPossession;
-  let redSuccessRate = ~~(game.teams[1].possessedKicks / game.teams[1].kicks * 100);
-  let blueSuccessRate = ~~(game.teams[2].possessedKicks / game.teams[2].kicks * 100);
 
   // Player stats information
   let redPlayerStats = [];
@@ -1224,8 +1222,7 @@ function reportStats() {
   // Generate a room message about game statistics
   let statsMsg = `Kiểm soát bóng: 🔴 ${redPossession}% - ${bluePossession}% 🔵
 Sút trúng đích: 🔴 ${game.teams[1].shotsOnTarget} - ${game.teams[2].shotsOnTarget} 🔵
-Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} 🔵
-Tỉ lệ xử lý bóng thành công: 🔴 ${redSuccessRate}% - ${blueSuccessRate}% 🔵`;
+Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} 🔵`;
   if ( redPlayerStats.length != 0 ) {
     statsMsg += `\nRED: ${redPlayerStats.join("  •  ")}`;
   };
@@ -1236,21 +1233,24 @@ Tỉ lệ xử lý bóng thành công: 🔴 ${redSuccessRate}% - ${blueSuccessRa
   room.sendAnnouncement(statsMsg, null, YELLOW, "small-bold", 0);
 
   // Generate a Discord embed about game statistics
-  let discordMsg = `**RED (captain: ${captains[1]})\n\`\`\`ansi\n[2;31m${redPlayerStats.join("\n")}\`\`\`\nBLUE (captain: ${captains[2]})\n\`\`\`ansi\n[2;34m${bluePlayerStats.join("\n")}\`\`\``;
+  let redCaption = room.getPlayer(captains[1]).name;
+  let blueCaptain = room.getPlayer(captains[2]).name;
+  // Generate a Discord embed about game statistics
+  let discordMsg = `**RED (captain: ${redCaption})**\n\`\`\`ansi\n[2;31m${redPlayerStats.join("\n")}\`\`\`\n**BLUE (captain: ${blueCaptain})**\n\`\`\`ansi\n[2;34m${bluePlayerStats.join("\n")}\`\`\``;
   let discordFields = [
     {
       name: "Thống kê",
-      value: "=======================\n\n**Kiểm soát bóng**\n**Sút trúng đích**\n**Lượt chuyền bóng**\n**Tỉ lệ xử lý bóng thành công**",
+      value: "=======================\n\n**Kiểm soát bóng**\n**Sút trúng đích**\n**Lượt chuyền bóng**",
       inline: true,
     },
     {
       name: "🔴 **RED**",
-      value: `==============\n\n${redPossession}%\n${game.teams[1].shotsOnTarget}\n${game.teams[1].passes}\n${redSuccessRate}%`,
+      value: `==============\n\n${redPossession}%\n${game.teams[1].shotsOnTarget}\n${game.teams[1].passes}`,
       inline: true,
     },
     {
       name: "🔵 **BLUE**",
-      value: `==============\n\n${bluePossession}%\n${game.teams[2].shotsOnTarget}\n${game.teams[2].passes}\n${blueSuccessRate}%`,
+      value: `==============\n\n${bluePossession}%\n${game.teams[2].shotsOnTarget}\n${game.teams[2].passes}`,
       inline: true,
     },
     {
@@ -1259,7 +1259,7 @@ Tỉ lệ xử lý bóng thành công: 🔴 ${redSuccessRate}% - ${blueSuccessRa
       inline: false,
     },
   ];
-  sendWebhook(`🌟 ${scoreline}`, discordMsg, discordFields, [`${captains[1]}-${captains[2]} (${new Date().toString().slice(0, 24)})`, room.stopRecordings()]);
+  sendWebhook(`🌟 ${scoreline}`, discordMsg, discordFields, [`${redCaption}-${blueCaptain} (${new Date().toString().slice(0, 24)})`, room.stopRecording()]);
 }
 
 function celebrateGoal(team) {
@@ -1531,12 +1531,11 @@ room.onPlayerJoin = async function(player) {
   reorderPlayers();
   if ( MODE == "pick" ) {
     // Assign captains if missing
-    switch ( 0 ) {
-      case captains[1]:
-        updateCaptain(1, player);
+    for (teamId = 1; teamId < 3; teamId++) {
+      if ( captains[teamId].id == 0 ) {
+        updateCaptain(teamId, player);
         break;
-      case captains[2]:
-        updateCaptain(2, player);
+      };
     };
     showSpecTable();
   };
@@ -1580,13 +1579,13 @@ room.onPlayerLeave = async function(player) {
   };
 
   // A captain left, assign another one
-  if ( isCaptain(player.id) ) {
+  let isCaptainOf = ( player.id == captains[1] ) ? 1 : ( player.id == captains[2] ) ? 2 : 0
+  if ( isCaptainOf != 0 ) {
     if ( isTakingPenalty ) {
-      let playerTeam = ( player.id == captains[1] ) ? 1 : 2;
       // To assign another player who is from the same team, we have to pick up from `penalty.groups`
-      await updateCaptain(playerTeam, room.getPlayer(penalty.groups[playerTeam].at(0)));
+      await updateCaptain(isCaptainOf, room.getPlayer(penalty.groups[isCaptainOf].at(0)));
     } else {
-      await updateCaptain(player.team);
+      await updateCaptain(isCaptainOf);
     };
   };
   checkAutoPick() || showSpecTable();
@@ -1608,15 +1607,10 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
     reorderPlayers();
     if ( MODE == "pick" ) {
       // Captain was moved to Spectators, assign captain
-      switch ( changedPlayer.id ) {
-        case captains[1]:
-          updateCaptain(1);
-          break;
-        case captains[2]:
-          updateCaptain(2);
-          break;
-        default:
-          showSpecTable();
+      if ( isCaptain(changedPlayer.id) ) {
+        updateCaptain(changedPlayer.team);
+      } else {
+        showSpecTable();
       };
     };
   } else if ( afkList.has(changedPlayer.id) ) { // Move AFK players back to Spectators
