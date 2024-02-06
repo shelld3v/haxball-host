@@ -15,6 +15,9 @@ const MAX_AFK_PLAYERS = 4;
 const MAX_DUPE_MESSAGES = 3;
 const MAX_PLAYER_RADIUS_REDUCTION = 2;
 const SAVE_RECORDINGS = false;
+const MAX_PLAYERS = 5;
+const TIME_LIMIT = 5;
+const SCORE_LIMIT = 4;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
 const BLUE = 0x00BFFF;
@@ -82,8 +85,8 @@ const COMMANDS_TO_VALIDATE = ["discord", "kickafk", "afk", "captains", "unmute",
 const NEW_UPDATE_MESSAGE = "MỚI: Người chơi có thể xem BXH bàn thắng/kiến tạo trong tháng và vị trí của mình bằng !rankings";
 
 // Analyze the stadium
-let parsedStadium = JSON.parse(STADIUM);
-const GOAL_LINE = parsedStadium.goals[0].p0.map((coordinate) => Math.abs(coordinate)); // Both x and y values are positive numbers
+parsedStadium = JSON.parse(STADIUM);
+const GOAL_LINE = parsedStadium.goals[0].p0.map(coordinate => Math.abs(coordinate)); // Both x and y values are positive numbers
 const BALL_RADIUS = parsedStadium.ballPhysics.radius || 10;
 const PLAYER_RADIUS = parsedStadium.playerPhysics.radius || 15;
 delete parsedStadium; // Free the memory
@@ -182,8 +185,8 @@ var room = HBInit({
   playerName: "BLV Trông Anh Ngược",
   public: true,
 });
-room.setScoreLimit(5);
-room.setTimeLimit(5);
+room.setScoreLimit(SCORE_LIMIT);
+room.setTimeLimit(TIME_LIMIT);
 room.setCustomStadium(TRAINING_STADIUM);
 room.setTeamsLock(1);
 room.setKickRateLimit(7, 15, 3);
@@ -212,8 +215,8 @@ async function randomAnnouncement() {
     default: // Send a random quote
       try {
         (quotes.length == 0) && await fetch("https://api.quotable.io/quotes/random?limit=50", { method: "GET" }) // Fetch new quotes
-          .then((response) => response.json())
-          .then((json) => quotes = json.map((quote) => `"${quote.content}" - ${quote.author}`));
+          .then(response => response.json())
+          .then(json => quotes = json.map(quote => `"${quote.content}" - ${quote.author}`));
       } catch (error) {
         return;
       };
@@ -256,7 +259,7 @@ function resetStorage() {
 
   let msg = `Danh sách vua phá lưới tháng ${getMonths()}:
 
-${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goals} bàn thắng (${player.assists} kiến tạo)`).join("\n")}`;
+${topScorers.some(player, index) => `${index + 1}. ${player.name} - ${player.goals} bàn thắng (${player.assists} kiến tạo)`).join("\n")}`;
   setInterval(room.sendAnnouncement.bind(null, msg, null, BLUE, "small-bold", 0), 3.5 * 60 * 1000);
 
   let discordFields = [
@@ -330,14 +333,14 @@ async function sendWebhook(title, content, fields, attachment) {
     headers: {
       "Content-Type": "application/json",
     },
-  }).then((res) => res);
+  });
   if ( !attachment || !attachment[1] ) return;
   let form = new FormData();
   form.append(null, new File([attachment[1]], attachment[0], { "type": "text/plain" }));
   fetch(DISCORD_WEBHOOK, {
     method: "POST",
     body: form,
-  }).then((res) => res);
+  });
 }
 
 // Move AFK player to bottom of the Spectators list
@@ -350,21 +353,21 @@ function getPlayerByName(value) {
   if ( !value ) return null;
   // Find player by tag
   if ( value.startsWith("@") ) {
-    return room.getPlayerList().find((player) => getTag(player.name) == value);
+    return room.getPlayerList().find(player => getTag(player.name) == value);
   };
   // Find player by part of the name
   value = value.toLowerCase();
-  return room.getPlayerList().find((player) => player.name.toLowerCase().includes(value));
+  return room.getPlayerList().find(player => player.name.toLowerCase().includes(value));
 }
 
 // Get a player by position in Spectators list
 function getPlayerByPos(number) {
-  return getNonAfkPlayers().filter((player) => player.team == 0)[number - 1];
+  return getNonAfkPlayers().filter(player => player.team == 0)[number - 1];
 }
 
 // Exclude AFK players from player list
 function getNonAfkPlayers() {
-  return room.getPlayerList().filter((player) => !afkList.has(player.id));
+  return room.getPlayerList().filter(player => !afkList.has(player.id));
 }
 
 function getPredictionWinners() {
@@ -379,7 +382,7 @@ function getPredictionWinners() {
 function getBestSpectatorByStats() {
   let bestPlayer = null;
   let highestGA = -1;
-  for (const spectator of getNonAfkPlayers().filter((player) => player.team == 0)) {
+  for (const spectator of getNonAfkPlayers().filter(player => player.team == 0)) {
     let stats = getStats(identities[spectator.id][0]);
     if ( stats.goals + stats.assists <= highestGA ) continue;
     bestPlayer = spectator;
@@ -408,7 +411,7 @@ function setRandomColors() {
 // Set avatars for players of a specific team
 async function teamAvatarEffect(teamId, avatar) {
   let flickerDelay = 200;
-  let players = room.getPlayerList().filter((player) => player.team == teamId);
+  let players = room.getPlayerList().filter(player => player.team == teamId);
   for (let i = 0; i < 4; i++) {
     for (const player of players) {
       await room.setPlayerAvatar(player.id, avatar);
@@ -425,7 +428,7 @@ async function teamAvatarEffect(teamId, avatar) {
 function showSpecTable() {
   if ( !isPicking ) return;
   let playerList = room.getPlayerList()
-    .filter((player) => (player.team == 0) && !afkList.has(player.id))
+    .filter(player => (player.team == 0) && !afkList.has(player.id))
     .map((player, index) => `${player.name} (#${index + 1})`);
   let table = " ".repeat(85) + "DANH SÁCH DỰ BỊ\n" + "_".repeat(150) + "\n" + playerList.join("  •  ") + "\n" + "_".repeat(150);
   room.sendAnnouncement(table, captains[pickTurn], BLUE, "small-bold", 0);
@@ -440,13 +443,13 @@ function isPlayerValid(player) {
     return false;
   };
   // 2 players have the same connection ID
-  if ( Object.values(identities).map((identity) => identity[1]).includes(player.conn) ) {
+  if ( Object.values(identities).map(identity => identity[1]).includes(player.conn) ) {
     room.kickPlayer(player.id, "Người chơi có cùng địa chỉ IP với một người chơi khác trong phòng");
     return false;
   };
   // Duplicate tag
   let tag = getTag(player.name.trim());
-  if ( room.getPlayerList().some((_player) => (_player.id != player.id) && (getTag(_player.name.trim()) == tag)) ) {
+  if ( room.getPlayerList().some(_player => (_player.id != player.id) && (getTag(_player.name.trim()) == tag)) ) {
     room.kickPlayer(player.id, "Vui lòng đổi tên");
     return false;
   };
@@ -495,9 +498,9 @@ function getPenaltyWinner() {
   };
 
   // One team has more penalties scored than the other team even if the other team scores all the remaining penalties
-  if ( penalty.results[0].filter((result) => result).length > 5 - penalty.results[1].filter((result) => !result).length ) {
+  if ( penalty.results[0].filter(result => result).length > 5 - penalty.results[1].filter(result => !result).length ) {
     return 1;
-  } else if ( penalty.results[1].filter((result) => result).length > 5 - penalty.results[0].filter((result) => !result).length ) {
+  } else if ( penalty.results[1].filter(result => result).length > 5 - penalty.results[0].filter(result => !result).length ) {
     return 2;
   };
   return null;
@@ -505,23 +508,25 @@ function getPenaltyWinner() {
 
 async function updateTeamPlayers(subPlayer) {
   let scores = room.getScores();
-  if ( (scores === null) || isTakingPenalty ) return;
+  if ( scores === null ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
     let players = getNonAfkPlayers();
-    let redPlayersCount = players.filter((player) => player.team == 1).length;
-    let bluePlayersCount = players.filter((player) => player.team == 2).length;
-    if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) return; // Enough players for 2 teams
+    let redPlayersCount = players.filter(player => player.team == 1).length;
+    let bluePlayersCount = players.filter(player => player.team == 2).length;
+    let maxPlayers = MAX_PLAYERS;
+    if ( isTakingPenalty ) maxPlayers = 1; // One player each side for taking a penalty
+    if ( (redPlayersCount >= maxPlayers) && (bluePlayersCount >= maxPlayers) ) return; // Enough players for 2 teams
     // Find team that needs new player the most, if both have the same number of players, choose team who is worse in scores, or RED if neither is
     let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : ( redPlayersCount < bluePlayersCount ) ? 1 : 1 + (scores.red > scores.blue) | 0;
 
     if ( !subPlayer ) {
       // Get a bench player
-      subPlayer = players.find((player) => player.team == 0);
+      subPlayer = players.find(player => player.team == 0);
       if ( !subPlayer ) { // No player left in the Spectators
         if ( Math.abs(redPlayersCount - bluePlayersCount) < 2 ) return;
         // Move a player from one team to another because of the gap in player count between 2 teams
-        subPlayer = players.filter((player) => player.team == getOppositeTeamId(missingTeam)).at(-1); // Take player from the last to avoid moving captains
+        subPlayer = players.filter(player => player.team == getOppositeTeamId(missingTeam)).at(-1); // Take player from the last to avoid moving captains
       }
     }
 
@@ -593,8 +598,8 @@ async function updateCaptain(teamId, newCaptain) {
     // Exclude former captain and AFK players
     let players = getNonAfkPlayers();
     newCaptain = (
-      players.find((player) => (player.team == teamId) && !isCaptain(player.id)) || // Find someone who is in the team
-      players.find((player) => player.team == 0) // If there is no one else, pick someone from the Spectators
+      players.find(player => (player.team == teamId) && !isCaptain(player.id)) || // Find someone who is in the team
+      players.find(player => player.team == 0) // If there is no one else, pick someone from the Spectators
     );
     // No player left to assign
     if ( !newCaptain ) {
@@ -660,10 +665,10 @@ function checkAutoPick() {
 function requestPick() {
   if ( !isPicking || checkAutoPick() ) return; // Game started
   let players = room.getPlayerList();
-  let redPlayersCount = players.filter((player) => player.team == 1).length;
-  let bluePlayersCount = players.filter((player) => player.team == 2).length;
+  let redPlayersCount = players.filter(player) => player.team == 1).length;
+  let bluePlayersCount = players.filter(player) => player.team == 2).length;
   // Enough players for 2 teams
-  if ( (redPlayersCount >= 5) && (bluePlayersCount >= 5) ) {
+  if ( (redPlayersCount >= MAX_PLAYERS) && (bluePlayersCount >= MAX_PLAYERS) ) {
     room.startGame();
     return;
   };
@@ -680,8 +685,8 @@ function requestPick() {
 }
 
 function helpFunc(value, player) {
-  let allAlias = Object.keys(commands).filter((alias) => canUseCommand(commands[alias], player));
-  allAlias = allAlias.map((alias) => "!" + alias)
+  let allAlias = Object.keys(commands).filter(alias) => canUseCommand(commands[alias], player));
+  allAlias = allAlias.map(alias => "!" + alias)
   room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, GREEN);
   return false;
 }
@@ -721,7 +726,7 @@ function showRankingsFunc(value, player) {
     return false;
   };
   let msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()} ⚽: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals})`).join("  •  ")}`;
-  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex((stats) => stats.auth == identities[player.id][0]) || "Không có"})`;
+  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == identities[player.id][0]) || "Không có"})`;
 
   // Sort players by assists made
   playerList.sort(function(player1, player2) {
@@ -731,7 +736,7 @@ function showRankingsFunc(value, player) {
     return player2.assists - player1.assists;
   });
   msg += `\nDanh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists})`).join("  •  ")}`;
-  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex((stats) => stats.auth == identities[player.id][0]) || "Không có"})`;
+  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == identities[player.id][0]) || "Không có"})`;
 
   room.sendAnnouncement(msg, player.id, YELLOW, "small-italic");
   return false;
@@ -752,7 +757,7 @@ function specFunc(value, player) {
   if ( player.team == 0 ) {
     room.sendAnnouncement("Bạn đã ở Spectators", player.id, RED);
     return false;
-  } else if ( !getNonAfkPlayers().some((_player) => _player.team == 0) ) {
+  } else if ( !getNonAfkPlayers().some(_player => _player.team == 0) ) {
     room.sendAnnouncement("Đã hết người chơi để thay vào", player.id, RED);
     return false;
   };
@@ -777,36 +782,33 @@ function predictFunc(prediction, player) {
     room.sendAnnouncement("Vui lòng cung cấp một tỉ số hợp lệ, có dạng RED-BLUE (VD: 3-1)", player.id, RED);
     return false;
   };
-  if ( Object.values(predictions).some((predictors) => predictors.includes(player.id)) ) { // Has already had a prediction
+  if ( Object.values(predictions).some(predictors => predictors.includes(player.id)) ) { // Has already had a prediction
     room.sendAnnouncement("Bạn chỉ có thể thực hiện một dự đoán trong một trận đấu", player.id, RED);
     return false;
   };
   let scores = room.getScores();
-  if ( (scores === null) || (scores.time > PREDICTION_PERIOD) || (scores.red + scores.blue != 0) ) {
-    room.sendAnnouncement("Đã hết thời hạn dự đoán tỉ số", player.id, RED);
+  if ( isTakingPenalty || (scores === null) || (scores.time > PREDICTION_PERIOD) || (scores.red + scores.blue != 0) ) {
+    room.sendAnnouncement("Chưa thể đoán tỉ số hoặc đã hết thời hạn dự đoán tỉ số", player.id, RED);
     return false;
   };
 
-  let score = prediction.split("-").map((goals) => Number(goals));
-  if ( (score.length != 2) || score.some((goals) => goals % 1 !== 0) ) {
+  let score = prediction.split("-").map(goals => Number(goals));
+  if ( (score.length != 2) || score.some(goals => goals % 1 !== 0) ) {
     room.sendAnnouncement("Tỉ số không hợp lệ, vui lòng đảm bảo tỉ số có dạng RED-BLUE (VD: 2-1)", player.id, RED);
     return false;
   };
   let scoreLimit = room.getScores().scoreLimit;
-  if ( (scoreLimit != 0) && (score.some((goals) => goals > scoreLimit) || (score[0] + score[1] == scoreLimit * 2)) ) {
+  if ( (scoreLimit != 0) && (score.some(goals => goals > scoreLimit) || (score[0] + score[1] == scoreLimit * 2)) ) {
     room.sendAnnouncement("Tỉ số không thể xảy ra", player.id, RED);
     return false;
   };
   prediction = score.join("-"); // Re-format weird scores like "0x01-0x02", even though I don't know why I should even care
   if ( predictions[prediction] === undefined ) {
     predictions[prediction] = [player.id];
-  } else if ( MODE == "pick" ) { // There is only 1 winner per match in pick mode
-    room.sendAnnouncement("Đã có người dự đoán tỉ số này, vui lòng dự đoán tỉ số khác", player.id, RED);
-    return false;
-  } else if ( predictions[prediction].length <= 5 ) {
+  } else if ( (MODE != "pick") && (predictions[prediction].length <= MAX_PLAYERS) ) {
     predictions[prediction].push(player.id);
-  } else { // There are maximum 5 winners per match in rand mode
-    room.sendAnnouncement("Đã có 5 người dự đoán tỉ số này, vui lòng dự đoán tỉ số khác", player.id, RED);
+  } else { // Maximum winners per match reached (1 in pick mode and maximum number of players each team in rand mode) 
+    room.sendAnnouncement("Đã có đủ người dự đoán tỉ số này, vui lòng dự đoán tỉ số khác", player.id, RED);
     return false;
   };
   
@@ -852,7 +854,7 @@ function surrenderFunc(value, player) {
 }
 
 function subFunc(value, player) {
-  if ( room.getScores() === null ) {
+  if ( isTakingPenalty || (room.getScores() === null) ) {
     room.sendAnnouncement("Bạn chỉ có thể thay người khi trận đấu đang diễn ra", player.id, RED);
     return false;
   };
@@ -1190,7 +1192,7 @@ function saveStats() {
 function reportStats() {
   let scoreline = ` RED ${prevScore} BLUE`;
   if ( penalty.results[0].length != 0 ) {
-    scoreline += ` (Luân lưu: ${penalty.results[0].filter((result) => result).length}-${penalty.results[1].filter((result) => result).length})`;
+    scoreline += ` (Luân lưu: ${penalty.results[0].filter(result) => result).length}-${penalty.results[1].filter(result) => result).length})`;
   }
   room.sendAnnouncement(scoreline, null, YELLOW, "bold");
 
@@ -1400,8 +1402,8 @@ async function endPenaltyShootout(winner) {
   handlePostGame(winner);
   isTakingPenalty = false;
   room.stopGame();
-  room.setTimeLimit(5);
-  room.setScoreLimit(5);
+  room.setTimeLimit(TIME_LIMIT);
+  room.setScoreLimit(SCORE_LIMIT);
   room.setCustomStadium(STADIUM);
 }
 
@@ -1476,7 +1478,7 @@ async function randPlayers() {
     if ( predictionWinners.includes(player2.id) && !predictionWinners.includes(player1.id) ) return 1;
     // Random order
     return Math.random() - 0.5;
-  }).map((player) => player.id);
+  }).map(player => player.id);
 
   // Max number of players for each team
   let maxIndex = Math.min(idList.length, 10);
@@ -1604,7 +1606,7 @@ room.onPlayerLeave = async function(player) {
 room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
   if ( isTakingPenalty ) {
     // The current penalty taker was moved to the Spectators by an admin, consider it a failed penalty
-    if ( (changedPlayer.team == 0) && (byPlayer.id != 0) && Object.values(penalty.groups).some((group) => group.includes(changedPlayer.id)) ) {
+    if ( (changedPlayer.team == 0) && (byPlayer.id != 0) && Object.values(penalty.groups).some(group => group.includes(changedPlayer.id)) ) {
       clearTimeout(timeouts.toTakePenalty);
       penaltyTimeoutCallback();
     };
@@ -1706,7 +1708,7 @@ room.onPlayerChat = function(player, message) {
     return false;
   };
   // Perform some validations on the message
-  if ( !message.startsWith("!") || COMMANDS_TO_VALIDATE.some((command) => message.substring(1).startsWith(command)) ) {
+  if ( !message.startsWith("!") || COMMANDS_TO_VALIDATE.some(command => message.substring(1).startsWith(command)) ) {
     if ( muteList.has(identities[player.id][1]) ) {
       room.sendAnnouncement("Không thể chat, bạn đã bị cấm", player.id, RED);
       return false;
@@ -1740,7 +1742,7 @@ room.onTeamVictory = function(scores) {
   isPlaying = false;
   prevScore = `${scores.red}-${scores.blue}`;
   // Secure the picker spot for the player on top of the Spectators list
-  selectedPicker = getNonAfkPlayers().find((player) => player.team == 0);
+  selectedPicker = getNonAfkPlayers().find(player => player.team == 0);
   if ( selectedPicker ) selectedPicker = selectedPicker.id;
   handlePostGame(( scores.red > scores.blue ) ? 1 : 2);
 }
