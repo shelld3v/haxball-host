@@ -434,6 +434,11 @@ function showSpecTable() {
 
 // Kick player if violates any rule
 function isPlayerValid(player) {
+  // Players without a name are not allowed
+  if ( player.name.length == 0 ) {
+    room.kickPlayer(player.id, "Người chơi không có tên");
+    return false;
+  };
   // 2 players have the same connection ID
   if ( Object.values(identities).map((identity) => identity[1]).includes(player.conn) ) {
     room.kickPlayer(player.id, "Người chơi có cùng địa chỉ IP với một người chơi khác trong phòng");
