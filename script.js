@@ -1512,6 +1512,7 @@ function reset() {
   game = JSON.parse(JSON.stringify(gameDefault));
   penalty = JSON.parse(JSON.stringify(penaltyDefault));
   predictions = {};
+  ballRecords = [null, null, null];
 }
 
 function handlePostGame(winner) {
@@ -1580,7 +1581,7 @@ room.onPlayerLeave = async function(player) {
   };
 
   // A captain left, assign another one
-  let isCaptainOf = ( player.id == captains[1] ) ? 1 : ( player.id == captains[2] ) ? 2 : 0
+  let isCaptainOf = ( player.id == captains[1] ) ? 1 : ( player.id == captains[2] ) ? 2 : 0;
   if ( isCaptainOf != 0 ) {
     if ( isTakingPenalty ) {
       // To assign another player who is from the same team, we have to pick up from `penalty.groups`
