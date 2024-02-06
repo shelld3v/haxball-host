@@ -195,7 +195,7 @@ updateMetadata();
 
 function getPlayerStats() {
   let playerList = [];
-  for (var i = 0; i < localStorage.length; i++) {
+  for (let i = 0; i < localStorage.length; i++) {
     var key = localStorage.key(i);
     if ( key.length != 43 ) continue;
     playerList.push({ ...JSON.parse(localStorage.getItem(key)), auth: key });
@@ -204,15 +204,19 @@ function getPlayerStats() {
 }
 
 async function randomAnnouncement() {
-  let msg = null;
+  let msg;
   switch ( Math.floor(Math.random() * 3) ) {
     case 0: // Send Discord link
       msg = `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`;
       break;
     default: // Send a random quote
-      (quotes.length == 0) && await fetch("https://api.quotable.io/quotes/random?limit=50", { method: "GET" }) // Fetch new quotes
-        .then( response => response.json() )
-        .then( json => quotes = json.map((quote) => `"${quote.content}" - ${quote.author}`) );
+      try {
+        (quotes.length == 0) && await fetch("https://api.quotable.io/quotes/random?limit=50", { method: "GET" }) // Fetch new quotes
+          .then((response) => response.json())
+          .then((json) => quotes = json.map((quote) => `"${quote.content}" - ${quote.author}`));
+      } catch (error) {
+        return;
+      };
       msg = quotes.pop();
   }
   room.sendAnnouncement(msg, null, YELLOW, "small-italic", 0);
@@ -375,7 +379,7 @@ function getPredictionWinners() {
 function getBestSpectatorByStats() {
   let bestPlayer = null;
   let highestGA = -1;
-  for (spectator of getNonAfkPlayers().filter((player) => player.team == 0)) {
+  for (const spectator of getNonAfkPlayers().filter((player) => player.team == 0)) {
     let stats = getStats(identities[spectator.id][0]);
     if ( stats.goals + stats.assists <= highestGA ) continue;
     bestPlayer = spectator;
@@ -406,11 +410,11 @@ async function teamAvatarEffect(teamId, avatar) {
   let flickerDelay = 200;
   let players = room.getPlayerList().filter((player) => player.team == teamId);
   for (let i = 0; i < 4; i++) {
-    for (player of players) {
+    for (const player of players) {
       await room.setPlayerAvatar(player.id, avatar);
     };
     await new Promise(r => setTimeout(r, flickerDelay));
-    for (player of players) {
+    for (const player of players) {
       await room.setPlayerAvatar(player.id, null);
     };
     await new Promise(r => setTimeout(r, flickerDelay));
@@ -640,7 +644,7 @@ function checkAutoPick() {
   ) return false;
 
   // Move all players to the missing team
-  for (player of specPlayers) {
+  for (const player of specPlayers) {
     room.setPlayerTeam(player.id, 1 + (redPlayersCount > bluePlayersCount) | 0);
   };
   room.startGame();
@@ -1169,7 +1173,7 @@ function saveStats() {
     item.ownGoals += info.ownGoals;
     localStorage.setItem(auth, JSON.stringify(item));
   };
-  for (player of room.getPlayerList()) {
+  for (const player of room.getPlayerList()) {
     if ( player.team != prevWinner ) continue;
     let item = getStats(identities[player.id][0]);
     item.name = player.name;
@@ -1324,7 +1328,7 @@ function trackAfk() {
 
 // Stop all AFK trackers
 function clearAfkRecords() {
-  for (id of Object.keys(timeouts.toAct)) {
+  for (const id of Object.keys(timeouts.toAct)) {
     clearTimeout(timeouts.toAct[id]);
     delete timeouts.toAct[id];
   };
@@ -1380,8 +1384,8 @@ async function startPenaltyShootout() {
 
 async function endPenaltyShootout(winner) {
   // Put players back to where they were before the penalty shootout
-  for (teamId = 1; teamId < 3; teamId++) {
-    for (id of penalty.groups[teamId]) {
+  for (let teamId = 1; teamId < 3; teamId++) {
+    for (const id of penalty.groups[teamId]) {
       await room.setPlayerTeam(id, teamId);
     };
   };
@@ -1403,7 +1407,7 @@ async function takePenalty() {
   };
 
   // Put previous penalty taker and goalkeeper back to the Spectators
-  for (player of room.getPlayerList()) {
+  for (const player of room.getPlayerList()) {
     if ( player.team == 0 ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
@@ -1422,7 +1426,7 @@ async function takePenalty() {
   await room.setPlayerTeam(penaltyTaker.id, 1);
   await room.setPlayerTeam(penalty.groups[getOppositeTeamId(turn + 1)].at(-1), 2);
   let penResults = [[], []];
-  for (i = 0; i < 2; i++) {
+  for (let i = 0; i < 2; i++) {
     penalty.results[i].forEach(function(result) {
       switch ( result ) {
         case ( true ):
@@ -1450,7 +1454,7 @@ async function takePenalty() {
 async function randPlayers() {
   // Prediction winners
   let predictionWinners = getPredictionWinners();
-  for (playerId of predictionWinners) {
+  for (const playerId of predictionWinners) {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", playerId, GREEN, "bold", 2);
   };
 
@@ -1496,7 +1500,7 @@ async function pickPlayers() {
     await updateCaptain(getOppositeTeamId(prevWinner), picker);
   };
   // Move players to Spectators
-  for (player of players) {
+  for (const player of players) {
     if ( isCaptain(player.id) || ((players.length > 10) && (player.team == prevWinner)) ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
@@ -1528,7 +1532,7 @@ room.onPlayerJoin = async function(player) {
   reorderPlayers();
   if ( MODE == "pick" ) {
     // Assign captains if missing
-    for (teamId = 1; teamId < 3; teamId++) {
+    for (let teamId = 1; teamId < 3; teamId++) {
       if ( captains[teamId].id == 0 ) {
         updateCaptain(teamId, player);
         break;
@@ -1555,7 +1559,7 @@ room.onPlayerLeave = async function(player) {
 
   if ( isTakingPenalty ) {
     // A penalty taker left the room
-    for (teamId = 1; teamId < 3; teamId++) {
+    for (let teamId = 1; teamId < 3; teamId++) {
       let index = penalty.groups[teamId].indexOf(player.id);
       if ( index == -1 ) continue;
       penalty.groups[teamId].splice(index, 1);
@@ -1651,7 +1655,7 @@ room.onPositionsReset = function() {
   // Allows captains to pause the game before kick-off
   if ( (MODE == "pick") && (room.getScores().time != 0) ) {
     canPause = true;
-    for (captain of Object.values(captains)) {
+    for (const captain of Object.values(captains)) {
       room.sendAnnouncement('Bạn có thể dừng game bằng lệnh !pause để thay người (dùng "!sub @thay_ra @thay_vào") trước khi kick-off', captain, YELLOW);
     };
   };
