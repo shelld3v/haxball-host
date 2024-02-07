@@ -259,7 +259,7 @@ function resetStorage() {
 
   let msg = `Danh sách vua phá lưới tháng ${getMonths()}:
 
-${topScorers.some(player, index) => `${index + 1}. ${player.name} - ${player.goals} bàn thắng (${player.assists} kiến tạo)`).join("\n")}`;
+${topScorers.some((player, index) => `${index + 1}. ${player.name} - ${player.goals} bàn thắng (${player.assists} kiến tạo)`).join("\n")}`;
   setInterval(room.sendAnnouncement.bind(null, msg, null, BLUE, "small-bold", 0), 3.5 * 60 * 1000);
 
   let discordFields = [
@@ -665,8 +665,8 @@ function checkAutoPick() {
 function requestPick() {
   if ( !isPicking || checkAutoPick() ) return; // Game started
   let players = room.getPlayerList();
-  let redPlayersCount = players.filter(player) => player.team == 1).length;
-  let bluePlayersCount = players.filter(player) => player.team == 2).length;
+  let redPlayersCount = players.filter(player => player.team == 1).length;
+  let bluePlayersCount = players.filter(player => player.team == 2).length;
   // Enough players for 2 teams
   if ( (redPlayersCount >= MAX_PLAYERS) && (bluePlayersCount >= MAX_PLAYERS) ) {
     room.startGame();
@@ -685,7 +685,7 @@ function requestPick() {
 }
 
 function helpFunc(value, player) {
-  let allAlias = Object.keys(commands).filter(alias) => canUseCommand(commands[alias], player));
+  let allAlias = Object.keys(commands).filter(alias => canUseCommand(commands[alias], player));
   allAlias = allAlias.map(alias => "!" + alias)
   room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, GREEN);
   return false;
@@ -1192,7 +1192,7 @@ function saveStats() {
 function reportStats() {
   let scoreline = ` RED ${prevScore} BLUE`;
   if ( penalty.results[0].length != 0 ) {
-    scoreline += ` (Luân lưu: ${penalty.results[0].filter(result) => result).length}-${penalty.results[1].filter(result) => result).length})`;
+    scoreline += ` (Luân lưu: ${penalty.results[0].filter(result => result).length}-${penalty.results[1].filter(result => result).length})`;
   }
   room.sendAnnouncement(scoreline, null, YELLOW, "bold");
 
