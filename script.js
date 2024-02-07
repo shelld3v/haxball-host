@@ -559,8 +559,7 @@ function updateBallKick(player) {
   let timeGap = ballRecords[0].time - ballRecords[1].time;
   if (
     ballRecords[1].isAShot &&
-    (timeGap < 1000) &&
-    (ballRecords[1].byPlayer.team != player.team) &&
+    (timeGap < 1) &&
     (getDistance(ballProperties.x - ballRecords[1].x, ballProperties.y - ballRecords[1].y) < BALL_RADIUS * 3)
   ) { // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
     game.teams[ballRecords[1].byPlayer.team].shotsOnTarget--;
@@ -1160,7 +1159,7 @@ function updateStats(team) {
       assist.isAShot && // The previous kick was a shot on target
       (assist.byPlayer.team == team) && // The previous kick came from an opponent player
       (GOAL_LINE[0] - Math.abs(shot.x) < PLAYER_RADIUS * 3 ) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
-      (shot.time - assist.time < 2000) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
+      (shot.time - assist.time < 2) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
     ) {
       // Correct the credits
       [shot, assist] = ballRecords.slice(1);
