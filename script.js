@@ -143,6 +143,7 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
   pause: [pauseFunc, 1, ["pick"]],
   resume: [resumeFunc, 1, ["pick"]],
   yellow: [yellowCardFunc, 2, ["rand", "pick"]],
+  clearyellow: [clearYellowCardFunc, 2, ["rand", "pick"]],
   mute: [muteFunc, 2, ["rand", "pick"]],
   unmute: [unmuteFunc, 2, ["rand", "pick"]],
   clearmutes: [clearMutesFunc, 2, ["rand", "pick"]],
@@ -438,7 +439,7 @@ function showSpecTable() {
 // Kick player if violates any rule
 function isPlayerValid(player) {
   // Players without a name are not allowed
-  if ( player.name.length == 0 ) {
+  if ( player.name.trim().length == 0 ) {
     room.kickPlayer(player.id, "Người chơi không có tên");
     return false;
   };
@@ -991,6 +992,30 @@ function yellowCardFunc(value, player) {
   return false;
 }
 
+function clearYellowCardFunc(value, player) {
+  if ( !value ) {
+    room.sendAnnouncement("Vui lòng cung cấp một người chơi hợp lệ (VD: !clearyellow @De_Paul hoặc !clearyellow paul)", player.id, RED);
+    return false;
+  };
+
+  let toPlayer = getPlayerByName(value);
+  if ( !toPlayer ) {
+    room.sendAnnouncement(`Không thể tìm thấy người chơi "${value}"`, player.id, RED);
+    return false;
+  };
+
+  let yellowCards = JSON.parse(localStorage.getItem("yellow_cards")) || [];
+  let index = yellowCards.indexOf(identities[toPlayer.id][1]);
+  if ( index == -1 ) {
+    room.sendAnnouncement(`${toPlayer.name} chưa nhận thẻ vàng nào`, player.id, RED);
+    return false;
+  };
+  yellowCards.splice(index, 1);
+  localStorage.setItem("yellow_cards", JSON.stringify(yellowCards));
+  room.sendAnnouncement(`🟨❌ ${toPlayer.name} đã được xóa thẻ vàng`, null, YELLOW);
+  return false;
+}
+
 function muteFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp người chơi, thời hạn cấm chat (đơn vị phút, để 0 để cấm vĩnh viễn) và lý do nếu có (VD: !mute @ân 1 / !mute paul 0 Ngu)", player.id, RED);
@@ -1036,6 +1061,7 @@ function unmuteFunc(value, player) {
 
   muteList.delete(identities[toPlayer.id][1]);
   room.sendAnnouncement(`${toPlayer.name} đã có thể chat trở lại`, null, GREEN);
+  return false;
 }
 
 function clearMutesFunc(value, player) {
