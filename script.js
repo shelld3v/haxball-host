@@ -567,10 +567,10 @@ function updateBallKick(player) {
     let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE[0] : -GOAL_LINE[0]; // The x position value of the opponent's goal
     if (
       (xOpponentGoal * ballProperties.xspeed > 0) && // It's a kick toward the opponent goal
-      (Math.abs(ballProperties.x + ballProperties.xspeed * 99) > GOAL_LINE[0]) // At this speed, the ball can cross the goal line
+      (Math.abs(ballProperties.x + ballProperties.xspeed * 98) > GOAL_LINE[0]) // At this speed, the ball can cross the goal line
     ) {
       // Check if it's on target (not really accurate because it might hit the post)
-      if ( Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < GOAL_LINE[1] ) {
+      if ( Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < GOAL_LINE[1] - BALL_RADIUS ) {
         game.teams[player.team].shotsOnTarget++;
         ballRecords[0].isAShot = true;
       };
@@ -597,9 +597,13 @@ async function updateCaptain(teamId, newCaptain) {
   if ( !newCaptain ) {
     // Exclude former captain and AFK players
     let players = getNonAfkPlayers();
-    newCaptain = (
-      players.find(player => (player.team == teamId) && !isCaptain(player.id)) || // Find someone who is in the team
-      players.find(player => player.team == 0) // If there is no one else, pick someone from the Spectators
+    // How new captain is picked:
+    // - Find a player who is already in the team first
+    // - If 2 teams are taking penalty, get that team player from `penalty.groups`
+    // - As the last option, find someone in the Spectators
+    newCaptain = isTakingPenalty ? room.getPlayer(penalty.groups[teamId].at(0)) : (
+      players.find(player => (player.team == teamId) && !isCaptain(player.id)) ||
+      players.find(player => player.team == 0)
     );
     // No player left to assign
     if ( !newCaptain ) {
@@ -1258,12 +1262,12 @@ Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} �
     },
     {
       name: "🔴 **RED**",
-      value: `==============\n\n${redPossession}%\n${game.teams[1].shotsOnTarget}\n${game.teams[1].passes}`,
+      value: `==========\n\n${redPossession}%\n${game.teams[1].shotsOnTarget}\n${game.teams[1].passes}`,
       inline: true,
     },
     {
       name: "🔵 **BLUE**",
-      value: `==============\n\n${bluePossession}%\n${game.teams[2].shotsOnTarget}\n${game.teams[2].passes}`,
+      value: `==========\n\n${bluePossession}%\n${game.teams[2].shotsOnTarget}\n${game.teams[2].passes}`,
       inline: true,
     },
     {
@@ -1272,7 +1276,7 @@ Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} �
       inline: false,
     },
   ];
-  sendWebhook(`🌟 ${scoreline}`, discordMsg, discordFields, [`${new Date().toString().slice(0, 21).replace(":", "h")}.hbr2`, room.stopRecording()]);
+  sendWebhook(`🌟 ${scoreline}`, discordMsg, discordFields, [new Date().toString().slice(0, 21).replace(":", "h") + ".hbr2", room.stopRecording()]);
 }
 
 function celebrateGoal(team) {
@@ -1505,7 +1509,12 @@ async function pickPlayers() {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được chiếc băng đội trưởng", predictionWinner, GREEN, "bold", 2);
     await updateCaptain(getOppositeTeamId(prevWinner), room.getPlayer(predictionWinner));
   } else {
-    let picker = room.getPlayer(selectedPicker);
+    let picker;
+    if ( !selectedPicker || afkList.has(selectedPicker) ) {
+      picker = getNonAfkPlayers().find(player => player.team == 0);
+    } else {
+      picker = room.getPlayer(selectedPicker);
+    );
     selectedPicker = null;
     await updateCaptain(getOppositeTeamId(prevWinner), picker);
   };
@@ -1593,12 +1602,7 @@ room.onPlayerLeave = async function(player) {
   // A captain left, assign another one
   let isCaptainOf = ( player.id == captains[1] ) ? 1 : ( player.id == captains[2] ) ? 2 : 0;
   if ( isCaptainOf != 0 ) {
-    if ( isTakingPenalty ) {
-      // To assign another player who is from the same team, we have to pick up from `penalty.groups`
-      await updateCaptain(isCaptainOf, room.getPlayer(penalty.groups[isCaptainOf].at(0)));
-    } else {
-      await updateCaptain(isCaptainOf);
-    };
+    await updateCaptain(isCaptainOf);
   };
   checkAutoPick() || showSpecTable();
 }
