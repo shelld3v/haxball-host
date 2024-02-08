@@ -622,7 +622,7 @@ async function updateCaptain(teamId, newCaptain) {
     // Move old captain to Spectators
     await room.setPlayerTeam(oldCaptainId, 0);
   };
-  room.sendAnnouncement(`${newCaptain.name} đã được chọn làm đội trưởng của ${TEAM_NAMES[teamId]}`, null, GREEN, "bold");
+  room.sendAnnouncement(`${newCaptain.name} đã được chọn làm đội trưởng của ${TEAM_NAMES[teamId]}`, null, GREEN, "bold", 0);
 
   // Reset pick timeout for the new captain
   if ( isPicking && (pickTurn == teamId) ) {
@@ -705,11 +705,11 @@ function byeFunc(value, player) {
 
 function showStatsFunc(value, player) {
   let item = getStats(identities[player.id][0]);
-  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${player.name}:`, player.id, BLUE, "bold");
+  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${player.name}:`, player.id, BLUE, "bold", 0);
   room.sendAnnouncement(`⚽ Bàn thắng: ${item.goals}
 🤝🏻 Kiến tạo: ${item.assists}
 ❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
-👑 Chiến thắng: ${item.wins}`, player.id, BLUE, "small-bold");
+👑 Chiến thắng: ${item.wins}`, player.id, BLUE, "small-bold", 0);
   return false;
 }
 
@@ -740,7 +740,7 @@ function showRankingsFunc(value, player) {
   msg += `\nDanh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists})`).join("  •  ")}`;
   msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == identities[player.id][0]) || "Không có"})`;
 
-  room.sendAnnouncement(msg, player.id, YELLOW, "small-italic");
+  room.sendAnnouncement(msg, player.id, YELLOW, "small-italic", 0);
   return false;
 }
 
@@ -887,7 +887,7 @@ function subFunc(value, player) {
     room.sendAnnouncement("Không thể thay ra cầu thủ không nằm trong đội bạn", player.id, RED);
     return false;
   };
-  room.sendAnnouncement(`🔻 ${outPlayer.name} đã được thay ra ngoài`, null, RED);
+  room.sendAnnouncement(`🔻 ${outPlayer.name} đã được thay ra ngoài`, null, RED, "normal", 0);
   room.sendAnnouncement(`🔺 ${inPlayer.name} đã được thay vào sân`, null, GREEN, "normal", 0);
   room.setPlayerTeam(inPlayer.id, player.team);
   room.setPlayerTeam(outPlayer.id, 0);
@@ -1040,7 +1040,7 @@ function muteFunc(value, player) {
     var msg = `${toPlayer.name} đã bị cấm chat trong ${period} phút bởi ${player.name}`;
   };
   reason && (msg += `: ${reason}`);
-  room.sendAnnouncement(msg, null, RED, "bold");
+  room.sendAnnouncement(msg, null, RED, "bold", 0);
   return false;
 }
 
@@ -1195,7 +1195,7 @@ function updateStats(team) {
   // Calculate goal stats
   let speed = convertToMeters(getDistance(shot.xspeed, shot.yspeed) * 60); // There are 60 frames per second
   let distance = convertToMeters(getDistance(Math.abs(shot.x - ballPosition.x), Math.abs(shot.y - ballPosition.y)));
-  room.sendAnnouncement(`Khoảng cách: ${distance || "dưới 1"}m | Lực sút: ${speed} (m/s)`, null, GREEN, "small");
+  room.sendAnnouncement(`Khoảng cách: ${distance || "dưới 1"}m | Lực sút: ${speed} (m/s)`, null, GREEN, "small", 0);
 }
 
 function saveStats() {
@@ -1221,7 +1221,7 @@ function reportStats() {
   if ( penalty.results[0].length != 0 ) {
     scoreline += ` (Luân lưu: ${penalty.results[0].filter(result => result).length}-${penalty.results[1].filter(result => result).length})`;
   }
-  room.sendAnnouncement(scoreline, null, YELLOW, "bold");
+  room.sendAnnouncement(scoreline, null, YELLOW, "bold", 0);
 
   let redPossession = ~~(game.teams[1].possession / (game.teams[1].possession + game.teams[2].possession) * 100);
   let bluePossession = 100 - redPossession;
@@ -1479,7 +1479,7 @@ async function takePenalty() {
       penResults[i].push("⚪");
     };
   };
-  room.sendAnnouncement(` RED ${penResults[0].reverse().join("")} - ${penResults[1].join("")} BLUE`, null, BLUE, "bold");
+  room.sendAnnouncement(` RED ${penResults[0].reverse().join("")} - ${penResults[1].join("")} BLUE`, null, BLUE, "bold", 0);
   if ( penalty.results.flat(1).length == 10 ) {
     room.sendChat('Giờ ta sẽ đến loạt sút "Sudden Death", một đội thực hiện thành công và đội còn lại đá trượt thì kết quả sẽ được định đoạt');
   };
