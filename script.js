@@ -8,6 +8,9 @@ const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
 const PREDICTION_PERIOD = 60;
 const MAX_SUBSTITUTIONS = 2;
+const MAX_PLAYERS = 5;
+const TIME_LIMIT = 5;
+const SCORE_LIMIT = 4;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
 const MIN_TIME_FOR_SURRENDER = 2 * 60;
@@ -15,9 +18,6 @@ const MAX_AFK_PLAYERS = 4;
 const MAX_DUPE_MESSAGES = 3;
 const MAX_PLAYER_RADIUS_REDUCTION = 2;
 const SAVE_RECORDINGS = false;
-const MAX_PLAYERS = 5;
-const TIME_LIMIT = 5;
-const SCORE_LIMIT = 4;
 const RED = 0xFF0000;
 const GREEN = 0x00FF00;
 const BLUE = 0x00BFFF;
@@ -177,7 +177,7 @@ var timeouts = {
   toTakePenalty: null,
   toAct: {},
 };
-var selectedPicker = null;
+var selectedCaptain = null;
 var quotes = [];
 
 var room = HBInit({
@@ -549,7 +549,6 @@ function updateBallKick(player) {
   ballRecords.unshift(ballProperties);
   ballRecords.pop();
 
-  // Update accurate kicks
   if ( ballRecords[1] === null ) { // Kick-off pass
     // Disallow pausing after kick-off
     canPause = false;
@@ -557,38 +556,37 @@ function updateBallKick(player) {
   };
 
   let timeGap = ballRecords[0].time - ballRecords[1].time;
+  // If the previous kick was a shot on goal, check whether it was blocked and exclude that shot if it was
   if (
     ballRecords[1].isAShot &&
     (timeGap < 1) &&
-    (getDistance(ballProperties.x - ballRecords[1].x, ballProperties.y - ballRecords[1].y) < BALL_RADIUS * 3)
-  ) { // If the previous kick was a shot on goal, check whether it's blocked by this kick and exclude that shot from "shots on target" if it is
+    (getDistance(ballProperties.x - ballRecords[1].x, ballProperties.y - ballRecords[1].y) < BALL_RADIUS * 2.5)
+  ) {
+    ballRecords[1].isAShot = false;
     game.teams[ballRecords[1].byPlayer.team].shotsOnTarget--;
-  } else { // Check for shot on target
-    let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE[0] : -GOAL_LINE[0]; // The x position value of the opponent's goal
-    if (
-      (xOpponentGoal * ballProperties.xspeed > 0) && // It's a kick toward the opponent goal
-      (Math.abs(ballProperties.x + ballProperties.xspeed * 98) > GOAL_LINE[0]) // At this speed, the ball can cross the goal line
-    ) {
-      // Check if it's on target (not really accurate because it might hit the post)
-      if ( Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < GOAL_LINE[1] - BALL_RADIUS ) {
-        game.teams[player.team].shotsOnTarget++;
-        ballRecords[0].isAShot = true;
-      };
-    } else {
-      // Switch to penalty shootout when it hits maximum added time
-      if ( scores.time - scores.timeLimit > MAX_ADDED_TIME ) { // Maximum extra time exceeded
-        startPenaltyShootout();
-        return;
-      };
+  };
+
+  let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE[0] : -GOAL_LINE[0]; // The x position value of the opponent's goal
+  if (
+    (xOpponentGoal * ballProperties.xspeed > 0) && // It's a kick toward the opponent goal
+    (Math.abs(ballProperties.x + ballProperties.xspeed * 98) > GOAL_LINE[0]) // At this speed, the ball can cross the goal line
+  ) {
+    // Check if it's on target (not really accurate because it might hit the post)
+    if ( Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < GOAL_LINE[1] - BALL_RADIUS ) {
+      ballRecords[0].isAShot = true;
+      game.teams[player.team].shotsOnTarget++;
+    };
+  } else {
+    // Switch to penalty shootout when it hits maximum added time
+    if ( scores.time - scores.timeLimit > MAX_ADDED_TIME ) { // Maximum extra time exceeded
+      startPenaltyShootout();
+      return;
     };
   };
 
   if ( player.team != ballRecords[1].byPlayer.team ) return; // Received the ball from an opponent player
-
-  // Received the ball from a teammate, so the previous kick was a pass
-  if ( player.id != ballRecords[1].byPlayer.id ) game.teams[player.team].passes++;
-  // Received the ball from a teammate or from yourself, so it's in possession
-  game.teams[player.team].possession += timeGap;
+  if ( player.id != ballRecords[1].byPlayer.id ) game.teams[player.team].passes++; // Received the ball from a teammate, so the previous kick was a pass
+  game.teams[player.team].possession += timeGap; // Received the ball from a teammate or from yourself, so it's in possession
 }
 
 // Change captain of a specific team
@@ -1534,14 +1532,9 @@ async function pickPlayers() {
     room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được chiếc băng đội trưởng", predictionWinner, GREEN, "bold", 2);
     await updateCaptain(getOppositeTeamId(prevWinner), room.getPlayer(predictionWinner));
   } else {
-    let picker;
-    if ( !selectedPicker || afkList.has(selectedPicker) ) {
-      picker = getNonAfkPlayers().find(player => player.team == 0);
-    } else {
-      picker = room.getPlayer(selectedPicker);
-    );
-    selectedPicker = null;
-    await updateCaptain(getOppositeTeamId(prevWinner), picker);
+    let captain = (afkList.has(selectedCaptain) ? null : room.getPlayer(selectedCaptain)) || getNonAfkPlayers().find(player => player.team == 0);
+    selectedCaptain = null;
+    await updateCaptain(getOppositeTeamId(prevWinner), captain);
   };
   // Move players to Spectators
   for (const player of players) {
@@ -1658,10 +1651,23 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
   } else if ( afkList.has(changedPlayer.id) ) { // Move AFK players back to Spectators
     room.setPlayerTeam(changedPlayer.id, 0);
     room.sendAnnouncement("Người chơi đang ở trạng thái AFK", byPlayer.id, RED);
-  } else if ( room.getScores() !== null ) {
+  } else {
+    let scores = room.getScores();
+    if ( scores === null ) return;
     room.sendAnnouncement("Bạn đã được thay vào sân", changedPlayer.id, BLUE, "small", 2);
     if ( isPlaying ) {
       timeouts.toAct[changedPlayer.id] = setTimeout(afkCallback.bind(null, changedPlayer.id), AFK_DEADLINE * 1000);
+    };
+    // Player was moved in in late of the game, we should not take away his chance of being a captain
+    if (
+      (MODE == "pick") &&
+      (selectedCaptain === null) &&
+      (
+        (scores.timeLimit && (scores.timeLimit - scores.time < 20)) ||
+        (scores.scoreLimit && (Math.max(scores.red, scores.blue) == scores.scoreLimit))
+      )
+    ) {
+      selectedCaptain = player.id;
     };
   };
 }
@@ -1770,9 +1776,6 @@ room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
 room.onTeamVictory = function(scores) {
   isPlaying = false;
   prevScore = `${scores.red}-${scores.blue}`;
-  // Secure the picker spot for the player on top of the Spectators list
-  selectedPicker = getNonAfkPlayers().find(player => player.team == 0);
-  if ( selectedPicker ) selectedPicker = selectedPicker.id;
   handlePostGame(( scores.red > scores.blue ) ? 1 : 2);
 }
 
