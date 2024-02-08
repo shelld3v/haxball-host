@@ -1,8 +1,9 @@
 const ADMIN_PASSWORD = "pulabel";
 const MODE = "pick"; // can be "rand" or "pick"
-const AFK_DEADLINE = 10;
-const PICK_DEADLINE = 25;
-const FIRST_PICK_DEADLINE = 15;
+const ACTIVITY_TIMEOUT = 10;
+const AFK_TIMEOUT = 10 * 60;
+const FIRST_PICK_TIMEOUT = 15;
+const PICK_TIMEOUT = 25;
 const PAUSE_TIMEOUT = 15;
 const PENALTY_TIMEOUT = 10;
 const AFTER_GAME_REST = 2.5;
@@ -176,6 +177,7 @@ var timeouts = {
   toResume: null,
   toTakePenalty: null,
   toAct: {},
+  toQuitAfk: {},
 };
 var selectedCaptain = null;
 var quotes = [];
@@ -473,10 +475,16 @@ function canUseCommand(command, player) {
   return true;
 }
 
+// Kick player if player doesn't act in time
 function afkCallback(id) {
-  // Kick player if player doesn't act in time
   room.kickPlayer(id, "AFK");
   delete timeouts.toAct[id];
+}
+
+// Kick if player doesn't quit AFK mode in time
+function oversleepCallback(id) {
+  room.kickPlayer(id, "Bạn đã AFK quá lâu");
+  delete timeouts.toQuitAfk[id];
 }
 
 function penaltyTimeoutCallback() {
@@ -682,7 +690,7 @@ function requestPick() {
   // Kick if captain doesn't pick in time
   timeouts.toPick = setTimeout(
     room.kickPlayer.bind(null, captains[pickTurn], "AFK"),
-    (( Math.min(redPlayersCount, bluePlayersCount) > 1 ) ? PICK_DEADLINE : FIRST_PICK_DEADLINE) * 1000,
+    (( Math.min(redPlayersCount, bluePlayersCount) > 1 ) ? PICK_TIMEOUT : FIRST_PICK_TIMEOUT) * 1000,
   );
 }
 
@@ -1076,6 +1084,8 @@ function clearBansFunc(value, player) {
 function afkFunc(value, player) {
   if ( afkList.has(player.id) ) { // Escape AFK mode
     afkList.delete(player.id);
+    clearTimeout(timeouts.toQuitAfk[player.id]);
+    delete timeouts.toQuitAfk[player.id];
     room.sendAnnouncement(`${player.name} đã thoát chế độ AFK`, null, GREEN);
   } else {
     // Only allows a limited number of AFK players including the host
@@ -1084,6 +1094,7 @@ function afkFunc(value, player) {
       return false;
     }
     afkList.add(player.id);
+    timeouts.toQuitAfk[player.id] = setTimeout(oversleepCallback.bind(null, player.id), AFK_TIMEOUT);
     room.sendAnnouncement(`${player.name} đã chuyển sang chế độ AFK, dùng !afk lần nữa để thoát`, null, GREEN);
     // Move the AFK player to Spectators
     if ( player.team != 0 ) {
@@ -1359,7 +1370,7 @@ function trackAfk() {
     if ( player.team == 0 ) return;
     let id = player.id;
     if ( timeouts.toAct[id] !== undefined ) return; // Player has already been monitored
-    timeouts.toAct[id] = setTimeout(afkCallback.bind(null, id), AFK_DEADLINE * 1000);
+    timeouts.toAct[id] = setTimeout(afkCallback.bind(null, id), ACTIVITY_TIMEOUT * 1000);
   });
 }
 
@@ -1656,7 +1667,7 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
     if ( scores === null ) return;
     room.sendAnnouncement("Bạn đã được thay vào sân", changedPlayer.id, BLUE, "small", 2);
     if ( isPlaying ) {
-      timeouts.toAct[changedPlayer.id] = setTimeout(afkCallback.bind(null, changedPlayer.id), AFK_DEADLINE * 1000);
+      timeouts.toAct[changedPlayer.id] = setTimeout(afkCallback.bind(null, changedPlayer.id), ACTIVITY_TIMEOUT * 1000);
     };
     // Player was moved in in late of the game, we should not take away his chance of being a captain
     if (
