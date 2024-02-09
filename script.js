@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "pulabel";
+const ADMIN_PASSWORD = "pulakobel";
 const MODE = "pick"; // can be "rand" or "pick"
 const ACTIVITY_TIMEOUT = 10;
 const AFK_TIMEOUT = 10 * 60;
@@ -1092,7 +1092,7 @@ function afkFunc(value, player) {
       return false;
     }
     afkList.add(player.id);
-    timeouts.toQuitAfk[player.id] = setTimeout(oversleepCallback.bind(null, player.id), AFK_TIMEOUT);
+    timeouts.toQuitAfk[player.id] = setTimeout(oversleepCallback.bind(null, player.id), AFK_TIMEOUT * 1000);
     room.sendAnnouncement(`${player.name} đã chuyển sang chế độ AFK, dùng !afk lần nữa để thoát`, null, GREEN);
     // Move the AFK player to Spectators
     if ( player.team != 0 ) {
@@ -1575,7 +1575,7 @@ room.onPlayerJoin = async function(player) {
   if ( MODE == "pick" ) {
     // Assign captains if missing
     for (let teamId = 1; teamId < 3; teamId++) {
-      if ( captains[teamId].id == 0 ) {
+      if ( captains[teamId] == 0 ) {
         updateCaptain(teamId, player);
         break;
       };
