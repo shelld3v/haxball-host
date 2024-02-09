@@ -16,7 +16,6 @@ const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
 const MIN_TIME_FOR_SURRENDER = 2 * 60;
 const MAX_AFK_PLAYERS = 4;
-const MAX_DUPE_MESSAGES = 3;
 const MAX_PLAYER_RADIUS_REDUCTION = 2;
 const SAVE_RECORDINGS = false;
 const RED = 0xFF0000;
@@ -154,7 +153,6 @@ var commands = { // Format: "alias: [function, minimumRole, availableModes]"
 var identities = {}; // Store connection string/public IDs of players
 var afkList = new Set([0]); // Host player is always in AFK mode
 var muteList = new Set();
-var duplicateMessagesCount = 0;
 var isPlaying = false;
 var isPicking = false;
 var isTakingPenalty = false;
@@ -1350,16 +1348,11 @@ function celebratePenalty(team) {
 }
 
 function checkSpam(player, message) {
-  if ( (message != lastMessage[0]) || (player.id != lastMessage[1]) ) { // The message is not spammy
-    lastMessage = [message, player.id];
-    duplicateMessagesCount = 0;
-  };
-
-  duplicateMessagesCount++;
-  if ( duplicateMessagesCount >= MAX_DUPE_MESSAGES ) {
+  if ( (message === lastMessage[0]) && (player.id === lastMessage[1]) ) { // The message is duplicated
     muteFunc(`${getTag(player.name)} 1 Spam`, room.getPlayer(0));
     return true;
   };
+  lastMessage = [message, player.id];
   return false;
 }
 
