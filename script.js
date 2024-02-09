@@ -260,7 +260,7 @@ function resetStorage() {
 
   let msg = `Danh sách vua phá lưới tháng ${getMonths()}:
 
-${topScorers.some((player, index) => `${index + 1}. ${player.name} - ${player.goals} bàn thắng (${player.assists} kiến tạo)`).join("\n")}`;
+${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goals} bàn thắng (${player.assists} kiến tạo)`).join("\n")}`;
   setInterval(room.sendAnnouncement.bind(null, msg, null, BLUE, "small-bold", 0), 3.5 * 60 * 1000);
 
   let discordFields = [
@@ -361,14 +361,14 @@ function getPlayerByName(value) {
   return room.getPlayerList().find(player => player.name.toLowerCase().includes(value));
 }
 
-// Get a player by position in Spectators list
-function getPlayerByPos(number) {
-  return getNonAfkPlayers().filter(player => player.team == 0)[number - 1];
-}
-
 // Exclude AFK players from player list
 function getNonAfkPlayers() {
   return room.getPlayerList().filter(player => !afkList.has(player.id));
+}
+
+// Get a player by position in Spectators list
+function getPlayerByPos(number) {
+  return getNonAfkPlayers().filter(player => player.team == 0)[number - 1];
 }
 
 function getPredictionWinners() {
@@ -399,6 +399,12 @@ function getPenaltyTurn() {
 
 function isCaptain(id) {
   return Object.values(captains).includes(id);
+}
+
+// Return true whether there is at least an available (non-AFK) player in the Spectator
+function isAnySpectatorAvailable() {
+  // This is faster than room.getPlayerList().find(...)
+  return room.getPlayerList().length - afkList.size > MAX_PLAYERS * 2;
 }
 
 // Set random colors for 2 teams
@@ -519,21 +525,21 @@ async function updateTeamPlayers(subPlayer) {
 
   await navigator.locks.request("update_team_players", async lock => {
     let players = getNonAfkPlayers();
-    let redPlayersCount = players.filter(player => player.team == 1).length;
-    let bluePlayersCount = players.filter(player => player.team == 2).length;
+    let redPlayers = players.filter(player => player.team == 1);
+    let bluePlayers = players.filter(player => player.team == 2);
     let maxPlayers = MAX_PLAYERS;
     if ( isTakingPenalty ) maxPlayers = 1; // One player each side for taking a penalty
-    if ( (redPlayersCount >= maxPlayers) && (bluePlayersCount >= maxPlayers) ) return; // Enough players for 2 teams
+    if ( (redPlayers.length >= maxPlayers) && (bluePlayers.length >= maxPlayers) ) return; // Enough players for 2 teams
     // Find team that needs new player the most, if both have the same number of players, choose team who is worse in scores, or RED if neither is
-    let missingTeam = ( redPlayersCount > bluePlayersCount ) ? 2 : ( redPlayersCount < bluePlayersCount ) ? 1 : 1 + (scores.red > scores.blue) | 0;
+    let missingTeam = ( redPlayers.length > bluePlayers.length ) ? 2 : ( redPlayers.length < bluePlayers.length ) ? 1 : 1 + (scores.red > scores.blue) | 0;
 
     if ( !subPlayer ) {
       // Get a bench player
       subPlayer = players.find(player => player.team == 0);
       if ( !subPlayer ) { // No player left in the Spectators
-        if ( Math.abs(redPlayersCount - bluePlayersCount) < 2 ) return;
+        if ( Math.abs(redPlayers.length - bluePlayers.length) < 2 ) return;
         // Move a player from one team to another because of the gap in player count between 2 teams
-        subPlayer = players.filter(player => player.team == getOppositeTeamId(missingTeam)).at(-1); // Take player from the last to avoid moving captains
+        subPlayer = (missingTeam == 1) ? bluePlayers.at(-1) : redPlayers.at(-1); // Take player from the last to avoid moving captains
       }
     }
 
@@ -671,7 +677,7 @@ function checkAutoPick() {
 
 // Request a pick from the most needed team
 function requestPick() {
-  if ( !isPicking || checkAutoPick() ) return; // Game started
+  if ( !isPicking || checkAutoPick() ) return;
   let players = room.getPlayerList();
   let redPlayersCount = players.filter(player => player.team == 1).length;
   let bluePlayersCount = players.filter(player => player.team == 2).length;
@@ -765,7 +771,7 @@ function specFunc(value, player) {
   if ( player.team == 0 ) {
     room.sendAnnouncement("Bạn đã ở Spectators", player.id, RED);
     return false;
-  } else if ( !getNonAfkPlayers().some(_player => _player.team == 0) ) {
+  } else if ( !isAnySpectatorAvailable() ) {
     room.sendAnnouncement("Đã hết người chơi để thay vào", player.id, RED);
     return false;
   };
@@ -1361,9 +1367,8 @@ function trackAfk() {
   // Track every player on the pitch
   room.getPlayerList().forEach(function(player) {
     if ( player.team == 0 ) return;
-    let id = player.id;
-    if ( timeouts.toAct[id] !== undefined ) return; // Player has already been monitored
-    timeouts.toAct[id] = setTimeout(afkCallback.bind(null, id), ACTIVITY_TIMEOUT * 1000);
+    if ( timeouts.toAct[player.id] !== undefined ) return; // Player has already been monitored
+    timeouts.toAct[player.id] = setTimeout(afkCallback.bind(null, player.id), ACTIVITY_TIMEOUT * 1000);
   });
 }
 
@@ -1703,7 +1708,7 @@ room.onPositionsReset = function() {
   isPlaying = true;
   ballRecords = [null, null,  null];
   // Allows captains to pause the game before kick-off
-  if ( (MODE == "pick") && (room.getScores().time != 0) ) {
+  if ( (MODE == "pick") && (room.getScores().time != 0) && isAnySpectatorAvailable() ) {
     canPause = true;
     for (const captain of Object.values(captains)) {
       room.sendAnnouncement('Bạn có thể dừng game bằng lệnh !pause để thay người (dùng "!sub @thay_ra @thay_vào") trước khi kick-off', captain, YELLOW);
