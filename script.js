@@ -1671,7 +1671,7 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
         (scores.scoreLimit && (Math.max(scores.red, scores.blue) == scores.scoreLimit))
       )
     ) {
-      selectedCaptain = player.id;
+      selectedCaptain = changedPlayer.id;
     };
   };
 }
