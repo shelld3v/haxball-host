@@ -26,6 +26,11 @@ const TEAM_NAMES = {
   1: "RED",
   2: "BLUE",
 };
+const ROLE = {
+  PLAYER: 0,
+  VIP: 1,
+  ADMIN: 2,
+};
 const TEAM_COLORS = [
   [[60, 0xFFCC00, [0xE83030]], [60, 0xFFCC00, [0x004170]]],
   [[60, 0xFFFFFF, [0xFF4A4A]], [60, 0xFFFFFF, [0x5ECFFF]]],
@@ -91,6 +96,10 @@ const BALL_RADIUS = parsedStadium.ballPhysics.radius || 10;
 const PLAYER_RADIUS = parsedStadium.playerPhysics.radius || 15;
 delete parsedStadium; // Free the memory
 
+const settingDefault = {
+  msgColor: "normal",
+  sizeDecreasement: 0,
+};
 const playerStats = {
   name: null,
   goals: 0,
@@ -125,30 +134,31 @@ const penaltyDefault = {
   },
   results: [[], []], // Results of taken penalties (first for RED, second for BLUE)
 };
-var commands = { // Format: "alias: [function, minimumRole, availableModes]"
-  help: [helpFunc, 0, ["rand", "pick"]],
-  discord: [discordFunc, 0, ["rand", "pick"]],
-  bye: [byeFunc, 0, ["rand", "pick"]],
-  stats: [showStatsFunc, 0, ["rand", "pick"]],
-  rankings: [showRankingsFunc, 0, ["rand", "pick"]],
-  kickafk: [kickAfkFunc, 0, ["rand", "pick"]],
-  spec: [specFunc, 0, ["rand", "pick"]],
-  login: [loginFunc, 0, ["rand", "pick"]],
-  afk: [afkFunc, 0, ["rand", "pick"]],
-  predict: [predictFunc, 0, ["rand", "pick"]],
-  reducesize: [reduceSizeFunc, 0, ["rand", "pick"]],
-  captains: [listCaptainsFunc, 0, ["pick"]],
-  surrender: [surrenderFunc, 1, ["pick"]],
-  sub: [subFunc, 1, ["pick"]],
-  pause: [pauseFunc, 1, ["pick"]],
-  resume: [resumeFunc, 1, ["pick"]],
-  yellow: [yellowCardFunc, 2, ["rand", "pick"]],
-  clearyellow: [clearYellowCardFunc, 2, ["rand", "pick"]],
-  mute: [muteFunc, 2, ["rand", "pick"]],
-  unmute: [unmuteFunc, 2, ["rand", "pick"]],
-  clearmutes: [clearMutesFunc, 2, ["rand", "pick"]],
-  clearbans: [clearBansFunc, 2, ["rand", "pick"]],
-  assigncap: [assignCaptainFunc, 2, ["pick"]],
+var commands = { // Format: "alias: [function, availableModes, minimumRole, captainOnly]"
+  help: [helpFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  discord: [discordFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  bye: [byeFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  stats: [showStatsFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  rankings: [showRankingsFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  kickafk: [kickAfkFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  spec: [specFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  login: [loginFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  afk: [afkFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  predict: [predictFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  captains: [listCaptainsFunc, ["pick"], ROLE.PLAYER, false],
+  surrender: [surrenderFunc, ["pick"], ROLE.PLAYER, true],
+  sub: [subFunc, ["pick"], ROLE.PLAYER, true],
+  pause: [pauseFunc, ["pick"], ROLE.PLAYER, true],
+  resume: [resumeFunc, ["pick"], ROLE.PLAYER, true],
+  msgcolor: [setMsgColorFunc, ["rand", "pick"], ROLE.VIP, false],
+  reducesize: [reduceSizeFunc, ["rand", "pick"], ROLE.VIP, false],
+  yellow: [yellowCardFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  clearyellow: [clearYellowCardFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  mute: [muteFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  unmute: [unmuteFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  clearmutes: [clearMutesFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  clearbans: [clearBansFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  assigncap: [assignCaptainFunc, ["pick"], ROLE.ADMIN, false],
 };
 var identities = {}; // Store connection string/public IDs of players
 var afkList = new Set([0]); // Host player is always in AFK mode
@@ -212,6 +222,9 @@ async function randomAnnouncement() {
   switch ( Math.floor(Math.random() * 3) ) {
     case 0: // Send Discord link
       msg = `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`;
+      break;
+    case 1:
+      msg = `Donate cho room để trở thành người chơi VIP với khả năng đổi màu tin nhắn, thu nhỏ cầu thủ, xem vị trí bản thân trên BXH, ... Vào Discord để biết thêm chi tiết: ${DISCORD_LINK}`;
       break;
     default: // Send a random quote
       try {
@@ -279,7 +292,10 @@ ${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goa
   ];
   sendWebhook(`✨ Số liệu thống kê trong tháng ${getMonths()}`, null, discordFields);
 
-  localStorage.clear();
+  for (const key in localStorage) {
+    if ( key.length != 43 ) continue;
+    localStorage.removeItem(key);
+  }
   localStorage.setItem("starting_month", new Date().getMonth() + 1);
 }
 
@@ -349,6 +365,27 @@ function reorderPlayers() {
   room.reorderPlayers(Array.from(afkList), false);
 }
 
+function getAuth(id) {
+  return identities[id][0];
+}
+
+function getConn(id) {
+  return identities[id][1];
+}
+
+function getRole(player) {
+  if ( player.admin ) return 2;
+  return +localStorage.getItem("vip").includes(getAuth(player.id));
+}
+
+function getSetting(id) {
+  return JSON.parse(localStorage.getItem(`${getAuth(id)}_setting`)) || { ...settingDefault };
+}
+
+function saveSetting(id, setting) {
+  localStorage.setItem(`${getAuth(id)}_setting`, JSON.stringify(setting));
+}
+
 // Get a player by name or tag
 function getPlayerByName(value) {
   if ( !value ) return null;
@@ -384,7 +421,7 @@ function getBestSpectatorByStats() {
   let bestPlayer = null;
   let highestGA = -1;
   for (const spectator of getNonAfkPlayers().filter(player => player.team == 0)) {
-    let stats = getStats(identities[spectator.id][0]);
+    let stats = getStats(getAuth(spectator.id));
     if ( stats.goals + stats.assists <= highestGA ) continue;
     bestPlayer = spectator;
     highestGA = stats.goals + stats.assists;
@@ -405,6 +442,21 @@ function isCaptain(id) {
 function isAnySpectatorAvailable() {
   // This is faster than room.getPlayerList().find(...)
   return room.getPlayerList().length - afkList.size > MAX_PLAYERS * 2;
+}
+
+function resizePlayer(id) {
+  let setting = getSetting(id);
+  if ( setting.sizeDecreasement == 0 ) return;
+  let playerDiscProperties = room.getPlayerDiscProperties(id);
+  room.setPlayerDiscProperties(id, { radius: playerDiscProperties.radius - setting.sizeDecreasement });
+}
+
+// Change players' size according to their settings
+function resizePlayers() {
+  for (const player of room.getPlayerList()) {
+    if ( player.team == 0 ) continue;
+    resizePlayer(player.id);
+  };
 }
 
 // Set random colors for 2 teams
@@ -473,9 +525,9 @@ function getStats(auth) {
 }
 
 function canUseCommand(command, player) {
-  if ( !command[2].includes(MODE) ) return false; // Command is not available in this mode
-  if ( (command[1] == 2) && !player.admin ) return false; // Admin required
-  if ( (command[1] == 1) && !isCaptain(player.id) ) return false; // Captain required
+  if ( !command[1].includes(MODE) ) return false; // Command is not available in this mode
+  if ( getRole(player) < command[2] ) return false; // Role is not high enough
+  if ( isCaptain(player.id) < command[3] ) return false; // Captain required
   return true;
 }
 
@@ -716,8 +768,22 @@ function byeFunc(value, player) {
 }
 
 function showStatsFunc(value, player) {
-  let item = getStats(identities[player.id][0]);
-  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${player.name}:`, player.id, BLUE, "bold", 0);
+  let showPlayer;
+  if ( !value ) {
+    showPlayer = player;
+  } else {
+    if ( getRole(player) < ROLE.VIP ) {
+      room.sendAnnouncement("Bạn cần phải là người chơi VIP để có thể xem thống kê người khác", player.id, RED);
+      return false;
+    };
+    showPlayer = getPlayerByName(value);
+    if ( showPlayer === undefined ) {
+      room.sendAnnouncement(`Người chơi "${value}" không tồn tại hoặc đã rời đi`, player.id, RED);
+      return false;
+    };
+  };
+  let item = getStats(getAuth(showPlayer.id));
+  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${showPlayer.name}:`, player.id, BLUE, "bold", 0);
   room.sendAnnouncement(`⚽ Bàn thắng: ${item.goals}
 🤝🏻 Kiến tạo: ${item.assists}
 ❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
@@ -740,7 +806,7 @@ function showRankingsFunc(value, player) {
     return false;
   };
   let msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()} ⚽: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals})`).join("  •  ")}`;
-  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == identities[player.id][0]) || "Không có"})`;
+  if ( getRole(player) >= ROLE.VIP ) msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
   // Sort players by assists made
   playerList.sort(function(player1, player2) {
@@ -750,9 +816,10 @@ function showRankingsFunc(value, player) {
     return player2.assists - player1.assists;
   });
   msg += `\nDanh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists})`).join("  •  ")}`;
-  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == identities[player.id][0]) || "Không có"})`;
+  if ( getRole(player) >= ROLE.VIP ) msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
   room.sendAnnouncement(msg, player.id, YELLOW, "small-italic", 0);
+  if ( getRole(player) < ROLE.VIP ) room.sendAnnouncement(`Donate và trở người chơi VIP để được xem xếp hạng của bản thân. Truy cập Discord để biết thêm chi tiết: ${DISCORD_LINK}`);
   return false;
 }
 
@@ -827,21 +894,6 @@ function predictFunc(prediction, player) {
   };
   
   room.sendAnnouncement(`${player.name} đã dự đoán tỉ số RED ${prediction} BLUE`, null, GREEN);
-  return false;
-}
-
-function reduceSizeFunc(value, player) {
-  let playerDiscProperties = room.getPlayerDiscProperties(player.id);
-  if ( playerDiscProperties === null ) {
-    room.sendAnnouncement("Bạn đang ở ngoài sân", player.id, RED);
-    return false;
-  };
-
-  if ( PLAYER_RADIUS - playerDiscProperties.radius >= MAX_PLAYER_RADIUS_REDUCTION ) {
-    room.sendAnnouncement("Đã giảm đến kích thước tối đa", player.id, RED);
-    return false;
-  };
-  room.setPlayerDiscProperties(player.id, { radius: playerDiscProperties.radius - 1 });
   return false;
 }
 
@@ -931,6 +983,37 @@ function resumeFunc(value, player) {
   return false;
 }
 
+function setMsgColorFunc(value, player) {
+  if ( (value != "normal") && !/^[0-9A-F]{6}$/i.test(value) ) {
+    room.sendAnnouncement('Vui lòng nhập một mã màu hợp lệ hoặc dùng "normal" để đặt lại về mặc định (VD: !msgcolor 00FFFF hoặc !msgcolor normal)', player.id, RED);
+    return false;
+  };
+  let setting = getSetting(player.id);
+  setting.msgColor = value;
+  saveSetting(player.id, setting);
+  return false;
+}
+
+function reduceSizeFunc(value, player) {
+  if ( !value || isNaN(value) ) {
+    room.sendAnnouncement("Vui lòng cung cấp số đơn vị muốn giảm, dùng 0 để chỉnh lại về bình thường (VD: !reducesize 2)", player.id, RED);
+    return false;
+  };
+  let setting = getSetting(player.id);
+  if ( (value < 0) || (PLAYER_RADIUS - value <= BALL_RADIUS) ) {
+    room.sendAnnouncement("Kích cỡ cầu thủ đã bị chỉnh tới mức không hợp lệ", player.id, RED);
+    return false;
+  };
+  let gap = value - setting.sizeDecreasement;
+  setting.sizeDecreasement = value;
+  saveSetting(player.id, setting);
+
+  let playerDiscProperties = room.getPlayerDiscProperties(player.id);
+  if ( playerDiscProperties ) room.setPlayerDiscProperties(player.id, { radius: playerDiscProperties.radius - gap });
+  room.sendAnnouncement("Đã chỉnh và lưu kích thước cầu thủ", player.id, GREEN);
+  return false;
+}
+
 function assignCaptainFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp tên đội và một người chơi hợp lệ (VD: !assigncap red @De_Paul hoặc !assigncap blue paul)", player.id, RED);
@@ -986,13 +1069,13 @@ function yellowCardFunc(value, player) {
   };
 
   let yellowCards = JSON.parse(localStorage.getItem("yellow_cards")) || [];
-  let index = yellowCards.indexOf(identities[toPlayer.id][1]);
+  let index = yellowCards.indexOf(getConn(toPlayer.id));
   if ( index != -1 ) { // Player has already received a yellow card
     yellowCards.splice(index, 1); // Clear the card
     room.kickPlayer(toPlayer.id, "Bạn đã nhận 2 thẻ vàng", true);
     var msg = `🟨🟨 ${toPlayer.name} đã nhận thẻ vàng thứ 2 từ ${player.name}`;
   } else {
-    yellowCards.push(identities[toPlayer.id][1]);
+    yellowCards.push(getConn(toPlayer.id));
     var msg = `🟨 ${toPlayer.name} đã nhận một thẻ vàng từ ${player.name} (2 thẻ vàng = ban)`;
   };
   reason && (msg += `: ${reason}`);
@@ -1014,7 +1097,7 @@ function clearYellowCardFunc(value, player) {
   };
 
   let yellowCards = JSON.parse(localStorage.getItem("yellow_cards")) || [];
-  let index = yellowCards.indexOf(identities[toPlayer.id][1]);
+  let index = yellowCards.indexOf(getConn(toPlayer.id));
   if ( index == -1 ) {
     room.sendAnnouncement(`${toPlayer.name} chưa nhận thẻ vàng nào`, player.id, RED);
     return false;
@@ -1044,11 +1127,12 @@ function muteFunc(value, player) {
     return false;
   };
 
-  muteList.add(identities[toPlayer.id][1]);
+  let conn = getConn(toPlayer.id);
+  muteList.add(conn);
   if ( period == 0 ) {
     var msg = `${toPlayer.name} đã bị cấm chat bởi ${player.id}`;
   } else {
-    setTimeout(muteList.delete.bind(muteList, identities[toPlayer.id][1]), period * 60 * 1000);
+    setTimeout(muteList.delete.bind(muteList, conn), period * 60 * 1000);
     var msg = `${toPlayer.name} đã bị cấm chat trong ${period} phút bởi ${player.name}`;
   };
   reason && (msg += `: ${reason}`);
@@ -1068,7 +1152,7 @@ function unmuteFunc(value, player) {
     return false;
   };
 
-  muteList.delete(identities[toPlayer.id][1]);
+  muteList.delete(getConn(toPlayer.id));
   room.sendAnnouncement(`${toPlayer.name} đã có thể chat trở lại`, null, GREEN);
   return false;
 }
@@ -1092,13 +1176,15 @@ function afkFunc(value, player) {
     delete timeouts.toQuitAfk[player.id];
     room.sendAnnouncement(`${player.name} đã thoát chế độ AFK`, null, GREEN);
   } else {
-    // Only allows a limited number of AFK players including the host
-    if ( afkList.size == MAX_AFK_PLAYERS ) {
-      room.sendAnnouncement("Đã có quá nhiều người chơi AFK, bạn không thể AFK", player.id, RED);
-      return false;
-    }
+    if ( getRole(player) < ROLE.VIP ) {
+      // Only allows a limited number of AFK players including the host
+      if ( afkList.size == MAX_AFK_PLAYERS ) {
+        room.sendAnnouncement("Đã có quá nhiều người chơi AFK, bạn không thể AFK", player.id, RED);
+        return false;
+      };
+      timeouts.toQuitAfk[player.id] = setTimeout(oversleepCallback.bind(null, player.id), AFK_TIMEOUT * 1000);
+    };
     afkList.add(player.id);
-    timeouts.toQuitAfk[player.id] = setTimeout(oversleepCallback.bind(null, player.id), AFK_TIMEOUT * 1000);
     room.sendAnnouncement(`${player.name} đã chuyển sang chế độ AFK, dùng !afk lần nữa để thoát`, null, GREEN);
     // Move the AFK player to Spectators
     if ( player.team != 0 ) {
@@ -1126,7 +1212,7 @@ async function pick(pickedPlayer, team) {
   requestPick();
 }
 
-function processCommand(player, input) {
+function handleCommand(player, input) {
   // Get alias and value from command
   let splitIndex = input.indexOf(" ");
   splitIndex = ( splitIndex != -1 ) ? splitIndex : input.length;
@@ -1143,7 +1229,7 @@ function processCommand(player, input) {
 function updatePlayerStats(player, type) {
   if ( identities[player.id] === undefined ) return; 
   // If player hasn't had stats yet, initialize an object
-  let auth = identities[player.id][0];
+  let auth = getAuth(player.id);
   game.players[auth] = ( game.players[auth] || { ...playerReport } );
   game.players[auth].name = player.name;
   game.players[auth].forTeam = player.team;
@@ -1187,7 +1273,7 @@ function updateStats(team) {
   updatePlayerStats(shot.byPlayer, 1);
   if ( identities[shot.byPlayer.id] === undefined ) return; // Scorer left the game
   // Design celebrating comment
-  let hasScored = game.players[identities[shot.byPlayer.id][0]].goals;
+  let hasScored = game.players[getAuth(shot.byPlayer.id)].goals;
   let comment = SCORER_COMMENTARIES[hasScored] || `Thật điên rồ, bàn thắng thứ ${hasScored} trong trận đấu này của`;
   comment = comment.concat(" ", getTag(shot.byPlayer.name));
 
@@ -1198,7 +1284,7 @@ function updateStats(team) {
     (assist.byPlayer.id in identities) // Assister hasn't left the game
   ) {
     updatePlayerStats(assist.byPlayer, 2);
-    let hasAssisted = game.players[identities[assist.byPlayer.id][0]].assists;
+    let hasAssisted = game.players[getAuth(assist.byPlayer.id)].assists;
     if ( hasAssisted != 1 ) { // Multiple assists O_O
       comment = comment.concat(", ", `${getTag(assist.byPlayer.name)} đã có cho mình kiến tạo thứ ${hasAssisted} trong trận đấu`);
     } else {
@@ -1224,10 +1310,10 @@ function saveStats() {
   };
   for (const player of room.getPlayerList()) {
     if ( player.team != prevWinner ) continue;
-    let item = getStats(identities[player.id][0]);
+    let item = getStats(getAuth(player.id));
     item.name = player.name;
     item.wins += 1;
-    localStorage.setItem(identities[player.id][0], JSON.stringify(item));
+    localStorage.setItem(getAuth(player.id), JSON.stringify(item));
   };
 }
 
@@ -1554,6 +1640,22 @@ async function pickPlayers() {
   requestPick();
 }
 
+function personalizeMsg(message, player) {
+  let newMessage = `${player.name.trim()}: ${message}`;
+  let color = getSetting(player.id).msgColor;
+  if ( message.includes("@") ) {
+    for (const _player of room.getPlayerList()) {
+      if ( message.includes(getTag(_player.name)) ) {
+        room.sendAnnouncement(newMessage, _player.id, color, "bold", 2);
+      } else {
+        room.sendAnnouncement(newMessage, _player.id, color);
+      };
+    };
+    return;
+  };
+  room.sendAnnouncement(newMessage, null, color);
+}
+
 function reset() {
   game = JSON.parse(JSON.stringify(gameDefault));
   penalty = JSON.parse(JSON.stringify(penaltyDefault));
@@ -1663,6 +1765,7 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
   } else {
     let scores = room.getScores();
     if ( scores === null ) return;
+    resizePlayer(changedPlayer.id);
     room.sendAnnouncement("Bạn đã được thay vào sân", changedPlayer.id, BLUE, "small", 2);
     if ( isPlaying ) {
       timeouts.toAct[changedPlayer.id] = setTimeout(afkCallback.bind(null, changedPlayer.id), ACTIVITY_TIMEOUT * 1000);
@@ -1700,6 +1803,7 @@ room.onTeamGoal = function(team) {
 }
 
 room.onPositionsReset = function() {
+  resizePlayers()
   if ( isTakingPenalty ) {
     takePenalty();
     return;
@@ -1753,21 +1857,25 @@ room.onPlayerChat = function(player, message) {
   };
   // Perform some validations on the message
   if ( !message.startsWith("!") || COMMANDS_TO_VALIDATE.some(command => message.substring(1).startsWith(command)) ) {
-    if ( muteList.has(identities[player.id][1]) ) {
+    if ( muteList.has(getConn(player.id)) ) {
       room.sendAnnouncement("Không thể chat, bạn đã bị cấm", player.id, RED);
       return false;
     };
-    if ( !player.admin ) {
+    if ( getRole(player) < ROLE.ADMIN ) {
       // Disallow Spectators from messaging when 2 teams are picking or taking penalty
       if ( isTakingPenalty && (player.team == 0) ) {
         room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
         return false;
       };
-      if ( checkSpam(player, message) ) return false;
+      if ( (getRole(player) < ROLE.VIP) && checkSpam(player, message) ) return false;
     };
   };
   if ( message.startsWith("!") ) { // Indicating a command
-    return processCommand(player, message.slice(1));
+    return handleCommand(player, message.slice(1));
+  };
+  if ( getSetting(player.id).msgColor != "normal" ) {
+    personalizeMsg(message, player);
+    return false;
   };
   return true;
 }
@@ -1791,6 +1899,7 @@ room.onTeamVictory = function(scores) {
 room.onGameStart = function(byPlayer) {
   isPlaying = true;
   isPicking = false;
+  resizePlayers();
   if ( isTakingPenalty || isTraining ) {
     return;
   };
