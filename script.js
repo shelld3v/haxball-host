@@ -819,7 +819,7 @@ function showRankingsFunc(value, player) {
   if ( getRole(player) >= ROLE.VIP ) msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
   room.sendAnnouncement(msg, player.id, YELLOW, "small-italic", 0);
-  if ( getRole(player) < ROLE.VIP ) room.sendAnnouncement(`(Donate và trở người chơi VIP để được xem xếp hạng của bản thân. Truy cập Discord để biết thêm chi tiết: ${DISCORD_LINK})`, player.id, YELLOW, "small-bold", 0);
+  if ( getRole(player) < ROLE.VIP ) room.sendAnnouncement(`Donate và trở người chơi VIP để được xem xếp hạng của bản thân. Truy cập Discord để biết thêm chi tiết: ${DISCORD_LINK}`, player.id, YELLOW, "small-bold", 0);
   return false;
 }
 
