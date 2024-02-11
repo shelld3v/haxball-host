@@ -989,7 +989,7 @@ function setMsgColorFunc(value, player) {
     return false;
   };
   let setting = getSetting(player.id);
-  setting.msgColor = value;
+  setting.msgColor = `0x${value}`;
   saveSetting(player.id, setting);
   return false;
 }
