@@ -549,9 +549,6 @@ function penaltyTimeoutCallback() {
   room.sendChat("Cầu thủ đã không thực hiện penalty trong thời gian quy định");
   // Count as a miss if player doesn't perform the penalty in time
   penalty.results[getPenaltyTurn()].push(false);
-  // Stop and start the game again to reset the ball position
-  room.stopGame();
-  room.startGame();
   takePenalty();
 }
 
@@ -1546,6 +1543,7 @@ async function takePenalty() {
     return;
   };
 
+  room.stopGame();
   // Put previous penalty taker and goalkeeper back to the Spectators
   for (const player of room.getPlayerList()) {
     if ( player.team == 0 ) continue;
@@ -1582,6 +1580,7 @@ async function takePenalty() {
       penResults[i].push("⚪");
     };
   };
+  room.startGame();
   room.sendAnnouncement(` RED ${penResults[0].reverse().join("")} - ${penResults[1].join("")} BLUE`, null, BLUE, "bold", 0);
   if ( penalty.results.flat(1).length == 10 ) {
     room.sendChat('Giờ ta sẽ đến loạt sút "Sudden Death", một đội thực hiện thành công và đội còn lại đá trượt thì kết quả sẽ được định đoạt');
@@ -1811,12 +1810,12 @@ room.onTeamGoal = function(team) {
 }
 
 room.onPositionsReset = function() {
-  resizePlayers()
   if ( isTakingPenalty ) {
     takePenalty();
     return;
   };
 
+  resizePlayers();
   isPlaying = true;
   ballRecords = [null, null,  null];
   // Allows captains to pause the game before kick-off
