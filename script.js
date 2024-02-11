@@ -468,19 +468,46 @@ function setRandomColors() {
   [kits.red, kits.blue] = colors;
 }
 
-// Set avatars for players of a specific team
-async function teamAvatarEffect(teamId, avatar) {
-  let flickerDelay = 200;
-  let players = room.getPlayerList().filter(player => player.team == teamId);
-  for (let i = 0; i < 4; i++) {
-    for (const player of players) {
-      await room.setPlayerAvatar(player.id, avatar);
-    };
-    await new Promise(r => setTimeout(r, flickerDelay));
-    for (const player of players) {
-      await room.setPlayerAvatar(player.id, null);
-    };
-    await new Promise(r => setTimeout(r, flickerDelay));
+async function avatarEffect(playerId, avatars) {
+  for (const avatar of avatars) {
+    await room.setPlayerAvatar(playerId, avatar);
+    await new Promise(r => setTimeout(r, 3000 / avatars.length));
+  };
+  room.setPlayerAvatar(playerId, null);
+}
+
+async function celebrationEffect(playerId, hasScored) {
+  switch ( Math.floor(Math.random() * 4) ) {
+    case 0:
+      avatarEffect(playerId, ["🤫", "😂", "🖕"]);
+      break;
+    case 1:
+      avatarEffect(playerId, ["3️⃣", "2️⃣", "1️⃣", "💥"]);
+      break;
+    case 2:
+      let avatars;
+      switch ( hasScored ) {
+        case 2:
+          avatars = ["2️⃣", "✌", "2️⃣", "✌🏻", "2️⃣", "✌🏿"];
+          break;
+        case 3:
+          avatars = ["3️⃣", "👌", "3️⃣", "👌🏻", "3️⃣", "👌🏿"];
+          break;
+        case 4:
+          avatars = ["4️⃣", "✌✌", "4️⃣", "✌🏻✌🏻", "4️⃣", "✌🏿✌🏿"];
+          break;
+        default:
+          avatars = ["🌟", "⭐", "✨", "💫"];
+      };
+      avatarEffect(playerId, avatars, 250);
+      break;
+    case 3:
+      let originalRadius = room.getPlayerDiscProperties(playerId).radius;
+      for (let i = 0; i < 5; i += 1) {
+        await room.setPlayerDiscProperties(playerId, { radius: PLAYER_RADIUS - PLAYER_RADIUS * (i % 2) / 2 });
+        await new Promise(r => setTimeout(r, 100));
+      };
+      room.setPlayerDiscProperties(playerId, { radius: originalRadius });
   };
 }
 
@@ -1277,6 +1304,7 @@ function updateStats(team) {
   let hasScored = game.players[getAuth(shot.byPlayer.id)].goals;
   let comment = SCORER_COMMENTARIES[hasScored] || `Thật điên rồ, bàn thắng thứ ${hasScored} trong trận đấu này của`;
   comment = comment.concat(" ", getTag(shot.byPlayer.name));
+  if ( getRole(shot.byPlayer) >= ROLE.VIP ) celebrationEffect(shot.byPlayer.id, hasScored);
 
   if (
     (assist !== null) &&
@@ -1417,7 +1445,6 @@ function celebrateGoal(team) {
   let scoreline = `${scores.red}-${scores.blue}`;
 
   var scream = "VÀOOO"; // Goal screamer
-  var avatar = "⚽";
   var comment = "bàn thắng mang lại không nhiều giá trị";
   // Design a good comment :P
   if (
@@ -1427,13 +1454,11 @@ function celebrateGoal(team) {
     scream = "VÀOOOOOOOO";
     // Pick a random comment
     comment = randomChoice(WINNING_GOAL_COMMENTARIES);
-    avatar = "🏆";
   } else {
     comment = GOAL_COMMENTARIES[goalDiff] || comment;
   };
 
   room.sendChat(`${scream} ${scoreline}, ${comment}`);
-  teamAvatarEffect(team, avatar);
 }
 
 function celebratePenalty(team) {
