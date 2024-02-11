@@ -984,12 +984,15 @@ function resumeFunc(value, player) {
 }
 
 function setMsgColorFunc(value, player) {
-  if ( (value != "normal") && !/^[0-9A-F]{6}$/i.test(value) ) {
-    room.sendAnnouncement('Vui lòng nhập một mã màu hợp lệ hoặc dùng "normal" để đặt lại về mặc định (VD: !msgcolor 00FFFF hoặc !msgcolor normal)', player.id, RED);
-    return false;
+  if ( value != "normal" ) {
+    if ( !/^[0-9A-F]{6}$/i.test(value) ) {
+      room.sendAnnouncement('Vui lòng nhập một mã màu hợp lệ hoặc dùng "normal" để đặt lại về mặc định (VD: !msgcolor 00FFFF hoặc !msgcolor normal)', player.id, RED);
+      return false;
+    };
+    value = `0x${value}`;
   };
   let setting = getSetting(player.id);
-  setting.msgColor = `0x${value}`;
+  setting.msgColor = value;
   saveSetting(player.id, setting);
   return false;
 }
