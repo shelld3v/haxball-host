@@ -1172,7 +1172,7 @@ function muteFunc(value, player) {
 
   muteList.add(getConn(toPlayer.id));
   if ( period == 0 ) {
-    var msg = `${toPlayer.name} đã bị cấm chat bởi ${player.id}`;
+    var msg = `${toPlayer.name} đã bị cấm chat bởi ${player.name}`;
   } else {
     setTimeout(muteList.delete.bind(muteList, getConn(toPlayer.id)), period * 60 * 1000);
     var msg = `${toPlayer.name} đã bị cấm chat trong ${period} phút bởi ${player.name}`;
