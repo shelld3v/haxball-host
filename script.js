@@ -1042,7 +1042,7 @@ function reduceSizeFunc(value, player) {
     return false;
   };
   let setting = getSetting(player.id);
-  if ( (value < 0) || (PLAYER_RADIUS - value <= BALL_RADIUS) ) {
+  if ( (value < 0) || (value > PLAYER_RADIUS / 2) ) {
     room.sendAnnouncement("Kích cỡ cầu thủ đã bị chỉnh tới mức không hợp lệ", player.id, RED);
     return false;
   };
