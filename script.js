@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "pulakobel";
+const ADMIN_PASSWORD = "yeudanh";
 const MODE = "pick"; // can be "rand" or "pick"
 const ACTIVITY_TIMEOUT = 10;
 const AFK_TIMEOUT = 10 * 60;
@@ -34,6 +34,7 @@ const TEAM_COLORS = [
   [[60, 0xFFCC00, [0xE83030]], [60, 0xFFCC00, [0x004170]]],
   [[60, 0xFFFFFF, [0xFF4A4A]], [60, 0xFFFFFF, [0x5ECFFF]]],
   [[60, 0xFFFFFF, [0xD60419]], [60, 0xFFFFFF, [0x0099FF]]],
+  [[0, 0xFF0000, [0x6D0000]], [0, 0x0000FF, [0x0D0E47]]],
   [[0, 0xF7FFF2, [0xE00202, 0xB00101, 0x800000]], [0, 0xF7FFF2, [0x00F7FF, 0x00D1D1, 0x00A7AD]]],
   [[90, 0xF7FFF2, [0xFF2121, 0xFF5757, 0xFC9595]], [90, 0xF7FFF2, [0x00C3FF, 0x45E0FF, 0xB5F5FC]]],
   [[45, 0xFFFFFF, [0x000000, 0xFF0000, 0x000000]], [45, 0x808080, [0xFFFFFF, 0x0096FF, 0xFFFFFF]]],
@@ -1042,7 +1043,7 @@ function reduceSizeFunc(value, player) {
     return false;
   };
   let setting = getSetting(player.id);
-  if ( (value < 0) || (value > PLAYER_RADIUS / 2) ) {
+  if ( (value < 0) || (value > PLAYER_RADIUS / 3) ) {
     room.sendAnnouncement("Kích cỡ cầu thủ đã bị chỉnh tới mức không hợp lệ", player.id, RED);
     return false;
   };
@@ -1051,7 +1052,7 @@ function reduceSizeFunc(value, player) {
   saveSetting(player.id, setting);
 
   let playerDiscProperties = room.getPlayerDiscProperties(player.id);
-  if ( playerDiscProperties ) room.setPlayerDiscProperties(player.id, { radius: playerDiscProperties.radius - gap });
+  (playerDiscProperties !== null) && room.setPlayerDiscProperties(player.id, { radius: playerDiscProperties.radius - gap });
   room.sendAnnouncement("Đã chỉnh và lưu kích thước cầu thủ", player.id, GREEN);
   return false;
 }
