@@ -977,7 +977,7 @@ function subFunc(value, player) {
     return false;
   };
   room.sendAnnouncement(`🔻 ${outPlayer.name} đã được thay ra ngoài`, null, 0xFF0000, "small", 0);
-  room.sendAnnouncement(`🔺 ${inPlayer.name} đã được thay vào sân`, null, 0x008000, "small", 0);
+  room.sendAnnouncement(`🔺 ${inPlayer.name} đã được thay vào sân`, null, 0x00FF00, "small", 0);
   room.setPlayerTeam(inPlayer.id, player.team);
   room.setPlayerTeam(outPlayer.id, 0);
   game.teams[player.team].substitutions++;
@@ -1325,7 +1325,7 @@ function updateStats(team) {
   // Calculate goal stats
   let speed = convertToMeters(getDistance(shot.xspeed, shot.yspeed) * 60); // There are 60 frames per second
   let distance = convertToMeters(getDistance(Math.abs(shot.x - ballPosition.x), Math.abs(shot.y - ballPosition.y)));
-  room.sendAnnouncement(`Khoảng cách: ${distance || "dưới 1"}m | Lực sút: ${speed} (m/s)`, null, 0x008000, "small", 0);
+  room.sendAnnouncement(`Khoảng cách: ${distance || "dưới 1"}m | Lực sút: ${speed} (m/s)`, null, 0x00FF00, "small", 0);
 }
 
 function saveStats() {
@@ -1543,7 +1543,6 @@ async function startPenaltyShootout() {
   room.setTimeLimit(0);
   room.setScoreLimit(0);
   room.setCustomStadium(PENALTY_STADIUM);
-  room.startGame();
   takePenalty();
 }
 
