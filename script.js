@@ -90,7 +90,7 @@ const NEW_UPDATE_MESSAGE = "MỚI: Người chơi có thể trở thành VIP m�
 
 // Analyze the stadium
 parsedStadium = JSON.parse(STADIUM);
-const GOAL_LINE = parsedStadium.goals[0].p0.map(coordinate => Math.abs(coordinate)); // Both x and y values are positive numbers
+const GOAL_LINE = { x: Math.abs(parsedStadium.goals[0].p0[0]), y: Math.abs(parsedStadium.goals[0].p0[1]) };
 const BALL_RADIUS = parsedStadium.ballPhysics.radius || 10;
 const PLAYER_RADIUS = parsedStadium.playerPhysics.radius || 15;
 delete parsedStadium; // Free the memory
@@ -476,13 +476,13 @@ async function avatarEffect(playerId, avatars) {
   room.setPlayerAvatar(playerId, null);
 }
 
-async function celebrationEffect(playerId, hasScored) {
-  switch ( Math.floor(Math.random() * 4) ) {
+async function celebrationEffect(player, hasScored) {
+  switch ( Math.floor(Math.random() * 5) ) {
     case 0:
-      avatarEffect(playerId, ["🤫", "😂", "🤫", "😂"]);
+      avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
       break;
     case 1:
-      avatarEffect(playerId, ["😴", "💤", "😴", "💤"]);
+      avatarEffect(player.id, ["😴", "💤", "😴", "💤"]);
       break;
     case 2:
       let avatars;
@@ -499,15 +499,24 @@ async function celebrationEffect(playerId, hasScored) {
         default:
           avatars = ["🌟", "⭐", "✨", "💫"];
       };
-      avatarEffect(playerId, avatars, 250);
+      avatarEffect(player.id, avatars, 250);
       break;
     case 3:
-      let originalRadius = room.getPlayerDiscProperties(playerId).radius;
+      let originalRadius = room.getPlayerDiscProperties(player.id).radius;
       for (let i = 0; i < 5; i += 1) {
-        await room.setPlayerDiscProperties(playerId, { radius: PLAYER_RADIUS - PLAYER_RADIUS * (i % 2) / 2 });
+        await room.setPlayerDiscProperties(player.id, { radius: PLAYER_RADIUS - PLAYER_RADIUS * (i % 2) / 2 });
         await new Promise(r => setTimeout(r, 100));
       };
-      room.setPlayerDiscProperties(playerId, { radius: originalRadius });
+      room.setPlayerDiscProperties(player.id, { radius: originalRadius });
+    case 4:
+      for (const _player of room.getPlayerList()) {
+        if ( (_player.team == 0) || (_player.id == player.id) ) continue;
+        room.setPlayerDiscProperties(
+          _player.id, {
+            xspeed: GOAL_LINE.y * ((_player.position.x > player.position.x) * 2 - 1),
+            yspeed: GOAL_LINE.y * ((_player.position.y > player.position.y) * 2 - 1) }
+        );
+      };
   };
 }
 
@@ -655,13 +664,13 @@ function updateBallKick(player) {
     game.teams[ballRecords[1].byPlayer.team].shotsOnTarget--;
   };
 
-  let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE[0] : -GOAL_LINE[0]; // The x position value of the opponent's goal
+  let xOpponentGoal = ( player.team == 1 ) ? GOAL_LINE.x : -GOAL_LINE.x; // The x position value of the opponent's goal
   if (
     (xOpponentGoal * ballProperties.xspeed > 0) && // It's a kick toward the opponent goal
-    (Math.abs(ballProperties.x + ballProperties.xspeed * 98) > GOAL_LINE[0]) // At this speed, the ball can cross the goal line
+    (Math.abs(ballProperties.x + ballProperties.xspeed * 98) > GOAL_LINE.x) // At this speed, the ball can cross the goal line
   ) {
     // Check if it's on target (not really accurate because it might hit the post)
-    if ( Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < GOAL_LINE[1] - BALL_RADIUS ) {
+    if ( Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < GOAL_LINE.y - BALL_RADIUS ) {
       ballRecords[0].isAShot = true;
       game.teams[player.team].shotsOnTarget++;
     };
@@ -700,17 +709,21 @@ async function updateCaptain(teamId, newCaptain) {
     };
   }
 
-  let oldCaptainId = captains[teamId];
-  captains[teamId] = newCaptain.id;
   if ( newCaptain.team == teamId ) {
     // Move old captain to the bottom of the team list to prevent being re-selected as the captain next time
-    room.reorderPlayers([oldCaptainId], false);
-  } else if ( !isTakingPenalty ) {
+    room.reorderPlayers([captains[teamId]], false);
+  } else if ( isTakingPenalty ) {
+    // Remove old captain from the penalty group
+    penalty.groups[teamId] = penalty.groups[teamId].filter(id => id != captains[teamId]);
+    // Add new captain to the penalty group (if necessary)
+    penalty.groups[teamId].includes(newCaptain.id) || penalty.groups[teamId].unshift(newCaptain.id);
+  } else {
     // Move new captain to team
     await room.setPlayerTeam(newCaptain.id, teamId);
     // Move old captain to Spectators
-    await room.setPlayerTeam(oldCaptainId, 0);
+    await room.setPlayerTeam(captains[teamId], 0);
   };
+  captains[teamId] = newCaptain.id;
   room.sendAnnouncement(`${newCaptain.name} đã được chọn làm đội trưởng của ${TEAM_NAMES[teamId]}`, null, GREEN, "bold", 0);
 
   // Reset pick timeout for the new captain
@@ -875,8 +888,9 @@ function specFunc(value, player) {
 }
 
 function listCaptainsFunc(value, player) {
-  (captains[1] != 0) && room.sendAnnouncement(`Đội trưởng của RED: ${room.getPlayer(captains[1]).name}`, null, GREEN, "normal", 0);
-  (captains[2] != 0) && room.sendAnnouncement(`Đội trưởng của BLUE: ${room.getPlayer(captains[2]).name}`, null, GREEN, "normal", 0);
+  for (let teamId = 1; teamId < 3; teamId++) {
+    (captains[teamId] != 0) && room.sendAnnouncement(`Đội trưởng của ${TEAM_NAMES[teamId]}: ${room.getPlayer(captains[captainId]).name}`, null, GREEN, "normal", 0);
+  };
 }
 
 function predictFunc(prediction, player) {
@@ -1285,7 +1299,7 @@ function updateStats(team) {
       assist && // Someone's kick resulted in this goal
       assist.isAShot && // The previous kick was a shot on target
       (assist.byPlayer.team == team) && // The previous kick came from an opponent player
-      (GOAL_LINE[0] - Math.abs(shot.x) < PLAYER_RADIUS * 3 ) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
+      (GOAL_LINE.x - Math.abs(shot.x) < PLAYER_RADIUS * 3 ) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
       (shot.time - assist.time < 2) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
     ) {
       // Correct the credits
@@ -1304,7 +1318,7 @@ function updateStats(team) {
   let hasScored = game.players[getAuth(shot.byPlayer.id)].goals;
   let comment = SCORER_COMMENTARIES[hasScored] || `Thật điên rồ, bàn thắng thứ ${hasScored} trong trận đấu này của`;
   comment = comment.concat(" ", getTag(shot.byPlayer.name));
-  if ( getRole(shot.byPlayer) >= ROLE.VIP ) celebrationEffect(shot.byPlayer.id, hasScored);
+  if ( getRole(shot.byPlayer) >= ROLE.VIP ) celebrationEffect(shot.byPlayer, hasScored);
 
   if (
     (assist !== null) &&
@@ -1324,7 +1338,7 @@ function updateStats(team) {
   room.sendChat(comment);
   // Calculate goal stats
   let speed = convertToMeters(getDistance(shot.xspeed, shot.yspeed) * 60); // There are 60 frames per second
-  let distance = convertToMeters(getDistance(Math.abs(shot.x - ballPosition.x), Math.abs(shot.y - ballPosition.y)));
+  let distance = convertToMeters(getDistance(shot.x - ballPosition.x, shot.y - ballPosition.y));
   room.sendAnnouncement(`Khoảng cách: ${distance || "dưới 1"}m | Lực sút: ${speed} (m/s)`, null, 0x00FF00, "small", 0);
 }
 
@@ -1517,24 +1531,16 @@ async function startPenaltyShootout() {
   isTakingPenalty = true;
   prevScore = Array(2).fill(room.getScores().red).join("-");
   // Store players' team and role (GK or not) for the penalty shootout
-  let deepestPositions = [Number.MAX_VALUE, Number.MIN_VALUE];
   room.getPlayerList().forEach(function(player) {
-    let isLowest = false;
-    switch ( player.team ) {
-      case 0:
-        return;
-      case 1:
-        isLowest = player.position.x < deepestPositions[0];
-        break;
-      case 2:
-        isLowest = player.position.x > deepestPositions[1];
-    }
-
-    if ( isLowest ) { // The lowest player will be assigned to the GK role
-      penalty.groups[player.team].push(player.id); // GK is the player in the last index of the array
-      deepestPositions[player.team - 1] = player.position.x;
+    if ( player.team == 0 ) return;
+    let group = penalty.groups[player.team];
+    if (
+      (group.length == 0) ||
+      ((player.position.x - group.at(-1).position.x) * (player.team * 2 - 3) > 0)
+    ) { // The lowest player will be assigned to the GK role
+      group.push(player.id); // GK is the player in the last index of the array
     } else {
-      penalty.groups[player.team].unshift(player.id);
+      group.unshift(player.id);
     };
   });
   room.stopGame();
