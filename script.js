@@ -195,7 +195,7 @@ var quotes = [];
 var room = HBInit({
   roomName: `💥 [De Paul's auto room] 5v5 (${MODE})`,
   maxPlayers: 30,
-  playerName: "BLV Trông Anh Ngược",
+  playerName: "BLV Khảnh Dơi",
   public: true,
 });
 room.setScoreLimit(SCORE_LIMIT);
@@ -411,11 +411,12 @@ function getPlayerByPos(number) {
 }
 
 function getPredictionWinners() {
-  return (predictions[prevScore] || []).filter(function(id) {
-    if ( afkList.has(id) ) return false;
+  return (predictions[prevScore] || []).filter(function(players, id) {
+    if ( afkList.has(id) ) return players;
     let player = room.getPlayer(id);
-    return (player !== null) && (player.team !== prevWinner);
-  });
+    (player !== null) && (player.team !== prevWinner) && players.push(player);
+    return players;
+  }, []);
 }
 
 // Get the spectator with the highest number of G/A
@@ -708,23 +709,24 @@ async function updateCaptain(teamId, newCaptain) {
       captains[teamId] = 0;
       return;
     };
-  }
+  };
 
+  let oldCaptainId = captains[teamId];
+  captains[teamId] = newCaptain.id;
   if ( newCaptain.team == teamId ) {
     // Move old captain to the bottom of the team list to prevent being re-selected as the captain next time
-    room.reorderPlayers([captains[teamId]], false);
+    room.reorderPlayers([oldCaptainId], false);
   } else if ( isTakingPenalty ) {
     // Remove old captain from the penalty group
-    penalty.groups[teamId] = penalty.groups[teamId].filter(id => id != captains[teamId]);
+    penalty.groups[teamId] = penalty.groups[teamId].filter(id => id != oldCaptainId);
     // Add new captain to the penalty group (if necessary)
     penalty.groups[teamId].includes(newCaptain.id) || penalty.groups[teamId].unshift(newCaptain.id);
   } else {
     // Move new captain to team
     await room.setPlayerTeam(newCaptain.id, teamId);
     // Move old captain to Spectators
-    await room.setPlayerTeam(captains[teamId], 0);
+    await room.setPlayerTeam(oldCaptainId, 0);
   };
-  captains[teamId] = newCaptain.id;
   room.sendAnnouncement(`${newCaptain.name} đã được chọn làm đội trưởng của ${TEAM_NAMES[teamId]}`, null, GREEN, "bold", 0);
 
   // Reset pick timeout for the new captain
@@ -890,7 +892,7 @@ function specFunc(value, player) {
 
 function listCaptainsFunc(value, player) {
   for (let teamId = 1; teamId < 3; teamId++) {
-    (captains[teamId] != 0) && room.sendAnnouncement(`Đội trưởng của ${TEAM_NAMES[teamId]}: ${room.getPlayer(captains[captainId]).name}`, null, GREEN, "normal", 0);
+    (captains[teamId] != 0) && room.sendAnnouncement(`Đội trưởng của ${TEAM_NAMES[teamId]}: ${room.getPlayer(captains[teamId]).name}`, null, GREEN, "normal", 0);
   };
 }
 
@@ -1531,15 +1533,17 @@ Discord: ${DISCORD_LINK}`;
 async function startPenaltyShootout() {
   isTakingPenalty = true;
   prevScore = Array(2).fill(room.getScores().red).join("-");
+  let deepestPositions = [Number.MAX_NUMBER, Number.MIN_NUMBER];
   // Store players' team and role (GK or not) for the penalty shootout
   room.getPlayerList().forEach(function(player) {
     if ( player.team == 0 ) return;
     let group = penalty.groups[player.team];
     if (
       (group.length == 0) ||
-      ((player.position.x - group.at(-1).position.x) * (player.team * 2 - 3) > 0)
+      ((player.position.x - deepestPositions[player.team - 1]) * (player.team * 2 - 3) > 0)
     ) { // The lowest player will be assigned to the GK role
       group.push(player.id); // GK is the player in the last index of the array
+      deepestPositions[player.team - 1] = player.position.x;
     } else {
       group.unshift(player.id);
     };
@@ -1627,9 +1631,7 @@ async function takePenalty() {
 async function randPlayers() {
   // Prediction winners
   let predictionWinners = getPredictionWinners();
-  for (const playerId of predictionWinners) {
-    room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được 1 suất đá chính", playerId, GREEN, "bold", 2);
-  };
+  (predictionWinners.length != 0) && room.sendChat(`Chúc mừng ${predictionWinners.map(winner => getTag(winner.name)).join(", ")} đã dự đoán đúng tỉ số và nhận được 1 suất đá chính`);
 
   // Get player list and suffle it
   let idList = getNonAfkPlayers().sort(function(player1, player2) {
@@ -1637,8 +1639,10 @@ async function randPlayers() {
     if ( player1.team == prevWinner ) return -1;
     if ( player2.team == prevWinner ) return 1;
     // Prediction winners get advantages over others
-    if ( predictionWinners.includes(player1.id) && !predictionWinners.includes(player2.id) ) return -1;
-    if ( predictionWinners.includes(player2.id) && !predictionWinners.includes(player1.id) ) return 1;
+    for (const winner of predictionWinners) {
+      if ( player1.id == winner.id ) return -1;
+      if ( player2.id == winner.id ) return 1;
+    };
     // Random order
     return Math.random() - 0.5;
   }).map(player => player.id);
@@ -1663,15 +1667,14 @@ async function randPlayers() {
 async function pickPlayers() {
   let players = getNonAfkPlayers();
   // Change captain of the losing team
-  let predictionWinner = getPredictionWinners()[0];
-  if ( predictionWinner !== undefined ) {
-    room.sendAnnouncement("Chúc mừng bạn đã dự đoán đúng tỉ số, bạn đã nhận được chiếc băng đội trưởng", predictionWinner, GREEN, "bold", 2);
-    await updateCaptain(getOppositeTeamId(prevWinner), room.getPlayer(predictionWinner));
+  let captain = getPredictionWinners()[0];
+  if ( captain !== undefined ) {
+    room.sendChat(`Chúc mừng ${getTag(captain.name)} đã dự đoán đúng tỉ số và nhận được chiếc băng đội trưởng`);
   } else {
-    let captain = (afkList.has(selectedCaptain) ? null : room.getPlayer(selectedCaptain)) || getNonAfkPlayers().find(player => player.team == 0);
+    captain = (afkList.has(selectedCaptain) ? null : room.getPlayer(selectedCaptain)) || getNonAfkPlayers().find(player => player.team == 0);
     selectedCaptain = null;
-    await updateCaptain(getOppositeTeamId(prevWinner), captain);
   };
+  await updateCaptain(getOppositeTeamId(prevWinner), captain);
   // Move players to Spectators
   for (const player of players) {
     if ( isCaptain(player.id) || ((players.length > 10) && (player.team == prevWinner)) ) continue;
