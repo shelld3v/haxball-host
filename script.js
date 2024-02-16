@@ -15,7 +15,7 @@ const SCORE_LIMIT = 4;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
 const MIN_TIME_FOR_SURRENDER = 2 * 60;
-const MAX_AFK_PLAYERS = 4;
+const MAX_AFK_PLAYERS = 3;
 const SAVE_RECORDINGS = true;
 const RED = 0xFA3E3E;
 const GREEN = 0x5DB899;
@@ -411,7 +411,7 @@ function getPlayerByPos(number) {
 }
 
 function getPredictionWinners() {
-  return (predictions[prevScore] || []).filter(function(players, id) {
+  return (predictions[prevScore] || []).reduce(function(players, id) {
     if ( afkList.has(id) ) return players;
     let player = room.getPlayer(id);
     (player !== null) && (player.team !== prevWinner) && players.push(player);
@@ -511,13 +511,14 @@ async function celebrationEffect(player, hasScored) {
       };
       room.setPlayerDiscProperties(player.id, { radius: originalRadius });
     case 4:
+      let ballSpeed = Math.abs(room.getDiscProperties(0).xspeed);
       for (const _player of room.getPlayerList()) {
         if ( (_player.team == 0) || (_player.id == player.id) ) continue;
-        room.setPlayerDiscProperties(
-          _player.id, {
-            xspeed: GOAL_LINE.y * ((_player.position.x > player.position.x) * 2 - 1),
-            yspeed: GOAL_LINE.y * ((_player.position.y > player.position.y) * 2 - 1) }
-        );
+        let xDiff = _player.position.x - player.position.x;
+        let yDiff = _player.position.y - player.position.y;
+        let xspeed = ((xDiff > 0) * 2 - 1) * ballSpeed / Math.sqrt((yDiff / xDiff) ** 2 + 1);
+        let yspeed = ((yDiff > 0) * 2 - 1) * Math.sqrt(ballSpeed ** 2 - xspeed ** 2);
+        room.setPlayerDiscProperties(_player.id, { xspeed: xspeed, yspeed: yspeed });
       };
   };
 }
