@@ -534,23 +534,26 @@ function showSpecTable() {
   room.sendAnnouncement("Hướng dẫn: nhập số hoặc tag để chọn người chơi (VD: 2 hoặc @De_Paul). Nhập '0' để tự động chọn người chơi có thống kê tốt nhất", captains[pickTurn], YELLOW, "small", 0);
 }
 
-// Kick player if violates any rule
 function isPlayerValid(player) {
   // Players without a name are not allowed
   if ( player.name.trim().length == 0 ) {
     room.kickPlayer(player.id, "Người chơi không có tên");
     return false;
   };
-  // 2 players have the same connection ID
-  if ( Object.values(identities).map(identity => identity[1]).includes(player.conn) ) {
-    room.kickPlayer(player.id, "Người chơi có cùng địa chỉ IP với một người chơi khác trong phòng");
-    return false;
-  };
-  // Duplicate tag
+
   let tag = getTag(player.name.trim());
-  if ( room.getPlayerList().some(_player => (_player.id != player.id) && (getTag(_player.name.trim()) == tag)) ) {
-    room.kickPlayer(player.id, "Vui lòng đổi tên");
-    return false;
+  for (const _player of room.getPlayerList()) {
+    if ( _player.id == player.id ) continue;
+    // Player joined by 2 tabs
+    if ( getConn(_player.id) == player.conn ) {
+      room.kickPlayer(_player.id, "Bạn đã vào room bằng 1 tab khác");
+      continue;
+    };
+    // Duplicate tag
+    if ( getTag(_player.name.trim()) == tag ) {
+      room.kickPlayer(player.id, "Vui lòng đổi tên");
+      return false;
+    };
   };
   return true;
 }
