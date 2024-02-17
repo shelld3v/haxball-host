@@ -479,7 +479,7 @@ async function avatarEffect(playerId, avatars) {
 }
 
 async function celebrationEffect(player, hasScored) {
-  switch ( Math.floor(Math.random() * 5) ) {
+  switch ( Math.floor(Math.random() * 4) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
       break;
@@ -510,16 +510,6 @@ async function celebrationEffect(player, hasScored) {
         await new Promise(r => setTimeout(r, 100));
       };
       room.setPlayerDiscProperties(player.id, { radius: originalRadius });
-    case 4:
-      let ballSpeed = Math.abs(room.getDiscProperties(0).xspeed);
-      for (const _player of room.getPlayerList()) {
-        if ( (_player.team == 0) || (_player.id == player.id) ) continue;
-        let xDiff = _player.position.x - player.position.x;
-        let yDiff = _player.position.y - player.position.y;
-        let xspeed = ((xDiff > 0) * 2 - 1) * ballSpeed / Math.sqrt((yDiff / xDiff) ** 2 + 1);
-        let yspeed = ((yDiff > 0) * 2 - 1) * Math.sqrt(ballSpeed ** 2 - xspeed ** 2);
-        room.setPlayerDiscProperties(_player.id, { xspeed: xspeed, yspeed: yspeed });
-      };
   };
 }
 
@@ -545,7 +535,7 @@ function isPlayerValid(player) {
   for (const _player of room.getPlayerList()) {
     if ( _player.id == player.id ) continue;
     // Player joined by 2 tabs
-    if ( getConn(_player.id) == player.conn ) {
+    if ( (_player.id != 0) && (getConn(_player.id) == player.conn) ) {
       room.kickPlayer(_player.id, "Bạn đã vào room bằng 1 tab khác");
       continue;
     };
