@@ -34,7 +34,7 @@ const TEAM_COLORS = [
   [[60, 0xFFCC00, [0xE83030]], [60, 0xFFCC00, [0x004170]]],
   [[60, 0xFFFFFF, [0xFF4A4A]], [60, 0xFFFFFF, [0x5ECFFF]]],
   [[60, 0xFFFFFF, [0xD60419]], [60, 0xFFFFFF, [0x0099FF]]],
-  [[0, 0x000000, [0xFF2400, 0xFFFF00, 0xFF2400]], [0, 0x000000, [0x0437F2, 0xFFFFFF,0x0437F2]]],
+  [[0, 0x000000, [0xFF2400, 0xFFFF00, 0xFF2400]], [0, 0x000000, [0x1F51FF, 0xFFFFFF, 0x1F51FF]]],
   [[0, 0xF7FFF2, [0xE00202, 0xB00101, 0x800000]], [0, 0xF7FFF2, [0x00F7FF, 0x00D1D1, 0x00A7AD]]],
   [[90, 0xF7FFF2, [0xFF2121, 0xFF5757, 0xFC9595]], [90, 0xF7FFF2, [0x00C3FF, 0x45E0FF, 0xB5F5FC]]],
   [[45, 0xFFFFFF, [0x000000, 0xFF0000, 0x000000]], [45, 0x808080, [0xFFFFFF, 0x0096FF, 0xFFFFFF]]],
@@ -479,7 +479,7 @@ async function avatarEffect(playerId, avatars) {
 }
 
 async function celebrationEffect(player, hasScored) {
-  switch ( Math.floor(Math.random() * 4) ) {
+  switch ( Math.floor(Math.random() * 5) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
       break;
@@ -510,6 +510,8 @@ async function celebrationEffect(player, hasScored) {
         await new Promise(r => setTimeout(r, 100));
       };
       room.setPlayerDiscProperties(player.id, { radius: originalRadius });
+    case 4:
+      room.setPlayerDiscProperties(player.id, { radius: room.getPlayerDiscProperties(player.id).radius * 2 });
   };
 }
 
