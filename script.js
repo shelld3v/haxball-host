@@ -505,13 +505,13 @@ async function celebrationEffect(player, hasScored) {
       break;
     case 3:
       let originalRadius = room.getPlayerDiscProperties(player.id).radius;
-      for (let i = 0; i < 5; i += 1) {
+      for (let i = 1; i <= 5; i += 1) {
         await room.setPlayerDiscProperties(player.id, { radius: PLAYER_RADIUS - PLAYER_RADIUS * (i % 2) / 2 });
         await new Promise(r => setTimeout(r, 100));
       };
       room.setPlayerDiscProperties(player.id, { radius: originalRadius });
     case 4:
-      room.setPlayerDiscProperties(player.id, { radius: room.getPlayerDiscProperties(player.id).radius * 2 });
+      room.setPlayerDiscProperties(player.id, { radius: PLAYER_RADIUS * 2 });
   };
 }
 
