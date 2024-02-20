@@ -493,7 +493,7 @@ async function avatarEffect(playerId, avatars) {
 }
 
 async function celebrationEffect(player, hasScored) {
-  switch ( Math.floor(Math.random() * 4) ) {
+  switch ( Math.floor(Math.random() * 5) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
       break;
@@ -519,16 +519,13 @@ async function celebrationEffect(player, hasScored) {
       break;
     case 3:
       let originalRadius = room.getPlayerDiscProperties(player.id).radius;
-      switch ( Math.floor(Math.random() * 2) ) {
-        case 0:
-          for (let i = 1; i <= 5; i += 1) {
-            await room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius - stadium.playerRadius * (i % 2) / 2 });
-            await new Promise(r => setTimeout(r, 100));
-          };
-        case 1:
-          room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius * 2 });
+      for (let i = 1; i <= 5; i += 1) {
+        await room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius - stadium.playerRadius * (i % 2) / 2 });
+        await new Promise(r => setTimeout(r, 100));
       };
       room.setPlayerDiscProperties(player.id, { radius: originalRadius });
+    case 4:
+      room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius * 2 });
   };
 }
 
