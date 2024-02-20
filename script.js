@@ -524,6 +524,7 @@ async function celebrationEffect(player, hasScored) {
         await new Promise(r => setTimeout(r, 100));
       };
       room.setPlayerDiscProperties(player.id, { radius: originalRadius });
+      break;
     case 4:
       room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius * 2 });
   };
