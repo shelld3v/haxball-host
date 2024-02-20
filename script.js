@@ -1782,6 +1782,7 @@ room.onPlayerLeave = async function(player) {
         break;
       case 4:
         loadStadium("1v1");
+    };
   };
 
   // A captain left, assign another one
