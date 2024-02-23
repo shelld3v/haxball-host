@@ -212,11 +212,12 @@ function loadStadium(name) {
     "1v1": [STADIUM_1v1, 5, 5],
     "training": [STADIUM_TRAINING, 0, 0],
   }[name];
-  room.stopGame();
+  let wasPlaying = !!room.getScores();
+  wasPlaying && room.stopGame();
   room.setCustomStadium(_stadium[0]);
   room.setScoreLimit(_stadium[1]);
   room.setTimeLimit(_stadium[2]);
-  room.startGame();
+  wasPlaying && room.startGame();
   // Analyze the stadium
   let parsedStadium = JSON.parse(_stadium[0]);
   if ( parsedStadium.goals.length != 0 ) {
@@ -423,6 +424,10 @@ function getNonAfkPlayers() {
   return room.getPlayerList().filter(player => !afkList.has(player.id));
 }
 
+function getSpectators() {
+  return room.getPlayerList().filter(player => (player.team == 0) && !afkList.has(player.id));
+}
+
 // Get a player by position in Spectators list
 function getPlayerByPos(number) {
   return getNonAfkPlayers().filter(player => player.team == 0)[number - 1];
@@ -441,10 +446,10 @@ function getPredictionWinners() {
 function getBestSpectatorByStats() {
   let bestPlayer = null;
   let highestGA = -1;
-  for (const spectator of getNonAfkPlayers().filter(player => player.team == 0)) {
-    let stats = getStats(getAuth(spectator.id));
+  for (const player of getSpectators()) {
+    let stats = getStats(getAuth(player.id));
     if ( stats.goals + stats.assists <= highestGA ) continue;
-    bestPlayer = spectator;
+    bestPlayer = player;
     highestGA = stats.goals + stats.assists;
   };
   return bestPlayer;
@@ -457,12 +462,6 @@ function getPenaltyTurn() {
 
 function isCaptain(id) {
   return Object.values(captains).includes(id);
-}
-
-// Return true whether there is at least an available (non-AFK) player in the Spectator
-function isAnySpectatorAvailable() {
-  // This is faster than room.getPlayerList().find(...)
-  return room.getPlayerList().length - afkList.size > MAX_PLAYERS * 2;
 }
 
 function resizePlayer(id) {
@@ -537,9 +536,7 @@ async function celebrationEffect(player, hasScored) {
 // Show spectators with their assigned numbers to captains for them to pick by number
 function showSpecTable() {
   if ( !isPicking ) return;
-  let playerList = room.getPlayerList()
-    .filter(player => (player.team == 0) && !afkList.has(player.id))
-    .map((player, index) => `${player.name} (#${index + 1})`);
+  let playerList = getSpectators().map((player, index) => `${player.name} (#${index + 1})`);
   let table = " ".repeat(85) + "DANH SÁCH DỰ BỊ\n" + "_".repeat(150) + "\n" + playerList.join("  •  ") + "\n" + "_".repeat(150);
   room.sendAnnouncement(table, captains[pickTurn], BLUE, "small-bold", 0);
   room.sendAnnouncement("Hướng dẫn: nhập số hoặc tag để chọn người chơi (VD: 2 hoặc @De_Paul). Nhập '0' để tự động chọn người chơi có thống kê tốt nhất", captains[pickTurn], YELLOW, "small", 0);
@@ -894,7 +891,7 @@ function specFunc(value, player) {
   if ( player.team == 0 ) {
     room.sendAnnouncement("Bạn đã ở Spectators", player.id, RED);
     return false;
-  } else if ( !isAnySpectatorAvailable() ) {
+  } else if ( getSpectators().length == 0 ) {
     room.sendAnnouncement("Đã hết người chơi để thay vào", player.id, RED);
     return false;
   };
@@ -1597,7 +1594,6 @@ async function takePenalty() {
   room.stopGame();
   // Put previous penalty taker and goalkeeper back to the Spectators
   for (const player of room.getPlayerList()) {
-    if ( player.team == 0 ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
   let turn = getPenaltyTurn();
@@ -1685,7 +1681,7 @@ async function pickPlayers() {
   if ( captain !== undefined ) {
     room.sendChat(`Chúc mừng ${getTag(captain.name)} đã dự đoán đúng tỉ số và nhận được chiếc băng đội trưởng`);
   } else {
-    captain = (afkList.has(selectedCaptain) ? null : room.getPlayer(selectedCaptain)) || getNonAfkPlayers().find(player => player.team == 0);
+    captain = (afkList.has(selectedCaptain) ? null : room.getPlayer(selectedCaptain)) || players.find(player => player.team == 0);
     selectedCaptain = null;
   };
   await updateCaptain(getOppositeTeamId(prevWinner), captain);
@@ -1757,7 +1753,7 @@ room.onPlayerJoin = async function(player) {
     case 5:
       loadStadium("3v3");
       break;
-    case 8:
+    case 7:
       loadStadium("5v5");
   };
 }
@@ -1880,7 +1876,7 @@ room.onPositionsReset = function() {
   isPlaying = true;
   ballRecords = [null, null,  null];
   // Allows captains to pause the game before kick-off
-  if ( (MODE == "pick") && (room.getScores().time != 0) && isAnySpectatorAvailable() ) {
+  if ( (MODE == "pick") && (room.getScores().time != 0) && getSpectators().length ) {
     canPause = true;
     for (const captain of Object.values(captains)) {
       room.sendAnnouncement('Bạn có thể dừng game bằng lệnh !pause để thay người (dùng "!sub @thay_ra @thay_vào") trước khi kick-off', captain, YELLOW);
