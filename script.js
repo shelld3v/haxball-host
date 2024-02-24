@@ -1561,8 +1561,8 @@ async function startPenaltyShootout() {
       group.unshift(player.id);
     };
   });
-  loadStadium("penalty");
   room.stopGame();
+  loadStadium("penalty");
   room.sendChat("Vậy là những phút thi đấu chính thức của trận đấu đã hết, 2 đội sẽ bước đến loạt sút luân lưu");
   await new Promise(r => setTimeout(r, AFTER_GAME_REST * 1000));
   takePenalty();
