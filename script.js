@@ -199,6 +199,7 @@ var room = HBInit({
 room.setTeamsLock(1);
 room.setKickRateLimit(7, 15, 3);
 loadStadium("training");
+room.startGame();
 
 setInterval(randomAnnouncement, NOTIFICATION_INTERVAL * 1000);
 if ( MODE == "pick" ) setInterval(showSpecTable.bind(null), 5 * 1000); // Send Spectators table once every few seconds to prevent it from being faded away by other messages
