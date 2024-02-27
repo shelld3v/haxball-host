@@ -214,7 +214,7 @@ function loadStadium(name) {
     "training": [STADIUM_TRAINING, 0, 0],
   }[name];
   let wasPlaying = !!room.getScores();
-  wasPlaying && room.stopGame();
+  room.stopGame();
   room.setCustomStadium(_stadium[0]);
   room.setScoreLimit(_stadium[1]);
   room.setTimeLimit(_stadium[2]);
@@ -458,7 +458,7 @@ function getBestSpectatorByStats() {
 
 // Return the index (0 or 1) of the team that will take the penalty
 function getPenaltyTurn() {
-  return penalty.results.flat(1).length % 2;
+  return penalty.results.flat(1).length % 2 + 1;
 }
 
 function isCaptain(id) {
@@ -599,7 +599,7 @@ function penaltyTimeoutCallback() {
   if ( !isTakingPenalty ) return;
   room.sendChat("Cầu thủ đã không thực hiện penalty trong thời gian quy định");
   // Count as a miss if player doesn't perform the penalty in time
-  penalty.results[getPenaltyTurn()].push(false);
+  penalty.results[getPenaltyTurn() - 1].push(false);
   takePenalty();
 }
 
@@ -1561,8 +1561,8 @@ async function startPenaltyShootout() {
       group.unshift(player.id);
     };
   });
-  room.stopGame();
   loadStadium("penalty");
+  room.stopGame();
   room.sendChat("Vậy là những phút thi đấu chính thức của trận đấu đã hết, 2 đội sẽ bước đến loạt sút luân lưu");
   await new Promise(r => setTimeout(r, AFTER_GAME_REST * 1000));
   takePenalty();
@@ -1578,9 +1578,14 @@ async function endPenaltyShootout(winner) {
   handlePostGame(winner);
   isTakingPenalty = false;
   room.stopGame();
-  room.setTimeLimit(TIME_LIMIT);
-  room.setScoreLimit(SCORE_LIMIT);
-  room.setCustomStadium(STADIUM);
+  let playersCount = getNonAfkPlayers().length;
+  if ( playersCount <= 4 ) {
+    loadStadium("1v1");
+  } else if ( playersCount <= 6 ) {
+    loadStadium("5v5");
+  } else {
+    loadStadium("5v5");
+  };
 }
 
 async function takePenalty() {
@@ -1599,18 +1604,18 @@ async function takePenalty() {
   };
   let turn = getPenaltyTurn();
   switch ( turn ) {
-    case 0:
+    case 1:
       room.setTeamColors(1, ...kits.red);
       room.setTeamColors(2, ...GOALKEEPER_COLORS.blue);
       break;
-    case 1:
+    case 2:
       room.setTeamColors(1, ...kits.blue);
       room.setTeamColors(2, ...GOALKEEPER_COLORS.red);
   };
 
-  let penaltyTaker = room.getPlayer(penalty.groups[turn + 1].at(penalty.results[1].length % penalty.groups[turn + 1].length));
+  let penaltyTaker = room.getPlayer(penalty.groups[turn].at(penalty.results[1].length % penalty.groups[turn].length));
   await room.setPlayerTeam(penaltyTaker.id, 1);
-  await room.setPlayerTeam(penalty.groups[getOppositeTeamId(turn + 1)].at(-1), 2);
+  await room.setPlayerTeam(penalty.groups[getOppositeTeamId(turn)].at(-1), 2);
   room.startGame();
 
   let penResults = [[], []];
@@ -1626,7 +1631,7 @@ async function takePenalty() {
     });
     if ( penResults[i].length < 5 ) {
       penResults[i].push("⚪".repeat(5 - penResults[i].length));
-    } else if ( turn <= i ) {
+    } else if ( turn < i ) {
       penResults[i].push("⚪");
     };
   };
@@ -1857,7 +1862,7 @@ room.onPlayerBallKick = function(player) {
 room.onTeamGoal = function(team) {
   if ( isTakingPenalty ) {
     clearTimeout(timeouts.toTakePenalty);
-    penalty.results[getPenaltyTurn()].push(team == 1);
+    penalty.results[getPenaltyTurn() - 1].push(team == 1);
     celebratePenalty(team);
     return;
   };
