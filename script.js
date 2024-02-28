@@ -456,7 +456,7 @@ function getBestSpectatorByStats() {
   return bestPlayer;
 }
 
-// Return the index (0 or 1) of the team that will take the penalty
+// Return the team [ID] that will take the penalty
 function getPenaltyTurn() {
   return penalty.results.flat(1).length % 2 + 1;
 }
@@ -1631,7 +1631,7 @@ async function takePenalty() {
     });
     if ( penResults[i].length < 5 ) {
       penResults[i].push("⚪".repeat(5 - penResults[i].length));
-    } else if ( turn < i ) {
+    } else if ( turn - 1 <= i ) {
       penResults[i].push("⚪");
     };
   };
