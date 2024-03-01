@@ -620,9 +620,8 @@ function getPenaltyWinner() {
   return null;
 }
 
-async function updateTeamPlayers(subPlayer) {
-  let scores = room.getScores();
-  if ( scores === null ) return;
+async function updateTeamPlayers() {
+  if ( room.getScores() === null ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
     let players = getNonAfkPlayers();
@@ -631,22 +630,18 @@ async function updateTeamPlayers(subPlayer) {
     let maxPlayers = MAX_PLAYERS;
     if ( isTakingPenalty ) maxPlayers = 1; // One player each side for taking a penalty
     if ( (redPlayers.length >= maxPlayers) && (bluePlayers.length >= maxPlayers) ) return; // Enough players for 2 teams
-    // Find team that needs new player the most, if both have the same number of players, choose team who is worse in scores, or RED if neither is
-    let missingTeam = ( redPlayers.length > bluePlayers.length ) ? 2 : ( redPlayers.length < bluePlayers.length ) ? 1 : 1 + (scores.red > scores.blue) | 0;
+    // Find team that needs new player the most
+    let missingTeam = ( redPlayers.length > bluePlayers.length ) ? 2 : ( redPlayers.length < bluePlayers.length ) ? 1 : 0;
+    let subPlayers = players.filter(player => player.team == 0);
 
-    if ( !subPlayer ) {
-      // Get a bench player
-      subPlayer = players.find(player => player.team == 0);
-      if ( !subPlayer ) { // No player left in the Spectators
-        if ( Math.abs(redPlayers.length - bluePlayers.length) < 2 ) return;
-        // Move a player from one team to another because of the gap in player count between 2 teams
-        subPlayer = (missingTeam == 1) ? bluePlayers.at(-1) : redPlayers.at(-1); // Take player from the last to avoid moving captains
-      }
-    }
-
-    await room.setPlayerTeam(subPlayer.id, missingTeam);
-    if ( MODE == "pick" ) {
-      room.sendAnnouncement(`${subPlayer.name} đã được tự động thay vào đội, dùng !sub để thay người`, captains[missingTeam], YELLOW);
+    if ( missingTeam == 0 ) {
+      if ( subPlayers.length < 2 ) return;
+      room.setPlayerTeam(subPlayers[0].id, 1);
+      room.setPlayerTeam(subPlayers[1].id, 2);
+    } else if ( subPlayers.length != 0 ) {
+      room.setPlayerTeam(subPlayers[0].id, missingTeam);
+    } else if ( players.length != 1 ) { // If there is only 1 player, let them chill with the training map
+      room.setPlayerTeam(((missingTeam == 1) ? bluePlayers : redPlayers).at(-1).id, 0);
     };
   });
 }
@@ -768,10 +763,11 @@ function checkAutoPick() {
         bluePlayersCount++;
     };
   });
-  if (
-    ((redPlayersCount >= 5) && (bluePlayersCount >= 5)) ||
-    ((specPlayers.length > 1) && (Math.abs(redPlayersCount - bluePlayersCount) < specPlayers.length))
-  ) return false;
+  if ( (redPlayersCount == bluePlayersCount) && ((specPlayers.length == 1) || (redPlayersCount >= MAX_PLAYERS)) ) {
+    room.startGame();
+    return true;
+  };
+  if ( Math.abs(redPlayersCount - bluePlayersCount) < specPlayers.length ) return false;
 
   // Move all players to the missing team
   for (const player of specPlayers) {
@@ -787,11 +783,6 @@ function requestPick() {
   let players = room.getPlayerList();
   let redPlayersCount = players.filter(player => player.team == 1).length;
   let bluePlayersCount = players.filter(player => player.team == 2).length;
-  // Enough players for 2 teams
-  if ( (redPlayersCount >= MAX_PLAYERS) && (bluePlayersCount >= MAX_PLAYERS) ) {
-    room.startGame();
-    return;
-  };
   pickTurn = ( redPlayersCount > bluePlayersCount ) ? 2 : 1;
 
   room.sendAnnouncement(`${TEAM_NAMES[pickTurn]} đang chọn người chơi...`, null, YELLOW, "small", 0);
@@ -1651,8 +1642,10 @@ async function randPlayers() {
   let predictionWinners = getPredictionWinners();
   (predictionWinners.length != 0) && room.sendChat(`Chúc mừng ${predictionWinners.map(winner => getTag(winner.name)).join(", ")} đã dự đoán đúng tỉ số và nhận được 1 suất đá chính`);
 
+  let players = getNonAfkPlayers();
   // Get player list and suffle it
-  let idList = getNonAfkPlayers().sort(function(player1, player2) {
+  let idList = players.sort(function(player1, player2) {
+    if ( players.length <= MAX_PLAYERS * 2 ) return Math.random() - 0.5;
     // Sort players of the winning team to be on top of the list so they will be picked up in the same team  
     if ( player1.team == prevWinner ) return -1;
     if ( player2.team == prevWinner ) return 1;
@@ -1739,7 +1732,7 @@ room.onPlayerJoin = async function(player) {
   if ( !isPlayerValid(player) ) return;
   saveIdentities(player);
   initiateChat(player);
-  await updateTeamPlayers(player);
+  await updateTeamPlayers();
   reorderPlayers();
   if ( adminAuths.has(player.auth) ) { // Auto-login
     room.setPlayerAdmin(player.id, true);
