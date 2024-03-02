@@ -531,6 +531,13 @@ async function celebrationEffect(player, hasScored) {
       break;
     case 4:
       room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius * 2 });
+      break;
+    case 5:
+      let players = room.getPlayerList().filter(player_ => player_.team == player.team);
+      let x = 
+      for (let i = 0; i < len(players); i++) {
+        
+      };
   };
 }
 
@@ -1570,12 +1577,12 @@ async function endPenaltyShootout(winner) {
   isTakingPenalty = false;
   await room.stopGame();
   let playersCount = getNonAfkPlayers().length;
-  if ( playersCount <= 1 ) {
+  if ( playersCount < 2 ) {
     loadStadium("training");
-  } else if ( playersCount <= 4 ) {
+  } else if ( playersCount < 6 ) {
     loadStadium("1v1");
-  } else if ( playersCount <= 6 ) {
-    loadStadium("5v5");
+  } else if ( playersCount < 8 ) {
+    loadStadium("3v3");
   } else {
     loadStadium("5v5");
   };
@@ -1751,10 +1758,10 @@ room.onPlayerJoin = async function(player) {
     case 2:
       loadStadium("1v1");
       break;
-    case 5:
+    case 6:
       loadStadium("3v3");
       break;
-    case 7:
+    case 8:
       loadStadium("5v5");
   };
 }
@@ -1782,10 +1789,10 @@ room.onPlayerLeave = async function(player) {
     };
   } else {
     switch ( getNonAfkPlayers().length ) {
-      case 6:
+      case 7:
         loadStadium("3v3");
         break;
-      case 4:
+      case 5:
         loadStadium("1v1");
         break;
       case 1:
