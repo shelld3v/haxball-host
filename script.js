@@ -538,8 +538,8 @@ async function celebrationEffect(player, hasScored) {
         room.setPlayerDiscProperties(
           players[i],
           {
-            x: player.x + PLAYER_RADIUS * 3 * math.cos(math.PI * i / players.length),
-            y: player.y + PLAYER_RADIUS * 3 * math.sin(math.PI * i / players.length)
+            x: player.x + stadium.playerRadius * 3 * math.cos(math.PI * i / players.length),
+            y: player.y + stadium.playerRadius * 3 * math.sin(math.PI * i / players.length)
           }
         );
       };
