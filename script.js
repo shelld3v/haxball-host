@@ -30,6 +30,13 @@ const ROLE = {
   VIP: 1,
   ADMIN: 2,
 };
+const STAT = {
+  GOAL: "goals",
+  ASSIST: "assists",
+  PASS: "passes",
+  OWN_GOAL: "ownGoals",
+  SHOT: "shotsOnTarget",
+};
 const TEAM_COLORS = [
   [[60, 0xFFCC00, [0xE83030]], [60, 0xFFCC00, [0x004170]]],
   [[60, 0xFFFFFF, [0xFF4A4A]], [60, 0xFFFFFF, [0x5ECFFF]]],
@@ -94,47 +101,99 @@ const settingDefault = {
   msgColor: "normal",
   sizeDecreasement: 0,
 };
-const playerStats = {
-  name: null,
-  goals: 0,
-  assists: 0,
-  ownGoals: 0,
-  wins: 0,
-  cleansheets: 0,
-};
-const playerReport = {
-  name: null,
-  goals: 0,
-  assists: 0,
-  ownGoals: 0,
-  forTeam: 0,
-};
-const teamStats = {
-  substitutions: 0,
-  passes: 0,
-  possession: 0,
-  shotsOnTarget: 0,
-};
-const gameDefault = {
-  players: {}, // Store players' stats
-  teams: { // Store teams' stats
-    1: { ...teamStats }, // RED team's stats
-    2: { ...teamStats }, // BLUE team's stats
-  },
-};
-const penaltyDefault = {
-  groups: {
-    1: [], // RED penalty takers
-    2: [], // BLUE penalty takers
-  },
-  results: [[], []], // Results of taken penalties (first for RED, second for BLUE)
-};
+class Kick {
+  constructor(ballProperties, byPlayer, prevKick) {
+    this.properties = ballProperties;
+    this.byPlayer = byPlayer;
+    this.time = room.getScores().time;
+    this.isAShot = false;
+  }
+}
+class playerReport {
+  constructor(player) {
+    this.name = "";
+    this.goals = 0;
+    this.assists = 0;
+    this.ownGoals = 0;
+    this.cleansheets = 0;
+    this.wins = 0;
+    this.games = 0;
+    if ( player !== null ) {
+      Object.assign(this, player);
+    };
+  }
+  getWinRate() {
+    if ( this.games == 0 ) return 0; 
+    return (this.wins / this.games * 100).toFixed(2);
+  }
+}
+class playerStats {
+  constructor() {
+    this.name = null;
+    this.goals = 0;
+    this.assists = 0;
+    this.ownGoals = 0;
+    this.passes = 0;
+    this.shotsOnTarget = 0;
+  }
+  update(attribute) {
+    this
+  }
+}
+class TeamStats {
+  constructor() {
+    this.substitutions = 0;
+    this.possession = 0;
+    this.players = {};
+  }
+}
+class Penalty {
+  constructor() {
+    this.groups = {
+      1: [], // RED penalty takers
+      2: [], // BLUE penalty takers
+    };
+    this.results = [[], []]; // Results of taken penalties (first for RED, second for BLUE)
+  }
+  // Returns the team that wins the penalty shootout
+  getPenaltyWinner() {
+    if ( this.results[0].length > 5 ) { // "Sudden Death" round
+      if ( this.results[0].length != this.results[1].length ) return null;
+      if ( this.results[0].at(-1) == this.results[1].at(-1) ) return null;
+      return this.results[0].at(-1) ? 1 : 2;
+    };
+
+    // One team has more penalties scored than the other team even if the other team scores all the remaining penalties
+    if ( this.results[0].filter(result => result).length > 5 - this.results[1].filter(result => !result).length ) {
+      return 1;
+    } else if ( this.results[1].filter(result => result).length > 5 - this.results[0].filter(result => !result).length ) {
+      return 2;
+    };
+    return null;
+  }
+}
+class Game {
+  constructor() {
+    this.teams = {
+      1: new TeamStats();
+      2: new TeamStats();
+    }; 
+    this.penalty = null;
+    this.ballRecords = [null, null, null];
+  }
+
+  resetBallRecords() {
+    this.ballRecords = [null, null, null];
+  } 
+}
+
 var commands = { // Format: "alias: [function, availableModes, minimumRole, captainOnly]"
   help: [helpFunc, ["rand", "pick"], ROLE.PLAYER, false],
   discord: [discordFunc, ["rand", "pick"], ROLE.PLAYER, false],
   bye: [byeFunc, ["rand", "pick"], ROLE.PLAYER, false],
   stats: [showStatsFunc, ["rand", "pick"], ROLE.PLAYER, false],
-  rankings: [showRankingsFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  gamestats: [showGameStatsFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  rank: [showRankingsFunc, ["rand", "pick"], ROLE.PLAYER, false],
   kickafk: [kickAfkFunc, ["rand", "pick"], ROLE.PLAYER, false],
   spec: [specFunc, ["rand", "pick"], ROLE.PLAYER, false],
   login: [loginFunc, ["rand", "pick"], ROLE.PLAYER, false],
@@ -202,6 +261,7 @@ loadStadium("training");
 room.startGame();
 
 setInterval(randomAnnouncement, NOTIFICATION_INTERVAL * 1000);
+setInterval(randomGameStat, 2 * 60 * 1000);
 if ( MODE == "pick" ) setInterval(showSpecTable.bind(null), 5 * 1000); // Send Spectators table once every few seconds to prevent it from being faded away by other messages
 updateMetadata();
 
@@ -259,6 +319,42 @@ async function randomAnnouncement() {
       msg = quotes.pop();
   }
   room.sendAnnouncement(msg, null, YELLOW, "small-italic", 0);
+}
+
+function randomGameStat() {
+  let scores = room.getScores();
+  if ( (scores == null) || (scores.time < 60) ) return;
+  let fact;
+  switch ( Math.floor(Math.random() * 4) ) {
+    case 0:
+      let redPossession = ~~(game.teams[1].possession / (game.teams[1].possession + game.teams[2].possession) * 100);
+      fact = `Kiểm soát bóng: 🟥 ${redPossession}% - ${100 - redPossession}% 🟦`;
+      break;
+    case 1:
+      let passes = Object.entries(game.players).reduce(function(stats, [team, player]) {
+        stats[team - 1] += player.passes;
+        return stats;
+      }, [0, 0]);
+      if ( passes[0] + passes[1] == 0 ) return;
+      fact = `Lượt chuyền bóng: 🟥 ${passes.join(" - ")} 🟦`;
+      break;
+    case 2:
+      let shotsOnTarget = Object.entries(game.players).reduce(function(stats, [team, player]) {
+        stats[team - 1] += player.shotsOnTarget;
+        return stats;
+      }, [0, 0]);
+      if ( shotsOnTarget[0] + shotsOnTarget[1] == 0 ) return;
+      fact = `Lượt chuyền bóng: 🟥 ${shotsOnTarget.join(" - ")} 🟦`;
+      break;
+    case 3:
+      if ( winningStreak < 3 ) return;
+      fact = `Chuỗi bất bại của ${TEAM_NAMES[prevWinner]}: ${winningStreak}`;
+    case 4:
+      mostPasses = [];
+      for (const player of Object.values(Object.values(game.players)) {
+      };
+  };
+  room.sendAnnouncement(`  `);
 }
 
 function updateMetadata() {
@@ -538,8 +634,8 @@ async function celebrationEffect(player, hasScored) {
         room.setPlayerDiscProperties(
           players[i],
           {
-            x: player.x + stadium.playerRadius * 3 * Math.cos(Math.PI * i / players.length),
-            y: player.y + stadium.playerRadius * 3 * Math.sin(Math.PI * i / players.length)
+            x: player.x + stadium.playerRadius * 4 * Math.cos(Math.PI * i / players.length),
+            y: player.y + stadium.playerRadius * 4 * Math.sin(Math.PI * i / players.length)
           }
         );
       };
@@ -585,7 +681,7 @@ function saveIdentities(player) {
 
 // Return player's statistics in the room
 function getStats(auth) {
-  return JSON.parse(localStorage.getItem(auth)) || { ...playerStats };
+  return new PlayerReport(JSON.parse(localStorage.getItem(auth)));
 }
 
 function canUseCommand(command, player) {
@@ -613,23 +709,6 @@ function penaltyTimeoutCallback() {
   // Count as a miss if player doesn't perform the penalty in time
   penalty.results[getPenaltyTurn() - 1].push(false);
   takePenalty();
-}
-
-// Returns the team that wins the penalty shootout
-function getPenaltyWinner() {
-  if ( penalty.results[0].length > 5 ) { // "Sudden Death" round
-    if ( penalty.results[0].length != penalty.results[1].length ) return null;
-    if ( penalty.results[0].at(-1) == penalty.results[1].at(-1) ) return null;
-    return penalty.results[0].at(-1) ? 1 : 2;
-  };
-
-  // One team has more penalties scored than the other team even if the other team scores all the remaining penalties
-  if ( penalty.results[0].filter(result => result).length > 5 - penalty.results[1].filter(result => !result).length ) {
-    return 1;
-  } else if ( penalty.results[1].filter(result => result).length > 5 - penalty.results[0].filter(result => !result).length ) {
-    return 2;
-  };
-  return null;
 }
 
 async function updateTeamPlayers() {
@@ -662,11 +741,7 @@ async function updateTeamPlayers() {
 function updateBallKick(player) {
   if ( !isPlaying ) return;
   let scores = room.getScores();
-  let ballProperties = room.getDiscProperties(0);
-  ballProperties.byPlayer = player;
-  ballProperties.isAShot = false;
-  ballProperties.time = scores.time;
-  ballRecords.unshift(ballProperties);
+  ballRecords.unshift(new Kick(ballProperties, player));
   ballRecords.pop();
 
   if ( ballRecords[1] === null ) { // Kick-off pass
@@ -683,18 +758,20 @@ function updateBallKick(player) {
     (getDistance(ballProperties.x - ballRecords[1].x, ballProperties.y - ballRecords[1].y) < stadium.ballRadius * 2.5)
   ) {
     ballRecords[1].isAShot = false;
-    game.teams[ballRecords[1].byPlayer.team].shotsOnTarget--;
+    game.players[ballRecords[1].byPlayer.team][getAuth(ballRecords[1].byPlayer.id)].shotsOnTarget--;
   };
+  // Update clearances stat
+  if ( ballRecords[2].isAShot && (ballRecords[1].byPlayer.team != ballRecords[1].byPlayer.team) ) updatePlayerStats(ballRecords[1], STAT.CLEARANCE);
 
   let xOpponentGoal = ( player.team == 1 ) ? stadium.goalLine.x : -stadium.goalLine.x; // The x position value of the opponent's goal
   if (
     (xOpponentGoal * ballProperties.xspeed > 0) && // It's a kick toward the opponent goal
-    (Math.abs(ballProperties.x + ballProperties.xspeed * 98) > stadium.goalLine.x) // At this speed, the ball can cross the goal line
+    (Math.abs(ballProperties.x + ballProperties.xspeed * 97.5) > stadium.goalLine.x) // At this speed, the ball can cross the goal line
   ) {
     // Check if it's on target (not really accurate because it might hit the post)
     if ( Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < stadium.goalLine.y ) {
       ballRecords[0].isAShot = true;
-      game.teams[player.team].shotsOnTarget++;
+      updatePlayerStats(player, STAT.SHOT);
     };
   } else {
     // Switch to penalty shootout when it hits maximum added time
@@ -705,7 +782,7 @@ function updateBallKick(player) {
   };
 
   if ( player.team != ballRecords[1].byPlayer.team ) return; // Received the ball from an opponent player
-  if ( player.id != ballRecords[1].byPlayer.id ) game.teams[player.team].passes++; // Received the ball from a teammate, so the previous kick was a pass
+  if ( player.id != ballRecords[1].byPlayer.id ) updatePlayerStats(ballRecords[1].byPlayer, STAT.PASS); // Received the ball from a teammate, so the previous kick was a pass
   game.teams[player.team].possession += timeGap; // Received the ball from a teammate or from yourself, so it's in possession
 }
 
@@ -845,7 +922,19 @@ function showStatsFunc(value, player) {
 🤝🏻 Kiến tạo: ${item.assists}
 ❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
 🧤 Sạch lưới: ${item.cleansheets}
-👑 Chiến thắng: ${item.wins}`, player.id, BLUE, "small-bold", 0);
+🔰 Số trận đã chơi: ${item.games}
+🏆 Tỉ lệ thắng: ${item.getWinRate()}%`, player.id, BLUE, "small-bold", 0);
+  return false;
+}
+
+function showGameStatsFunc(value, player) {
+  let stats = game[player.team][getAuth(showPlayer.id)];
+  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${player.name}:`, player.id, BLUE, "bold", 0);
+  room.sendAnnouncement(`Bàn thắng: ${stats.goals}
+Kiến tạo: ${stats.assists}
+Bàn thắng phản lưới nhà: ${stats.ownGoals}
+Đường chuyền: ${stats.passes}
+Sút trúng đích: ${stats.shotsOnTarget}`, player.id, BLUE, "small-bold", 0);
   return false;
 }
 
@@ -863,7 +952,7 @@ function showRankingsFunc(value, player) {
     room.sendAnnouncement("Chưa có dữ liệu người chơi", player.id, RED);
     return false;
   };
-  let msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()} ⚽: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals})`).join("  •  ")}`;
+  let msg = `⚽ Danh sách ghi bàn hàng đầu tháng ${getMonths()} ⚽: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals})`).join("  •  ")}`;
   msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
   // Sort players by assists made
@@ -873,7 +962,7 @@ function showRankingsFunc(value, player) {
     };
     return player2.assists - player1.assists;
   });
-  msg += `\nDanh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists})`).join("  •  ")}`;
+  msg += `\n👟 Danh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists})`).join("  •  ")}`;
   msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
   room.sendAnnouncement(msg, player.id, YELLOW, "small-italic", 0);
@@ -1287,28 +1376,19 @@ function handleCommand(player, input) {
   return command[0](value, player);
 }
 
-function updatePlayerStats(player, type) {
+function updatePlayerStats(player, statType) {
   if ( identities[player.id] === undefined ) return; 
   // If player hasn't had stats yet, initialize an object
   let auth = getAuth(player.id);
-  game.players[auth] = ( game.players[auth] || { ...playerReport } );
-  game.players[auth].name = player.name;
-  game.players[auth].forTeam = player.team;
-
-  switch ( type ) {
-    case 1: // Goal
-      game.players[auth].goals++;
-      break;
-    case 2: // Assist
-      game.players[auth].assists++;
-      break;
-    default: // Own goal
-      game.players[auth].ownGoals++;
+  if ( !game.players[player.team].hasOwnProperty(auth) ) {
+    game.players[player.team][auth] = { ...playerStats };
   };
+  game.players[player.team][auth].name = player.name;
+  game.players[player.team][auth][statType] += 1;
 }
 
 // Update stats about goals, assists and own goals
-function updateStats(team) {
+function updateGoalStats(team) {
   let [shot, assist] = ballRecords;
   if ( shot === null ) return;
 
@@ -1324,14 +1404,14 @@ function updateStats(team) {
       // Correct the credits
       [shot, assist] = ballRecords.slice(1);
     } else {
-      updatePlayerStats(shot.byPlayer, 0);
+      updatePlayerStats(shot.byPlayer, STAT.OWN_GOAL);
       room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(shot.byPlayer.name)}`);
       return;
     };
   };
 
   let ballPosition = room.getBallPosition();
-  updatePlayerStats(shot.byPlayer, 1);
+  updatePlayerStats(shot.byPlayer, STAT.GOAL);
   if ( identities[shot.byPlayer.id] === undefined ) return; // Scorer left the game
   // Design celebrating comment
   let hasScored = game.players[getAuth(shot.byPlayer.id)].goals;
@@ -1345,7 +1425,7 @@ function updateStats(team) {
     (assist.byPlayer.id != shot.byPlayer.id) && // Not a solo goal
     (assist.byPlayer.id in identities) // Assister hasn't left the game
   ) {
-    updatePlayerStats(assist.byPlayer, 2);
+    updatePlayerStats(assist.byPlayer, STAT.ASSIST);
     let hasAssisted = game.players[getAuth(assist.byPlayer.id)].assists;
     if ( hasAssisted != 1 ) { // Multiple assists O_O
       comment = comment.concat(", ", `${getTag(assist.byPlayer.name)} đã có cho mình kiến tạo thứ ${hasAssisted} trong trận đấu`);
@@ -1362,26 +1442,22 @@ function updateStats(team) {
 }
 
 function saveStats() {
-  for (const [auth, info] of Object.entries(game.players)) {
-    let item = getStats(auth);
-    item.name = info.name;
-    item.goals += info.goals;
-    item.assists += info.assists;
-    item.ownGoals += info.ownGoals;
-    localStorage.setItem(auth, JSON.stringify(item));
-  };
-  for (const player of room.getPlayerList()) {
-    if ( player.team == 0 ) continue;
-    let auth = getAuth(player.id);
-    let item = getStats(auth);
-    item.name = player.name;
-    if ( player.team == prevWinner ) {
-      item.wins++;
+  for (const [teamId, players] of Object.entries(game.players)) {
+    for (const [auth, info] of Object.entries(players)) {
+      let item = getStats(auth);
+      item.name = info.name;
+      item.goals += info.goals;
+      item.assists += info.assists;
+      item.ownGoals += info.ownGoals;
+      item.games++;
+      if ( teamId == prevWinner ) {
+        item.wins++;
+      };
+      if ( prevScore.split("0").length - (teamId != prevWinner) - 1 ) {
+        item.cleansheets++;
+      };
+      localStorage.setItem(auth, JSON.stringify(item));
     };
-    if ( prevScore.split("0").length - (player.team != prevWinner) - 1 ) {
-      item.cleansheets++;
-    };
-    localStorage.setItem(auth, JSON.stringify(item));
   };
 }
 
@@ -1393,48 +1469,44 @@ function reportStats() {
   room.sendAnnouncement(scoreline, null, YELLOW, "bold", 0);
 
   let redPossession = ~~(game.teams[1].possession / (game.teams[1].possession + game.teams[2].possession) * 100);
-  let bluePossession = 100 - redPossession;
+  let passes = [0, 0];
+  let shotsOnTarget = [0, 0];
+  let contributions = [[], []];
 
-  // Player stats information
-  let redPlayerStats = [];
-  let bluePlayerStats = [];
-  for (const [_, info] of Object.entries(game.players)) {
-    let msg = info.name + " (";
-    if ( info.goals == 1 ) {
-      msg += "⚽";
-    } else if ( info.goals != 0 ) { // More than 1 goal
-      msg += `${info.goals}⚽`;
-    };
-    if ( info.assists == 1 ) {
-      msg += "👟";
-    } else if ( info.assists != 0 ) { // More than 1 assist
-      msg += `${info.assists}👟`;
-    };
-    if ( info.ownGoals == 1 ) {
-      msg += "🥅";
-    } else if ( info.ownGoals != 0 ) { // More than 1 own goal
-      msg += `${info.ownGoals}🥅`;
-    };
-    msg += ")";
-
-    switch ( info.forTeam ) {
-      case 1:
-        redPlayerStats.push(msg);
-        break;
-      case 2:
-        bluePlayerStats.push(msg);
+  for (const [teamId, players] of Object.entries(game.players)) {
+    for (const player of Object.values(players)) {
+      let msg = info.name + " (";
+      if ( info.goals == 1 ) {
+        msg += "⚽";
+      } else if ( info.goals != 0 ) { // More than 1 goal
+        msg += `${info.goals}⚽`;
+      };
+      if ( info.assists == 1 ) {
+        msg += "👟";
+      } else if ( info.assists != 0 ) { // More than 1 assist
+        msg += `${info.assists}👟`;
+      };
+      if ( info.ownGoals == 1 ) {
+        msg += "🥅";
+      } else if ( info.ownGoals != 0 ) { // More than 1 own goal
+        msg += `${info.ownGoals}🥅`;
+      };
+      msg += ")";
+      contributions[teamId - 1].push(msg);
+      passes[teamId - 1] += player.passes;
+      shotsOnTarget[teamId - 1] += player.shotsOnTarget;
     };
   };
 
   // Generate a room message about game statistics
-  let statsMsg = `Kiểm soát bóng: 🔴 ${redPossession}% - ${bluePossession}% 🔵
-Sút trúng đích: 🔴 ${game.teams[1].shotsOnTarget} - ${game.teams[2].shotsOnTarget} 🔵
-Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} 🔵`;
-  if ( redPlayerStats.length != 0 ) {
-    statsMsg += `\nRED: ${redPlayerStats.join("  •  ")}`;
+  let statsMsg = `Kiểm soát bóng: 🔴 ${redPossession}% - ${100 - redPossession}% 🔵
+Sút trúng đích: 🔴 ${shotsOnTarget[0]} - ${shotsOnTarget[1]} 🔵
+Lượt chuyền bóng: 🔴 ${passes[0]} - ${passes[1]} 🔵`;
+  if ( contributions[0].length != 0 ) {
+    statsMsg += `\nRED: ${contributions[0].join("  •  ")}`;
   };
-  if ( bluePlayerStats.length != 0 ) {
-    statsMsg += `\nBLUE: ${bluePlayerStats.join("  •  ")}`;
+  if ( contributions[1].length != 0 ) {
+    statsMsg += `\nBLUE: ${contributions[1].join("  •  ")}`;
   };
   statsMsg += `\nChuỗi bất bại: ${winningStreak} trận`;
   room.sendAnnouncement(statsMsg, null, YELLOW, "small-bold", 0);
@@ -1442,10 +1514,10 @@ Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} �
   // Generate a Discord embed about game statistics
   let discordMsg = `**RED (captain: ${room.getPlayer(captains[1]).name})**
 \`\`\`ansi
-[2;31m${redPlayerStats.join("\n")}\`\`\`
+[2;31m${contributions[0].join("\n")}\`\`\`
 **BLUE (captain: ${room.getPlayer(captains[2]).name})**
 \`\`\`ansi
-[2;34m${bluePlayerStats.join("\n")}\`\`\``;
+[2;34m${contributions[1].join("\n")}\`\`\``;
   let discordFields = [
     {
       name: "Thống kê",
@@ -1454,12 +1526,12 @@ Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} �
     },
     {
       name: "🔴 **RED**",
-      value: `==========\n\n${redPossession}%\n${game.teams[1].shotsOnTarget}\n${game.teams[1].passes}`,
+      value: `==========\n\n${redPossession}%\n${shotsOnTarget[0]}\n${passes[0]}`,
       inline: true,
     },
     {
       name: "🔵 **BLUE**",
-      value: `==========\n\n${bluePossession}%\n${game.teams[2].shotsOnTarget}\n${game.teams[2].passes}`,
+      value: `==========\n\n${100 - redPossession}%\n${shotsOnTarget[1]}\n${passes[1]}`,
       inline: true,
     },
     {
@@ -1724,7 +1796,7 @@ function personalizeMsg(message, player) {
 }
 
 function reset() {
-  game = JSON.parse(JSON.stringify(gameDefault));
+  game = JSON.parse(JSON.stringify(gameStats));
   penalty = JSON.parse(JSON.stringify(penaltyDefault));
   predictions = {};
   ballRecords = [null, null, null];
@@ -1876,7 +1948,7 @@ room.onTeamGoal = function(team) {
 
   isPlaying = false; // The game is basically "off" until a position reset
   celebrateGoal(team);
-  updateStats(team);
+  updateGoalStats(team);
 }
 
 room.onPositionsReset = function() {
