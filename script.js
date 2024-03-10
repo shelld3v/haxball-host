@@ -90,51 +90,120 @@ const DISCORD_LINK = "https://discord.gg/DYWZFFsSYu";
 const COMMANDS_TO_VALIDATE = ["discord", "kickafk", "afk", "captains", "unmute", "clearmutes"]; // These commands can cause spam in the chat or bypass the mute
 const NEW_UPDATE_MESSAGE = "MỚI: Người chơi có thể trở thành VIP mở khóa nhiều tính năng hấp dẫn bằng cách donate cho room";
 
-const settingDefault = {
-  msgColor: "normal",
-  sizeDecreasement: 0,
-};
-const playerStats = {
-  name: null,
-  goals: 0,
-  assists: 0,
-  ownGoals: 0,
-  wins: 0,
-  cleansheets: 0,
-};
-const playerReport = {
-  name: null,
-  goals: 0,
-  assists: 0,
-  ownGoals: 0,
-  forTeam: 0,
-};
-const teamStats = {
-  substitutions: 0,
-  passes: 0,
-  possession: 0,
-  shotsOnTarget: 0,
-};
-const gameDefault = {
-  players: {}, // Store players' stats
-  teams: { // Store teams' stats
-    1: { ...teamStats }, // RED team's stats
-    2: { ...teamStats }, // BLUE team's stats
-  },
-};
-const penaltyDefault = {
-  groups: {
-    1: [], // RED penalty takers
-    2: [], // BLUE penalty takers
-  },
-  results: [[], []], // Results of taken penalties (first for RED, second for BLUE)
-};
+class Setting {
+  constructor(setting) {
+    this.msgColor = "normal";
+    this.sizeDecreasement = 0;
+    if ( setting !== null ) {
+      Object.assign(this, setting);
+    };
+  };
+}
+class Kick {
+  constructor(ballProperties, byPlayer, prevKick) {
+    this.properties = ballProperties;
+    this.byPlayer = byPlayer;
+    this.time = room.getScores().time;
+
+    let xOpponentGoal = ( byPlayer.team == 1 ) ? stadium.goalLine.x : -stadium.goalLine.x; // The x position value of the opponent's goal
+    this.isAShot = (
+      (xOpponentGoal * ballProperties.xspeed > 0) && // It's a kick toward the opponent goal
+      (Math.abs(ballProperties.x + ballProperties.xspeed * 97.5) > stadium.goalLine.x) && // At this speed, the ball can cross the goal line
+      (Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < stadium.goalLine.y) // Check if it's on target (not really accurate because it might hit the post)
+    );
+  }
+}
+class playerReport {
+  constructor(player) {
+    this.name = "";
+    this.goals = 0;
+    this.assists = 0;
+    this.ownGoals = 0;
+    this.cleansheets = 0;
+    this.wins = 0;
+    this.games = 0;
+    if ( player !== null ) {
+      Object.assign(this, player);
+    };
+  }
+  getWinRate() {
+    if ( this.games == 0 ) return 0; 
+    return (this.wins / this.games * 100).toFixed(2);
+  }
+}
+class playerStats {
+  constructor() {
+    this.name = null;
+    this.goals = 0;
+    this.assists = 0;
+    this.ownGoals = 0;
+    this.passes = 0;
+    this.shotsOnTarget = 0;
+  }
+}
+class TeamStats {
+  constructor() {
+    this.substitutions = 0;
+    this.possession = 0;
+    this.players = {};
+  }
+  getPlayerStats() {
+    
+  }
+}
+class Penalty {
+  constructor() {
+    this.groups = [[], []]; // Penalty takers
+    this.results = [[], []]; // Results of taken penalties (first for RED, second for BLUE)
+  }
+  getPenaltyTurn() {
+    return this.results[0].length - this.results[1].length;
+  }
+  // Returns the team that wins the penalty shootout
+  getPenaltyWinner() {
+    if ( this.results[0].length > 5 ) { // "Sudden Death" round
+      if ( this.results[0].length != this.results[1].length ) return null;
+      if ( this.results[0].at(-1) == this.results[1].at(-1) ) return null;
+      return this.results[0].at(-1) ? 1 : 2;
+    };
+
+    // One team has more penalties scored than the other team even if the other team scores all the remaining penalties
+    if ( this.results[0].filter(result => result).length > 5 - this.results[1].filter(result => !result).length ) {
+      return 1;
+    } else if ( this.results[1].filter(result => result).length > 5 - this.results[0].filter(result => !result).length ) {
+      return 2;
+    };
+    return null;
+  }
+  getPenaltyTakers() {
+    let turn = this.getPenaltyTurn();
+    return [this.groups[turn].at(this.results[1].length % this.groups[turn].length)), this.groups[turn ^ 1].at(-1)];
+  }
+  push(result) {
+    this.results[this.getPenaltyTurn()].push(result);
+  }
+}
+class Game {
+  constructor() {
+    this.teams = {
+      1: new TeamStats(),
+      2: new TeamStats(),
+    }; 
+    this.penalty = new Penalty();
+    this.ballRecords = [null, null, null];
+  }
+  resetBallRecords() {
+    this.ballRecords = [null, null, null];
+  } 
+}
+
 var commands = { // Format: "alias: [function, availableModes, minimumRole, captainOnly]"
   help: [helpFunc, ["rand", "pick"], ROLE.PLAYER, false],
   discord: [discordFunc, ["rand", "pick"], ROLE.PLAYER, false],
   bye: [byeFunc, ["rand", "pick"], ROLE.PLAYER, false],
   stats: [showStatsFunc, ["rand", "pick"], ROLE.PLAYER, false],
-  rankings: [showRankingsFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  gamestats: [showGameStatsFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  rank: [showRankingsFunc, ["rand", "pick"], ROLE.PLAYER, false],
   kickafk: [kickAfkFunc, ["rand", "pick"], ROLE.PLAYER, false],
   spec: [specFunc, ["rand", "pick"], ROLE.PLAYER, false],
   login: [loginFunc, ["rand", "pick"], ROLE.PLAYER, false],
@@ -172,7 +241,6 @@ var kits = {red: null, blue: null};
 var prevScore = null;
 var predictions = {};
 var lastMessage = [null, null, null]; // The last message with the player ID and sending time
-var ballRecords = [null, null, null]; // Ball properties of the last 3 kicks
 var game = null;
 var penalty = null;
 var stadium = { // Stadium attributes
@@ -202,6 +270,7 @@ loadStadium("training");
 room.startGame();
 
 setInterval(randomAnnouncement, NOTIFICATION_INTERVAL * 1000);
+setInterval(randomGameStat, 2 * 60 * 1000);
 if ( MODE == "pick" ) setInterval(showSpecTable.bind(null), 5 * 1000); // Send Spectators table once every few seconds to prevent it from being faded away by other messages
 updateMetadata();
 
@@ -259,6 +328,42 @@ async function randomAnnouncement() {
       msg = quotes.pop();
   }
   room.sendAnnouncement(msg, null, YELLOW, "small-italic", 0);
+}
+
+function randomGameStat() {
+  let scores = room.getScores();
+  if ( (scores == null) || (scores.time < 60) ) return;
+  let fact;
+  switch ( Math.floor(Math.random() * 4) ) {
+    case 0:
+      let redPossession = ~~(game.teams[1].possession / (game.teams[1].possession + game.teams[2].possession) * 100);
+      fact = `Kiểm soát bóng: 🟥 ${redPossession}% - ${100 - redPossession}% 🟦`;
+      break;
+    case 1:
+      let passes = Object.entries(game.players).reduce(function(stats, [team, player]) {
+        stats[team - 1] += player.passes;
+        return stats;
+      }, [0, 0]);
+      if ( passes[0] + passes[1] == 0 ) return;
+      fact = `Lượt chuyền bóng: 🟥 ${passes.join(" - ")} 🟦`;
+      break;
+    case 2:
+      let shotsOnTarget = Object.entries(game.players).reduce(function(stats, [team, player]) {
+        stats[team - 1] += player.shotsOnTarget;
+        return stats;
+      }, [0, 0]);
+      if ( shotsOnTarget[0] + shotsOnTarget[1] == 0 ) return;
+      fact = `Lượt chuyền bóng: 🟥 ${shotsOnTarget.join(" - ")} 🟦`;
+      break;
+    case 3:
+      if ( winningStreak < 3 ) return;
+      fact = `Chuỗi bất bại của ${TEAM_NAMES[prevWinner]}: ${winningStreak}`;
+    case 4:
+      mostPasses = [];
+      for (const player of Object.values(Object.values(game.players)) {
+      };
+  };
+  room.sendAnnouncement(`  `);
 }
 
 function updateMetadata() {
@@ -401,11 +506,16 @@ function getRole(player) {
 }
 
 function getSetting(id) {
-  return JSON.parse(localStorage.getItem(`${getAuth(id)}_setting`)) || { ...settingDefault };
+  return new Setting(JSON.parse(localStorage.getItem(`${getAuth(id)}_setting`)));
 }
 
 function saveSetting(id, setting) {
   localStorage.setItem(`${getAuth(id)}_setting`, JSON.stringify(setting));
+}
+
+// Return player's statistics in the room
+function getStats(auth) {
+  return new PlayerReport(JSON.parse(localStorage.getItem(auth)));
 }
 
 // Get a player by name or tag
@@ -454,11 +564,6 @@ function getBestSpectatorByStats() {
     highestGA = stats.goals + stats.assists;
   };
   return bestPlayer;
-}
-
-// Return the team [ID] that will take the penalty
-function getPenaltyTurn() {
-  return penalty.results.flat(1).length % 2 + 1;
 }
 
 function isCaptain(id) {
@@ -533,13 +638,13 @@ async function celebrationEffect(player, hasScored) {
       room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius * 2 });
       break;
     case 5:
-      let players = room.getPlayerList().flatMap(player_ => (player_.team == player.team) ? [player_.id] : []);
+      let players = room.getPlayerList().flatMap(player_ => (player_.team == player.team) && (player_.id != player.id) ? [player_.id] : []);
       for (let i = 0; i < players.length; i++) {
         room.setPlayerDiscProperties(
           players[i],
           {
-            x: player.x + stadium.playerRadius * 3 * Math.cos(Math.PI * i / players.length),
-            y: player.y + stadium.playerRadius * 3 * Math.sin(Math.PI * i / players.length)
+            x: player.x + stadium.playerRadius * 4 * Math.cos(Math.PI * 2 * i / players.length),
+            y: player.y + stadium.playerRadius * 4 * Math.sin(Math.PI * 2 * i / players.length)
           }
         );
       };
@@ -583,11 +688,6 @@ function saveIdentities(player) {
   identities[player.id] = [player.auth, player.conn];
 }
 
-// Return player's statistics in the room
-function getStats(auth) {
-  return JSON.parse(localStorage.getItem(auth)) || { ...playerStats };
-}
-
 function canUseCommand(command, player) {
   if ( !command[1].includes(MODE) ) return false; // Command is not available in this mode
   if ( getRole(player) < command[2] ) return false; // Role is not high enough
@@ -611,25 +711,8 @@ function penaltyTimeoutCallback() {
   if ( !isTakingPenalty ) return;
   room.sendChat("Cầu thủ đã không thực hiện penalty trong thời gian quy định");
   // Count as a miss if player doesn't perform the penalty in time
-  penalty.results[getPenaltyTurn() - 1].push(false);
+  game.penalty.push(false);
   takePenalty();
-}
-
-// Returns the team that wins the penalty shootout
-function getPenaltyWinner() {
-  if ( penalty.results[0].length > 5 ) { // "Sudden Death" round
-    if ( penalty.results[0].length != penalty.results[1].length ) return null;
-    if ( penalty.results[0].at(-1) == penalty.results[1].at(-1) ) return null;
-    return penalty.results[0].at(-1) ? 1 : 2;
-  };
-
-  // One team has more penalties scored than the other team even if the other team scores all the remaining penalties
-  if ( penalty.results[0].filter(result => result).length > 5 - penalty.results[1].filter(result => !result).length ) {
-    return 1;
-  } else if ( penalty.results[1].filter(result => result).length > 5 - penalty.results[0].filter(result => !result).length ) {
-    return 2;
-  };
-  return null;
 }
 
 async function updateTeamPlayers() {
@@ -661,51 +744,38 @@ async function updateTeamPlayers() {
 // Update information to monitor last kickers, possession and passing accuracy
 function updateBallKick(player) {
   if ( !isPlaying ) return;
-  let scores = room.getScores();
-  let ballProperties = room.getDiscProperties(0);
-  ballProperties.byPlayer = player;
-  ballProperties.isAShot = false;
-  ballProperties.time = scores.time;
-  ballRecords.unshift(ballProperties);
-  ballRecords.pop();
+  game.BallRecords.unshift(new Kick(ballProperties, player));
+  game.BallRecords.pop();
 
-  if ( ballRecords[1] === null ) { // Kick-off pass
+  if ( game.BallRecords[1] === null ) { // Kick-off pass
     // Disallow pausing after kick-off
     canPause = false;
     return;
   };
 
-  let timeGap = ballRecords[0].time - ballRecords[1].time;
+  let timeGap = game.BallRecords[0].time - game.BallRecords[1].time;
   // If the previous kick was a shot on goal, check whether it was blocked and exclude that shot if it was
   if (
-    ballRecords[1].isAShot &&
+    game.BallRecords[1].isAShot &&
     (timeGap < 1) &&
-    (getDistance(ballProperties.x - ballRecords[1].x, ballProperties.y - ballRecords[1].y) < stadium.ballRadius * 2.5)
+    (getDistance(ballProperties.x - game.BallRecords[1].properties.x, ballProperties.y - game.BallRecords[1].properties.y) < stadium.ballRadius * 2.5)
   ) {
-    ballRecords[1].isAShot = false;
-    game.teams[ballRecords[1].byPlayer.team].shotsOnTarget--;
+    game.players[game.BallRecords[1].byPlayer.team][getAuth(game.BallRecords[1].byPlayer.id)].shotsOnTarget--;
   };
 
-  let xOpponentGoal = ( player.team == 1 ) ? stadium.goalLine.x : -stadium.goalLine.x; // The x position value of the opponent's goal
-  if (
-    (xOpponentGoal * ballProperties.xspeed > 0) && // It's a kick toward the opponent goal
-    (Math.abs(ballProperties.x + ballProperties.xspeed * 98) > stadium.goalLine.x) // At this speed, the ball can cross the goal line
-  ) {
-    // Check if it's on target (not really accurate because it might hit the post)
-    if ( Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < stadium.goalLine.y ) {
-      ballRecords[0].isAShot = true;
-      game.teams[player.team].shotsOnTarget++;
-    };
-  } else {
-    // Switch to penalty shootout when it hits maximum added time
-    if ( (scores.timeLimit != 0) && (scores.time - scores.timeLimit > MAX_ADDED_TIME) ) { // Maximum extra time exceeded
-      startPenaltyShootout();
-      return;
-    };
+  let scores = room.getScores();
+  if ( game.BallRecords[0].isAShot ) {
+    updatePlayerStats(player, STAT.SHOT);
+  } else if (
+    (Math.abs(ballProperties.x + ballProperties.xspeed * 100) < stadium.goalLine.x) &&
+    (scores.timeLimit != 0) && (scores.time - scores.timeLimit > MAX_ADDED_TIME)
+  ) { // Switch to penalty shootout when it hits maximum added time
+    startPenaltyShootout();
+    return;
   };
 
-  if ( player.team != ballRecords[1].byPlayer.team ) return; // Received the ball from an opponent player
-  if ( player.id != ballRecords[1].byPlayer.id ) game.teams[player.team].passes++; // Received the ball from a teammate, so the previous kick was a pass
+  if ( player.team != game.BallRecords[1].byPlayer.team ) return; // Received the ball from an opponent player
+  if ( player.id != game.BallRecords[1].byPlayer.id ) updatePlayerStats(game.BallRecords[1].byPlayer, STAT.PASS); // Received the ball from a teammate, so the previous kick was a pass
   game.teams[player.team].possession += timeGap; // Received the ball from a teammate or from yourself, so it's in possession
 }
 
@@ -738,9 +808,9 @@ async function updateCaptain(teamId, newCaptain) {
     room.reorderPlayers([oldCaptainId], false);
   } else if ( isTakingPenalty ) {
     // Remove old captain from the penalty group
-    penalty.groups[teamId] = penalty.groups[teamId].filter(id => id != oldCaptainId);
+    game.penalty.groups[teamId - 1] = game.penalty.groups[teamId - 1].filter(id => id != oldCaptainId);
     // Add new captain to the penalty group (if necessary)
-    penalty.groups[teamId].includes(newCaptain.id) || penalty.groups[teamId].unshift(newCaptain.id);
+    game.penalty.groups[teamId - 1].includes(newCaptain.id) || game.penalty.groups[teamId - 1].unshift(newCaptain.id);
   } else {
     // Move new captain to team
     await room.setPlayerTeam(newCaptain.id, teamId);
@@ -845,7 +915,19 @@ function showStatsFunc(value, player) {
 🤝🏻 Kiến tạo: ${item.assists}
 ❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
 🧤 Sạch lưới: ${item.cleansheets}
-👑 Chiến thắng: ${item.wins}`, player.id, BLUE, "small-bold", 0);
+🔰 Số trận đã chơi: ${item.games}
+🏆 Tỉ lệ thắng: ${item.getWinRate()}%`, player.id, BLUE, "small-bold", 0);
+  return false;
+}
+
+function showGameStatsFunc(value, player) {
+  let stats = game[player.team][getAuth(showPlayer.id)];
+  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${player.name}:`, player.id, BLUE, "bold", 0);
+  room.sendAnnouncement(`Bàn thắng: ${stats.goals}
+Kiến tạo: ${stats.assists}
+Bàn thắng phản lưới nhà: ${stats.ownGoals}
+Đường chuyền: ${stats.passes}
+Sút trúng đích: ${stats.shotsOnTarget}`, player.id, BLUE, "small-bold", 0);
   return false;
 }
 
@@ -863,7 +945,7 @@ function showRankingsFunc(value, player) {
     room.sendAnnouncement("Chưa có dữ liệu người chơi", player.id, RED);
     return false;
   };
-  let msg = `Danh sách ghi bàn hàng đầu tháng ${getMonths()} ⚽: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals})`).join("  •  ")}`;
+  let msg = `⚽ Danh sách ghi bàn hàng đầu tháng ${getMonths()} ⚽: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals})`).join("  •  ")}`;
   msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
   // Sort players by assists made
@@ -873,7 +955,7 @@ function showRankingsFunc(value, player) {
     };
     return player2.assists - player1.assists;
   });
-  msg += `\nDanh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists})`).join("  •  ")}`;
+  msg += `\n👟 Danh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists})`).join("  •  ")}`;
   msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
   room.sendAnnouncement(msg, player.id, YELLOW, "small-italic", 0);
@@ -1287,29 +1369,16 @@ function handleCommand(player, input) {
   return command[0](value, player);
 }
 
-function updatePlayerStats(player, type) {
+function updatePlayerStats(player, statType) {
   if ( identities[player.id] === undefined ) return; 
   // If player hasn't had stats yet, initialize an object
   let auth = getAuth(player.id);
-  game.players[auth] = ( game.players[auth] || { ...playerReport } );
-  game.players[auth].name = player.name;
-  game.players[auth].forTeam = player.team;
-
-  switch ( type ) {
-    case 1: // Goal
-      game.players[auth].goals++;
-      break;
-    case 2: // Assist
-      game.players[auth].assists++;
-      break;
-    default: // Own goal
-      game.players[auth].ownGoals++;
-  };
+  ;
 }
 
 // Update stats about goals, assists and own goals
-function updateStats(team) {
-  let [shot, assist] = ballRecords;
+function updateGoalStats(team) {
+  let [shot, assist] = game.BallRecords;
   if ( shot === null ) return;
 
   if ( shot.byPlayer.team != team ) { // Own goal
@@ -1318,20 +1387,20 @@ function updateStats(team) {
       assist && // Someone's kick resulted in this goal
       assist.isAShot && // The previous kick was a shot on target
       (assist.byPlayer.team == team) && // The previous kick came from an opponent player
-      (stadium.goalLine.x - Math.abs(shot.x) < stadium.playerRadius * 3) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
+      (stadium.goalLine.x - Math.abs(shot.properties.x) < stadium.playerRadius * 3) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
       (shot.time - assist.time < 2.5) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
     ) {
       // Correct the credits
-      [shot, assist] = ballRecords.slice(1);
+      [shot, assist] = game.BallRecords.slice(1);
     } else {
-      updatePlayerStats(shot.byPlayer, 0);
+      updatePlayerStats(shot.byPlayer, STAT.OWN_GOAL);
       room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(shot.byPlayer.name)}`);
       return;
     };
   };
 
   let ballPosition = room.getBallPosition();
-  updatePlayerStats(shot.byPlayer, 1);
+  updatePlayerStats(shot.byPlayer, STAT.GOAL);
   if ( identities[shot.byPlayer.id] === undefined ) return; // Scorer left the game
   // Design celebrating comment
   let hasScored = game.players[getAuth(shot.byPlayer.id)].goals;
@@ -1345,7 +1414,7 @@ function updateStats(team) {
     (assist.byPlayer.id != shot.byPlayer.id) && // Not a solo goal
     (assist.byPlayer.id in identities) // Assister hasn't left the game
   ) {
-    updatePlayerStats(assist.byPlayer, 2);
+    updatePlayerStats(assist.byPlayer, STAT.ASSIST);
     let hasAssisted = game.players[getAuth(assist.byPlayer.id)].assists;
     if ( hasAssisted != 1 ) { // Multiple assists O_O
       comment = comment.concat(", ", `${getTag(assist.byPlayer.name)} đã có cho mình kiến tạo thứ ${hasAssisted} trong trận đấu`);
@@ -1356,85 +1425,77 @@ function updateStats(team) {
 
   room.sendChat(comment);
   // Calculate goal stats
-  let speed = convertToMeters(getDistance(shot.xspeed, shot.yspeed) * 60); // There are 60 frames per second
-  let distance = convertToMeters(getDistance(shot.x - ballPosition.x, shot.y - ballPosition.y));
+  let speed = convertToMeters(getDistance(shot.properties.xspeed, shot.properties.yspeed) * 60); // There are 60 frames per second
+  let distance = convertToMeters(getDistance(shot.properties.x - ballPosition.x, shot.properties.y - ballPosition.y));
   room.sendAnnouncement(`Khoảng cách: ${distance || "dưới 1"}m | Lực sút: ${speed} (m/s)`, null, 0x00FF00, "small", 0);
 }
 
 function saveStats() {
-  for (const [auth, info] of Object.entries(game.players)) {
-    let item = getStats(auth);
-    item.name = info.name;
-    item.goals += info.goals;
-    item.assists += info.assists;
-    item.ownGoals += info.ownGoals;
-    localStorage.setItem(auth, JSON.stringify(item));
-  };
-  for (const player of room.getPlayerList()) {
-    if ( player.team == 0 ) continue;
-    let auth = getAuth(player.id);
-    let item = getStats(auth);
-    item.name = player.name;
-    if ( player.team == prevWinner ) {
-      item.wins++;
+  for (const [teamId, players] of Object.entries(game.players)) {
+    for (const [auth, info] of Object.entries(players)) {
+      let item = getStats(auth);
+      item.name = info.name;
+      item.goals += info.goals;
+      item.assists += info.assists;
+      item.ownGoals += info.ownGoals;
+      item.games++;
+      if ( teamId == prevWinner ) {
+        item.wins++;
+      };
+      if ( prevScore.split("0").length - (teamId != prevWinner) - 1 ) {
+        item.cleansheets++;
+      };
+      localStorage.setItem(auth, JSON.stringify(item));
     };
-    if ( prevScore.split("0").length - (player.team != prevWinner) - 1 ) {
-      item.cleansheets++;
-    };
-    localStorage.setItem(auth, JSON.stringify(item));
   };
 }
 
 function reportStats() {
   let scoreline = ` RED ${prevScore} BLUE`;
-  if ( penalty.results[0].length != 0 ) {
+  if ( game.penalty.results[0].length != 0 ) {
     scoreline += ` (Luân lưu: ${penalty.results[0].filter(result => result).length}-${penalty.results[1].filter(result => result).length})`;
   }
   room.sendAnnouncement(scoreline, null, YELLOW, "bold", 0);
 
   let redPossession = ~~(game.teams[1].possession / (game.teams[1].possession + game.teams[2].possession) * 100);
-  let bluePossession = 100 - redPossession;
+  let passes = [0, 0];
+  let shotsOnTarget = [0, 0];
+  let contributions = [[], []];
 
-  // Player stats information
-  let redPlayerStats = [];
-  let bluePlayerStats = [];
-  for (const [_, info] of Object.entries(game.players)) {
-    let msg = info.name + " (";
-    if ( info.goals == 1 ) {
-      msg += "⚽";
-    } else if ( info.goals != 0 ) { // More than 1 goal
-      msg += `${info.goals}⚽`;
-    };
-    if ( info.assists == 1 ) {
-      msg += "👟";
-    } else if ( info.assists != 0 ) { // More than 1 assist
-      msg += `${info.assists}👟`;
-    };
-    if ( info.ownGoals == 1 ) {
-      msg += "🥅";
-    } else if ( info.ownGoals != 0 ) { // More than 1 own goal
-      msg += `${info.ownGoals}🥅`;
-    };
-    msg += ")";
-
-    switch ( info.forTeam ) {
-      case 1:
-        redPlayerStats.push(msg);
-        break;
-      case 2:
-        bluePlayerStats.push(msg);
+  for (const [teamId, players] of Object.entries(game.players)) {
+    for (const player of Object.values(players)) {
+      let msg = info.name + " (";
+      if ( info.goals == 1 ) {
+        msg += "⚽";
+      } else if ( info.goals != 0 ) { // More than 1 goal
+        msg += `${info.goals}⚽`;
+      };
+      if ( info.assists == 1 ) {
+        msg += "👟";
+      } else if ( info.assists != 0 ) { // More than 1 assist
+        msg += `${info.assists}👟`;
+      };
+      if ( info.ownGoals == 1 ) {
+        msg += "🥅";
+      } else if ( info.ownGoals != 0 ) { // More than 1 own goal
+        msg += `${info.ownGoals}🥅`;
+      };
+      msg += ")";
+      contributions[teamId - 1].push(msg);
+      passes[teamId - 1] += player.passes;
+      shotsOnTarget[teamId - 1] += player.shotsOnTarget;
     };
   };
 
   // Generate a room message about game statistics
-  let statsMsg = `Kiểm soát bóng: 🔴 ${redPossession}% - ${bluePossession}% 🔵
-Sút trúng đích: 🔴 ${game.teams[1].shotsOnTarget} - ${game.teams[2].shotsOnTarget} 🔵
-Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} 🔵`;
-  if ( redPlayerStats.length != 0 ) {
-    statsMsg += `\nRED: ${redPlayerStats.join("  •  ")}`;
+  let statsMsg = `Kiểm soát bóng: 🔴 ${redPossession}% - ${100 - redPossession}% 🔵
+Sút trúng đích: 🔴 ${shotsOnTarget[0]} - ${shotsOnTarget[1]} 🔵
+Lượt chuyền bóng: 🔴 ${passes[0]} - ${passes[1]} 🔵`;
+  if ( contributions[0].length != 0 ) {
+    statsMsg += `\nRED: ${contributions[0].join("  •  ")}`;
   };
-  if ( bluePlayerStats.length != 0 ) {
-    statsMsg += `\nBLUE: ${bluePlayerStats.join("  •  ")}`;
+  if ( contributions[1].length != 0 ) {
+    statsMsg += `\nBLUE: ${contributions[1].join("  •  ")}`;
   };
   statsMsg += `\nChuỗi bất bại: ${winningStreak} trận`;
   room.sendAnnouncement(statsMsg, null, YELLOW, "small-bold", 0);
@@ -1442,10 +1503,10 @@ Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} �
   // Generate a Discord embed about game statistics
   let discordMsg = `**RED (captain: ${room.getPlayer(captains[1]).name})**
 \`\`\`ansi
-[2;31m${redPlayerStats.join("\n")}\`\`\`
+[2;31m${contributions[0].join("\n")}\`\`\`
 **BLUE (captain: ${room.getPlayer(captains[2]).name})**
 \`\`\`ansi
-[2;34m${bluePlayerStats.join("\n")}\`\`\``;
+[2;34m${contributions[1].join("\n")}\`\`\``;
   let discordFields = [
     {
       name: "Thống kê",
@@ -1454,12 +1515,12 @@ Lượt chuyền bóng: 🔴 ${game.teams[1].passes} - ${game.teams[2].passes} �
     },
     {
       name: "🔴 **RED**",
-      value: `==========\n\n${redPossession}%\n${game.teams[1].shotsOnTarget}\n${game.teams[1].passes}`,
+      value: `==========\n\n${redPossession}%\n${shotsOnTarget[0]}\n${passes[0]}`,
       inline: true,
     },
     {
       name: "🔵 **BLUE**",
-      value: `==========\n\n${bluePossession}%\n${game.teams[2].shotsOnTarget}\n${game.teams[2].passes}`,
+      value: `==========\n\n${100 - redPossession}%\n${shotsOnTarget[1]}\n${passes[1]}`,
       inline: true,
     },
     {
@@ -1553,7 +1614,7 @@ async function startPenaltyShootout() {
   // Store players' team and role (GK or not) for the penalty shootout
   room.getPlayerList().forEach(function(player) {
     if ( player.team == 0 ) return;
-    let group = penalty.groups[player.team];
+    let group = game.penalty.groups[player.team - 1];
     if (
       (group.length == 0) ||
       ((player.position.x - deepestPositions[player.team - 1]) * (player.team * 2 - 3) > 0)
@@ -1573,9 +1634,9 @@ async function startPenaltyShootout() {
 
 async function endPenaltyShootout(winner) {
   // Put players back to where they were before the penalty shootout
-  for (let teamId = 1; teamId < 3; teamId++) {
-    for (const id of penalty.groups[teamId]) {
-      await room.setPlayerTeam(id, teamId);
+  for (let i = 0; i < 2; i++) {
+    for (const id of game.penalty.groups[i]) {
+      await room.setPlayerTeam(id, i + 1);
     };
   };
   handlePostGame(winner);
@@ -1594,7 +1655,7 @@ async function endPenaltyShootout(winner) {
 }
 
 async function takePenalty() {
-  let winner = getPenaltyWinner();
+  let winner = game.penalty.getPenaltyWinner();
   // Found the winner in this penalty shootout
   if ( winner !== null ) {
     room.sendChat(`Và đó cũng là dấu chấm hết, ${TEAM_NAMES[winner]} là những người chiến thắng, sau màn trình diễn đáng kinh ngạc của họ`);
@@ -1607,25 +1668,24 @@ async function takePenalty() {
   for (const player of room.getPlayerList()) {
     await room.setPlayerTeam(player.id, 0);
   };
-  let turn = getPenaltyTurn();
-  switch ( turn ) {
-    case 1:
+  switch ( game.penalty.getPenaltyTurn() ) {
+    case 0:
       room.setTeamColors(1, ...kits.red);
       room.setTeamColors(2, ...GOALKEEPER_COLORS.blue);
       break;
-    case 2:
+    case 1:
       room.setTeamColors(1, ...kits.blue);
       room.setTeamColors(2, ...GOALKEEPER_COLORS.red);
   };
 
-  let penaltyTaker = room.getPlayer(penalty.groups[turn].at(penalty.results[1].length % penalty.groups[turn].length));
-  await room.setPlayerTeam(penaltyTaker.id, 1);
-  await room.setPlayerTeam(penalty.groups[getOppositeTeamId(turn)].at(-1), 2);
+  let [penaltyTaker, goalkeeper] = game.penalty.getPenaltyTakers();
+  await room.setPlayerTeam(penaltyTaker, 1);
+  await room.setPlayerTeam(goalkeeper, 2);
   room.startGame();
 
   let penResults = [[], []];
   for (let i = 0; i < 2; i++) {
-    penalty.results[i].forEach(function(result) {
+    game.penalty.results[i].forEach(function(result) {
       switch ( result ) {
         case ( true ):
           penResults[i].push("🟢");
@@ -1641,11 +1701,11 @@ async function takePenalty() {
     };
   };
   room.sendAnnouncement(` RED ${penResults[0].reverse().join("")} - ${penResults[1].join("")} BLUE`, null, BLUE, "bold", 0);
-  if ( penalty.results.flat(1).length == 10 ) {
+  if ( game.penalty.results.flat(1).length == 10 ) {
     room.sendChat('Giờ ta sẽ đến loạt sút "Sudden Death", một đội thực hiện thành công và đội còn lại đá trượt thì kết quả sẽ được định đoạt');
   };
-  room.sendChat(`Bây giờ ${getTag(penaltyTaker.name)} sẽ bước lên để thức hiện quả penalty`);
-  room.sendAnnouncement(`Bạn có ${PENALTY_TIMEOUT} giây để thực hiện quả penalty`, penaltyTaker.id, YELLOW);
+  room.sendChat(`Bây giờ ${getTag(room.getPlayer(penaltyTaker).name)} sẽ bước lên để thức hiện quả penalty`);
+  room.sendAnnouncement(`Bạn có ${PENALTY_TIMEOUT} giây để thực hiện quả penalty`, penaltyTaker, YELLOW);
   timeouts.toTakePenalty = setTimeout(penaltyTimeoutCallback, PENALTY_TIMEOUT * 1000);
 }
 
@@ -1724,10 +1784,9 @@ function personalizeMsg(message, player) {
 }
 
 function reset() {
-  game = JSON.parse(JSON.stringify(gameDefault));
+  game = JSON.parse(JSON.stringify(gameStats));
   penalty = JSON.parse(JSON.stringify(penaltyDefault));
   predictions = {};
-  ballRecords = [null, null, null];
 }
 
 function handlePostGame(winner) {
@@ -1759,15 +1818,17 @@ room.onPlayerJoin = async function(player) {
     };
     showSpecTable();
   };
-  switch ( getNonAfkPlayers().length ) {
-    case 2:
-      loadStadium("1v1");
-      break;
-    case 6:
-      loadStadium("3v3");
-      break;
-    case 8:
-      loadStadium("5v5");
+  if ( !isTakingPenalty ) {
+    switch ( getNonAfkPlayers().length ) {
+      case 2:
+        loadStadium("1v1");
+        break;
+      case 6:
+        loadStadium("3v3");
+        break;
+      case 8:
+        loadStadium("5v5");
+    };
   };
 }
 
@@ -1782,13 +1843,13 @@ room.onPlayerLeave = async function(player) {
 
   if ( isTakingPenalty ) {
     // A penalty taker left the room
-    for (let teamId = 1; teamId < 3; teamId++) {
-      let index = penalty.groups[teamId].indexOf(player.id);
+    for (let i = 0; i < 2; i++) {
+      let index = game.penalty.groups[i].indexOf(player.id);
       if ( index == -1 ) continue;
-      penalty.groups[teamId].splice(index, 1);
-      if ( penalty.groups[teamId].length == 0 ) {
-        room.sendChat(`Toàn bộ cầu thủ sút luân lưu của ${TEAM_NAMES[teamId]} đã rời phòng, ${TEAM_NAMES[teamId]} đã bị xử thua`);
-        await endPenaltyShootout(getOppositeTeamId(teamId));
+      game.penalty.groups[i].splice(index, 1);
+      if ( game.penalty.groups[i].length == 0 ) {
+        room.sendChat(`Toàn bộ cầu thủ sút luân lưu của ${TEAM_NAMES[i + 1]} đã rời phòng, ${TEAM_NAMES[i + 1]} đã bị xử thua`);
+        await endPenaltyShootout(2 - i);
         break;
       };
     };
@@ -1852,7 +1913,7 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
       (MODE == "pick") &&
       (selectedCaptain === null) &&
       (
-        (scores.timeLimit && (scores.timeLimit - scores.time < 20)) ||
+        (scores.timeLimit && (scores.timeLimit - scores.time < 15)) ||
         (scores.scoreLimit && (Math.max(scores.red, scores.blue) == scores.scoreLimit))
       )
     ) {
@@ -1869,14 +1930,14 @@ room.onPlayerBallKick = function(player) {
 room.onTeamGoal = function(team) {
   if ( isTakingPenalty ) {
     clearTimeout(timeouts.toTakePenalty);
-    penalty.results[getPenaltyTurn() - 1].push(team == 1);
+    game.penalty.push(team == 1);
     celebratePenalty(team);
     return;
   };
 
   isPlaying = false; // The game is basically "off" until a position reset
   celebrateGoal(team);
-  updateStats(team);
+  updateGoalStats(team);
 }
 
 room.onPositionsReset = function() {
@@ -1887,7 +1948,7 @@ room.onPositionsReset = function() {
 
   resizePlayers();
   isPlaying = true;
-  ballRecords = [null, null,  null];
+  game.resetBallRecords();
   // Allows captains to pause the game before kick-off
   if ( (MODE == "pick") && (room.getScores().time != 0) && getSpectators().length ) {
     canPause = true;
