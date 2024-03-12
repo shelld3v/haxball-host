@@ -363,7 +363,7 @@ function randomGameStat() {
       if ( winningStreak < 3 ) return;
       fact = `Chuỗi bất bại của ${TEAM_NAMES[prevWinner]}: ${winningStreak}`;
   };
-  room.sendAnnouncement(`⏩   ${fact}   ⏪`, null, 0xCF9FFF, "small-bold");
+  room.sendAnnouncement(`⏩⏩    ${fact}    ⏪⏪`, null, 0xCF9FFF, "small-bold");
 }
 
 function updateMetadata() {
@@ -774,7 +774,7 @@ function updateBallKick(player) {
   ) {
     getGameStats(game.ballRecords[1].byPlayer.id).shotsOnTarget--;
   } else if ( game.ballRecords[0].isAShot ) {
-    stats.shots++;
+    stats.shotsOnTarget++;
   } else if ( Math.abs(ballProperties.x + ballProperties.xspeed * 100) < stadium.goalLine.x ) { // Switch to penalty shootout when it hits maximum added time
     let scores = room.getScores();
     if ( (scores.timeLimit != 0) && (scores.time - scores.timeLimit > MAX_ADDED_TIME) ) {
@@ -1442,7 +1442,7 @@ function saveStats() {
       if ( teamId == prevWinner ) {
         item.wins++;
       };
-      if ( prevScore.split("0").length - (teamId != prevWinner) - 1 ) {
+      if ( prevScore.split("0").length > (teamId != prevWinner) + 1 ) {
         item.cleansheets++;
       };
       localStorage.setItem(auth, JSON.stringify(item));
@@ -1457,7 +1457,7 @@ function reportStats() {
   } else {
     let time = room.getScores().time;
     let minutes = Math.floor(time / 60);
-    scoreline += ` (${minutes}:${Math.round(time - minutes * 60)})`;
+    scoreline += ` [${minutes}:${Math.round(time - minutes * 60).toString().padStart(2, "0")}]`;
   }
   room.sendAnnouncement(scoreline, null, YELLOW, "bold", 0);
 
@@ -1465,6 +1465,7 @@ function reportStats() {
   let contributions = [[], []];
   for (let i = 0; i < 2; i++) {
     for (const player of Object.values(game.teams[i + 1].players)) {
+      if ( player.goals + player.assists + player.ownGoals == 0 ) continue;
       let msg = player.name + " (";
       if ( player.goals == 1 ) {
         msg += "⚽";
