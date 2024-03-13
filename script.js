@@ -1452,13 +1452,15 @@ function saveStats() {
 
 function reportStats() {
   let scoreline = ` RED ${prevScore} BLUE`;
+  let time;
   if ( game.penalty.results[0].length != 0 ) {
     scoreline += ` (Luân lưu: ${game.penalty.results.map(results => results.length).join("-")})`;
+    time = 60 * MAX_TIME + MAX_ADDED_TIME;
   } else {
-    let time = room.getScores().time;
-    let minutes = Math.floor(time / 60);
-    scoreline += ` [${minutes}:${Math.round(time - minutes * 60).toString().padStart(2, "0")}]`;
-  }
+    time = room.getScores().time;
+  };
+  let minutes = Math.floor(time / 60);
+  let elapsedTime = `${minutes}:${Math.round(time - minutes * 60).toString().padStart(2, "0")}`;
   room.sendAnnouncement(scoreline, null, YELLOW, "bold", 0);
 
   let stats = game.getStats();
@@ -1525,7 +1527,7 @@ Lượt chuyền bóng: 🔴 ${stats.passes.join(" - ")} 🔵`;
     },
     {
       name: "",
-      value: `Chuỗi bất bại: ${winningStreak} trận`,
+      value: `Thời gian chơi: ${elapsedTime}\nChuỗi bất bại: ${winningStreak} trận`,
       inline: false,
     },
   ];
@@ -1696,7 +1698,7 @@ async function takePenalty() {
     });
     if ( penResults[i].length < 5 ) {
       penResults[i].push("⚪".repeat(5 - penResults[i].length));
-    } else if ( game.penalty.getTurn() - 1 <= i ) {
+    } else if ( game.penalty.getTurn() <= i ) {
       penResults[i].push("⚪");
     };
   };
@@ -2037,9 +2039,7 @@ room.onGameStart = function(byPlayer) {
   isPlaying = true;
   isPicking = false;
   resizePlayers();
-  if ( isTakingPenalty ) {
-    return;
-  };
+  if ( isTakingPenalty ) return;
   reset();
   // Stop forcing captain to pick
   clearTimeout(timeouts.toPick);
@@ -2059,6 +2059,7 @@ room.onGameStop = async function(byPlayer) {
     room.stopRecording();
     return;
   };
+  if ( isTakingPenalty ) return;
   await new Promise(r => setTimeout(r, AFTER_GAME_REST * 1000)); // Have a little rest
   if ( room.getScores() !== null ) return;
   if ( MODE == "rand" ) {
