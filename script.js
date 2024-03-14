@@ -1455,7 +1455,7 @@ function reportStats() {
   let time;
   if ( game.penalty.results[0].length != 0 ) {
     scoreline += ` (Luân lưu: ${game.penalty.results.map(results => results.length).join("-")})`;
-    time = 60 * MAX_TIME + MAX_ADDED_TIME;
+    time = 60 * TIME_LIMIT + MAX_ADDED_TIME;
   } else {
     time = room.getScores().time;
   };
