@@ -472,29 +472,36 @@ function getOppositeTeamId(id) {
 }
 
 // Send a message to Discord Webhook
-async function sendWebhook(title, content, fields, attachment) {
+async function sendWebhook(title, content, fields, attachments) {
   if ( !DISCORD_WEBHOOK ) return;
-  await fetch(DISCORD_WEBHOOK, {
-    method: "POST",
-    body: JSON.stringify({
-      embeds: [{
-        color: 1752220,
-        title: title,
-        description: content,
-        fields: fields,
-      }],
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if ( !attachment || !attachment[1] ) return;
-  let form = new FormData();
-  form.append(null, new File([attachment[1]], attachment[0], { "type": "text/plain" }));
-  fetch(DISCORD_WEBHOOK, {
-    method: "POST",
-    body: form,
-  });
+  try {
+    await fetch(DISCORD_WEBHOOK, {
+      method: "POST",
+      body: JSON.stringify({
+        embeds: [{
+          color: 1752220,
+          title: title,
+          description: content,
+          fields: fields,
+        }],
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    return;
+  };
+  if ( !attachments ) return;
+  for (const attachment of attachments) {
+    if ( !attachment[1] ) continue;
+    let form = new FormData();
+    form.append(null, new File([attachment[1]], attachment[0], { "type": "text/plain" }));
+    fetch(DISCORD_WEBHOOK, {
+      method: "POST",
+      body: form,
+    });
+  };
 }
 
 // Move AFK player to bottom of the Spectators list
@@ -575,10 +582,11 @@ function getMotms() {
         points += MOTM_RULES[statName] * value;
       };
       if ( teamId == prevWinner ) points++; // Winners get an extra point
-      if ( points > highestPoints ) {
-        MOTMs = {auth: stats};
-        highestPoints = points;
-      } else if ( points == highestPoints ) {
+      if ( points >= highestPoints ) {
+        if ( points > highestPoints ) {
+          MOTMs = {};
+          highestPoints = points;
+        };
         MOTMs[auth] = stats;
       };
     };
@@ -1516,10 +1524,10 @@ function reportStats() {
   let stats = game.getStats();
   let MOTMs = getMotms();
   let contributions = [[], []];
-  let playerStats = [];
+  let playerStats = "";
   for (let i = 0; i < 2; i++) {
     for (const [auth, player] of Object.entries(game.teams[i + 1].players)) {
-      playerStats.push(`${Object.keys(MOTMs).includes(auth) ? `**${player.name.trim()}**` : `*${player.name.trim()}*`}: ${player.goals} bàn, ${player.assists} kiến tạo, ${player.ownGoals} bàn phản lưới, ${player.passes} đường chuyền, ${player.shotsOnTarget} cú sút trúng đích, ${player.clearances} cú sút chặn được, ${player.touches} lần chạm bóng`);
+      playerStats += `${Object.keys(MOTMs).includes(auth) ? `[MOTM] ${player.name}` : `${player.name}`}: ${player.goals} bàn, ${player.assists} kiến tạo, ${player.ownGoals} bàn phản lưới, ${player.passes} đường chuyền, ${player.shotsOnTarget} cú sút trúng đích, ${player.clearances} cú sút chặn được, ${player.touches} lần chạm bóng\n`;
       if ( player.goals + player.assists + player.ownGoals == 0 ) continue;
       let msg = player.name + " (";
       if ( player.goals == 1 ) {
@@ -1580,17 +1588,12 @@ Lượt chuyền bóng: 🔴 ${stats.passes.join(" - ")} 🔵`;
       inline: true,
     },
     {
-      name: "Thống kê cầu thủ",
-      value: "=".repeat(45) + "\n" + playerStats.join("\n"),
-      inline: false,
-    },
-    {
       name: "",
       value: `MOTM: ${Object.values(MOTMs).map(player => player.name).join(", ")} ⚔\nThời gian: ${elapsedTime}\nChuỗi bất bại: ${winningStreak} trận`,
       inline: false,
     },
   ];
-  sendWebhook(`🌟 ${scoreline}`, discordMsg, discordFields, [new Date().toString().slice(0, 21).replace(":", "h") + ".hbr2", room.stopRecording()]);
+  sendWebhook(`🌟 ${scoreline}`, discordMsg, discordFields, [[new Date().toString().slice(0, 21).replace(":", "h") + ".hbr2", room.stopRecording()], ["players_report.txt", playerStats]]);
 }
 
 function celebrateGoal(team) {
