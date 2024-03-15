@@ -1561,7 +1561,7 @@ Lượt chuyền bóng: 🔴 ${stats.passes.join(" - ")} 🔵`;
     statsMsg += `\nBLUE: ${contributions[1].join("  •  ")}`;
   };
   statsMsg += `\nCầu thủ xuất sắc nhất trận: ${Object.values(MOTMs).map(player => player.name).join(", ")} 🎇`
-  statsMsg += `\nChuỗi bất bại: ${winningStreak} trận`;
+  statsMsg += `\nChuỗi bất bại: ${winningStreak} trận 🔥`;
   room.sendAnnouncement(statsMsg, null, YELLOW, "small-bold", 0);
 
   // Generate a Discord embed about game statistics
@@ -1589,7 +1589,7 @@ Lượt chuyền bóng: 🔴 ${stats.passes.join(" - ")} 🔵`;
     },
     {
       name: "",
-      value: `MOTM: ${Object.values(MOTMs).map(player => player.name).join(", ")} ⚔\nThời gian: ${elapsedTime}\nChuỗi bất bại: ${winningStreak} trận`,
+      value: `MOTM: ${Object.values(MOTMs).map(player => player.name).join(", ")}\nThời gian: ${elapsedTime}\nChuỗi bất bại: ${winningStreak} trận`,
       inline: false,
     },
   ];
