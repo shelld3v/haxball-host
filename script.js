@@ -30,13 +30,17 @@ const ROLE = {
   VIP: 1,
   ADMIN: 2,
 };
-const MOTM_RULES = {
-  goals: 4,
+const PLAYER_SCORING_TABLE = {
+  goals: 5,
   assists: 2, // An assist is a pass as well so you will in fact get 3 points
-  ownGoals: -2,
+  ownGoals: -3,
   passes: 1,
   shotsOnTarget: 1,
   clearances: 2,
+  errorsLeadingToGoal: -1,
+  attemptsLeadingToOG: 2,
+  penaltiesScored: 1,
+  penaltiesMissed: -1,
 };
 const TEAM_COLORS = [
   [[60, 0xFFCC00, [0xE83030]], [60, 0xFFCC00, [0x004170]]],
@@ -150,6 +154,10 @@ class PlayerStats {
     this.passes = 0;
     this.shotsOnTarget = 0;
     this.clearances = 0;
+    this.errorsLeadingToGoal = 0;
+    this.attemptsLeadingToOG = 0;
+    this.penaltiesScored = 0;
+    this.penaltiesMissed = 0;
   }
 };
 class TeamStats {
@@ -702,7 +710,7 @@ async function celebrationEffect(player, hasScored) {
       break;
     case 6:
       for (let i = 1; i < 3; i++) {
-        for (let j = 0; j < 5; i++) {
+        for (let j = 0; j < 5; j++) {
           setTimeout(room.setPlayerDiscProperties.bind(
             null,
             player.id,
@@ -1450,13 +1458,14 @@ function updateGoalStats(team) {
       assist.isAShot && // The previous kick was a shot on target
       (assist.player.team == team) && // The previous kick came from an opponent player
       (stadium.goalLine.x - Math.abs(shot.properties.x) < stadium.playerRadius * 3) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
-      (shot.time - assist.time < 2.5) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
+      (shot.time - assist.time < 3) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
     ) {
       // Correct the credits
       [shot, assist] = game.ballRecords.slice(1);
     } else {
       getGameStats(shot.player).ownGoals++;
       room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(shot.player.name)}`);
+      (assist !== null) && (assist.player.team == team) && getGameStats(assist.player).attemptsLeadingToOG++;
       return;
     };
   };
@@ -1467,23 +1476,21 @@ function updateGoalStats(team) {
   let comment = SCORER_COMMENTARIES[shooterStats.goals] || `Thật điên rồ, bàn thắng thứ ${shooterStats.goals} trong trận đấu này của`;
   comment = comment.concat(" ", getTag(shot.player.name));
   if ( getRole(shot.player) >= ROLE.VIP ) celebrationEffect(shot.player, shooterStats.goals);
-
-  if (
-    (assist !== null) &&
-    (assist.player.team == team) && // Assisted by teammate
-    (assist.player.id != shot.player.id) && // Not a solo goal
-    (assist.player.id in identities) // Assister hasn't left the game
-  ) {
+  if ( assist !== null ) {
     let assisterStats = getGameStats(assist.player);
-    assisterStats.assists++;
-    if ( assisterStats.assists != 1 ) { // Multiple assists O_O
-      comment = comment.concat(", ", `${getTag(assist.player.name)} đã có cho mình kiến tạo thứ ${assisterStats.assists} trong trận đấu`);
-    } else {
-      comment = comment.concat(", ", `đường kiến tạo từ ${getTag(assist.player.name)}`);
+    if ( assist.player.team != team ) {
+      assisterStats.errorsLeadingToGoal++;
+    } else if ( assist.player.id != shot.player.id ) { // Not a solo goal
+      assisterStats.assists++;
+      if ( assisterStats.assists != 1 ) { // Multiple assists O_O
+        comment = comment.concat(", ", `${getTag(assist.player.name)} đã có cho mình kiến tạo thứ ${assisterStats.assists} trong trận đấu`);
+      } else {
+        comment = comment.concat(", ", `đường kiến tạo từ ${getTag(assist.player.name)}`);
+      };
     };
   };
-
   room.sendChat(comment);
+
   // Calculate goal stats
   let speed = convertToMeters(getDistance(shot.properties.xspeed, shot.properties.yspeed) * 60); // There are 60 frames per second
   let distance = convertToMeters(getDistance(shot.properties.x - ballPosition.x, shot.properties.y - ballPosition.y));
@@ -1527,7 +1534,7 @@ function reportStats() {
   let playerStats = "";
   for (let i = 0; i < 2; i++) {
     for (const [auth, player] of Object.entries(game.teams[i + 1].players)) {
-      playerStats += `${Object.keys(MOTMs).includes(auth) ? `[MOTM] ${player.name}` : `${player.name}`}: ${player.goals} bàn, ${player.assists} kiến tạo, ${player.ownGoals} bàn phản lưới, ${player.passes} đường chuyền, ${player.shotsOnTarget} cú sút trúng đích, ${player.clearances} cú sút chặn được, ${player.touches} lần chạm bóng\n`;
+      playerStats += `${Object.keys(MOTMs).includes(auth) ? `[MOTM] ${player.name}` : `${player.name}`}: ${player.goals} bàn, ${player.assists} kiến tạo, ${player.ownGoals} bàn phản lưới, ${player.passes} đường chuyền, ${player.shotsOnTarget} cú sút trúng đích, ${player.clearances} cú sút chặn được, ${player.attemptsLeadingToOG} nỗ lực dẫn đến bàn thắng phản lưới, ${player.errorsLeadingToGoal} sai lầm dẫn đến bàn thắng, ${player.touches} lần chạm bóng\n`;
       if ( player.goals + player.assists + player.ownGoals == 0 ) continue;
       let msg = player.name + " (";
       if ( player.goals == 1 ) {
@@ -1994,6 +2001,7 @@ room.onTeamGoal = function(team) {
   if ( isTakingPenalty ) {
     clearTimeout(timeouts.toTakePenalty);
     game.penalty.push(team == 1);
+    getGameStats(room.getPlayerList().find(player => player.team == 1)).penaltiesScored += (team == 1);
     celebratePenalty(team);
     return;
   };
