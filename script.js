@@ -457,6 +457,14 @@ function getTag(name) {
   return "@" + name.replace(/ /g, "_");
 }
 
+// Find the number of spaces that a string takes on display, this can handle special cases like non-latin characters which take more than 1 space each character
+function getDisplayLength(string) {
+  let canvas = document.createElement("canvas");
+  let context = canvas.getContext("2d");
+  context.font = getComputedStyle(document.body).font;
+  return Math.round([...string].reduce((size, char) => size + ((char.charCodeAt(0) > 255) ? context.measureText(char).width : 8.8), 0) / 8.8);
+}
+
 // Get a random element from an array
 function randomChoice(array) {
   return array[Math.floor(Math.random() * array.length)];
@@ -543,13 +551,14 @@ function getStats(auth) {
   return new PlayerReport(JSON.parse(localStorage.getItem(auth)));
 }
 
-function getGameStats(player) {
+function getGameStats(player, team) {
   if ( identities[player.id] === undefined ) return new PlayerStats();
   let auth = getAuth(player.id);
-  if ( game.teams[player.team].players[auth] === undefined ) {
-    game.teams[player.team].players[auth] = new PlayerStats(player.name);
+  team = team || player.team;
+  if ( game.teams[team].players[auth] === undefined ) {
+    game.teams[team].players[auth] = new PlayerStats(player.name);
   };
-  return game.teams[player.team].players[auth];
+  return game.teams[team].players[auth];
 }
 
 // Get a player by name or tag
@@ -1531,12 +1540,13 @@ function reportStats() {
   let stats = game.getStats();
   let MOTMs = Object.values(getMotms()).map(player => player.name).join(", ");
   let contributions = [[], []];
-  let playerStats = [["Người chơi               ", "Bàn", "Kiến tạo", "Phản lưới", "Đường chuyền", "Sút trúng đích", "Chặn cú sút", "Nỗ lực tạo ra bàn thắng phản lưới", "Sai lầm dẫn đến bàn thua", "Thực hiện thành công penalty", "Thực hiện hỏng penalty", "Chạm bóng"]];
+  let playerStats = [["Người chơi               ", "Đội ", "Bàn", "Kiến tạo", "Phản lưới", "Đường chuyền", "Sút trúng đích", "Chặn cú sút", "Nỗ lực tạo ra bàn thắng phản lưới", "Sai lầm dẫn đến bàn thua", "Thực hiện thành công penalty", "Thực hiện hỏng penalty", "Chạm bóng"]];
   playerStats.push(["-".repeat(playerStats[0].reduce((length, name) => length + name.length + 3, 0) - 3)]);
   for (let i = 0; i < 2; i++) {
     for (const [auth, player] of Object.entries(game.teams[i + 1].players)) {
       playerStats.push([
-        player.name.padEnd(25 + player.name.length - [...player.name].length, " "), // https://stackoverflow.com/a/38901550
+        player.name.padEnd(25 + player.name.length - getDisplayLength(player.name), " "), // https://stackoverflow.com/a/38901550
+        TEAM_NAMES[i + 1].padEnd(4, " "),
         player.goals.toString().padEnd(playerStats[0][1].length, " "),
         player.assists.toString().padEnd(playerStats[0][2].length, " "),
         player.ownGoals.toString().padEnd(playerStats[0][3].length, " "),
@@ -2016,7 +2026,7 @@ room.onTeamGoal = function(team) {
   if ( isTakingPenalty ) {
     clearTimeout(timeouts.toTakePenalty);
     game.penalty.push(team == 1);
-    getGameStats(room.getPlayerList().find(player => player.team == 1))[(team == 1) ? "penaltiesScored" : "penaltiesMissed"]++;
+    getGameStats(room.getPlayerList().find(player => player.team == 1), game.penalty.getTurn() + 1)[(team == 1) ? "penaltiesScored" : "penaltiesMissed"]++;
     celebratePenalty(team);
     return;
   };
@@ -2168,3 +2178,4 @@ room.onTeamsLockChange = function(locked, byPlayer) {
   // Make sure teams are always locked
   !locked && room.setTeamsLock(true);
 }
+
