@@ -1547,17 +1547,17 @@ function reportStats() {
       playerStats.push([
         player.name.padEnd(25 + player.name.length - getDisplayLength(player.name), " "), // https://stackoverflow.com/a/38901550
         TEAM_NAMES[i + 1].padEnd(4, " "),
-        player.goals.toString().padEnd(playerStats[0][1].length, " "),
-        player.assists.toString().padEnd(playerStats[0][2].length, " "),
-        player.ownGoals.toString().padEnd(playerStats[0][3].length, " "),
-        player.passes.toString().padEnd(playerStats[0][4].length, " "),
-        player.shotsOnTarget.toString().padEnd(playerStats[0][5].length, " "),
-        player.stoppedShots.toString().padEnd(playerStats[0][6].length, " "),
-        player.attemptsLeadingToOG.toString().padEnd(playerStats[0][7].length, " "),
-        player.errorsLeadingToGoal.toString().padEnd(playerStats[0][8].length, " "),
-        player.penaltiesScored.toString().padEnd(playerStats[0][9].length, " "),
-        player.penaltiesMissed.toString().padEnd(playerStats[0][10].length, " "),
-        player.touches.toString().padEnd(playerStats[0][11].length, " ")
+        player.goals.toString().padEnd(playerStats[0][2].length, " "),
+        player.assists.toString().padEnd(playerStats[0][3].length, " "),
+        player.ownGoals.toString().padEnd(playerStats[0][4].length, " "),
+        player.passes.toString().padEnd(playerStats[0][5].length, " "),
+        player.shotsOnTarget.toString().padEnd(playerStats[0][6].length, " "),
+        player.stoppedShots.toString().padEnd(playerStats[0][7].length, " "),
+        player.attemptsLeadingToOG.toString().padEnd(playerStats[0][8].length, " "),
+        player.errorsLeadingToGoal.toString().padEnd(playerStats[0][9].length, " "),
+        player.penaltiesScored.toString().padEnd(playerStats[0][10].length, " "),
+        player.penaltiesMissed.toString().padEnd(playerStats[0][11].length, " "),
+        player.touches.toString().padEnd(playerStats[0][12].length, " ")
       ]);
       if ( player.goals + player.assists + player.ownGoals == 0 ) continue;
       let msg = player.name + " (";
