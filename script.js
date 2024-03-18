@@ -1599,10 +1599,10 @@ Lượt chuyền bóng: 🔴 ${stats.passes.join(" - ")} 🔵`;
   // Generate a Discord embed about game statistics
   let discordMsg = `**RED (captain: ${room.getPlayer(captains[1]).name})**
 \`\`\`ansi
-31m${contributions[0].join("\n")}\`\`\`
+[2;31m${contributions[0].join("\n")}\`\`\`
 **BLUE (captain: ${room.getPlayer(captains[2]).name})**
 \`\`\`ansi
-34m${contributions[1].join("\n")}\`\`\``;
+[2;34m${contributions[1].join("\n")}\`\`\``;
   let discordFields = [
     {
       name: "Thống kê trận đấu",
