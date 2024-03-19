@@ -1540,12 +1540,12 @@ function reportStats() {
   let stats = game.getStats();
   let MOTMs = Object.values(getMotms()).map(player => player.name).join(", ");
   let contributions = [[], []];
-  let playerStats = [["Người chơi               ", "Đội ", "Bàn", "Kiến tạo", "Phản lưới", "Đường chuyền", "Sút trúng đích", "Chặn cú sút", "Nỗ lực tạo ra bàn thắng phản lưới", "Sai lầm dẫn đến bàn thua", "Thực hiện thành công penalty", "Thực hiện hỏng penalty", "Chạm bóng"]];
+  let playerStats = [["Người chơi                       ", "Đội ", "Bàn", "Kiến tạo", "Phản lưới", "Đường chuyền", "Sút trúng đích", "Chặn cú sút", "Nỗ lực tạo ra bàn thắng phản lưới", "Sai lầm dẫn đến bàn thua", "Thực hiện thành công penalty", "Thực hiện hỏng penalty", "Chạm bóng"]];
   playerStats.push(["-".repeat(playerStats[0].reduce((length, name) => length + name.length + 3, 0) - 3)]);
   for (let i = 0; i < 2; i++) {
     for (const [auth, player] of Object.entries(game.teams[i + 1].players)) {
       playerStats.push([
-        player.name.padEnd(25 + player.name.length - getDisplayLength(player.name), " "), // https://stackoverflow.com/a/38901550
+        player.name.padEnd(33 + player.name.length - getDisplayLength(player.name), " "), // https://stackoverflow.com/a/38901550
         TEAM_NAMES[i + 1].padEnd(4, " "),
         player.goals.toString().padEnd(playerStats[0][2].length, " "),
         player.assists.toString().padEnd(playerStats[0][3].length, " "),
