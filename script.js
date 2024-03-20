@@ -35,8 +35,8 @@ const PLAYER_SCORING_RULES = {
   assists: 2, // An assist is a pass as well so you will in fact get 3 points
   ownGoals: -3,
   passes: 1,
-  shotsOnTarget: 1,
-  stoppedShots: 1.5,
+  shotsOnTarget: 0.5,
+  stoppedShots: 2,
   errorsLeadingToGoal: -2,
   attemptsLeadingToOG: 2,
   penaltiesScored: 1,
@@ -367,12 +367,14 @@ function randomGameStat() {
   let scores = room.getScores();
   if ( (scores == null) || (scores.time < 60) ) return;
   let fact;
-  switch ( Math.floor(Math.random() * 4) ) {
+  switch ( Math.floor(Math.random() * 5) ) {
     case 0:
       fact = `Kiểm soát bóng: 🟥 ${game.getStats().possession.map(possession => possession + "%").join(" - ")} 🟦`;
       break;
     case 1:
-      fact = `Lượt chuyền bóng: 🟥 ${game.getStats().passes.join(" - ")} 🟦`;
+      let passes = game.getStats().passes;
+      if ( passes[0] + passes[1] == 0 ) return;
+      fact = `Lượt chuyền bóng: 🟥 ${passes.join(" - ")} 🟦`;
       break;
     case 2:
       fact = `Sút trúng đích: 🟥 ${game.getStats().shotsOnTarget.join(" - ")} 🟦`;
@@ -380,6 +382,16 @@ function randomGameStat() {
     case 3:
       if ( winningStreak < 3 ) return;
       fact = `Chuỗi bất bại của ${TEAM_NAMES[prevWinner]}: ${winningStreak}`;
+    case 4:
+      let topPasser = new PlayerStats();
+      for (let teamId = 1; teamId < 3; teamId++) {
+        for (const stats of Object.values(game.teams[teamId].players)) {
+          if ( stats.passes <= topPasser.passes ) continue;
+          topPasser = stats;
+        };
+      };
+      if ( topPasseer.passes == 0 ) return;
+      fact = `Thực hiện nhiều đường chuyền nhất: ${stats.name} (${stats.passes} đường chuyền)`;
   };
   room.sendAnnouncement(`⏩⏩    ${fact}    ⏪⏪`, null, 0xCF9FFF, "small-bold");
 }
@@ -669,7 +681,7 @@ async function avatarEffect(playerId, avatars) {
 }
 
 async function celebrationEffect(player, hasScored) {
-  switch ( Math.floor(Math.random() * 7) ) {
+  switch ( Math.floor(Math.random() * 8) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
       break;
@@ -729,6 +741,12 @@ async function celebrationEffect(player, hasScored) {
             }
           ), (i - 1) * 500 + j * 100);
         };
+      };
+    case 7:
+      let originalColor = room.getDiscProperties(0).color;
+      let colors = [0xFF0000, 0xFF8000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF80, 0x00FFFF, 0x0080FF, 0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F, 0x808080, 0xFFFFFF, originalColor];
+      for (let i = 0; i < colors.length; i++) {
+        setTimeout(room.setDiscProperties.bind(null, 0, {color: colors[i]}), 150 * i);
       };
   };
 }
@@ -843,7 +861,7 @@ function updateBallKick(player) {
   if (
     game.ballRecords[1].isAShot &&
     (timeGap < 1) &&
-    (getDistance(ballProperties.x - game.ballRecords[1].properties.x, ballProperties.y - game.ballRecords[1].properties.y) < stadium.ballRadius * 2.5)
+    (getDistance(ballProperties.x - game.ballRecords[1].properties.x, ballProperties.y - game.ballRecords[1].properties.y) < stadium.playerRadius * 1.25)
   ) {
     getGameStats(game.ballRecords[1].player.id).shotsOnTarget--;
     game.ballRecords[1].isAShot = false;
@@ -1540,7 +1558,7 @@ function reportStats() {
   let stats = game.getStats();
   let MOTMs = Object.values(getMotms()).map(player => player.name).join(", ");
   let contributions = [[], []];
-  let playerStats = [["Người chơi                       ", "Đội ", "Bàn", "Kiến tạo", "Phản lưới", "Đường chuyền", "Sút trúng đích", "Chặn cú sút", "Nỗ lực tạo ra bàn thắng phản lưới", "Sai lầm dẫn đến bàn thua", "Thực hiện thành công penalty", "Thực hiện hỏng penalty", "Chạm bóng"]];
+  let playerStats = [["Người chơi                       ", "Đội ", "Bàn", "Kiến tạo", "Phản lưới", "Đường chuyền", "Sút trúng đích", "Chặn cú sút", "Nỗ lực tạo ra bàn thắng phản lưới", "Sai lầm dẫn đến bàn thua", "Penalty thành công", "Penalty không thành công", "Chạm bóng"]];
   playerStats.push(["-".repeat(playerStats[0].reduce((length, name) => length + name.length + 3, 0) - 3)]);
   for (let i = 0; i < 2; i++) {
     for (const [auth, player] of Object.entries(game.teams[i + 1].players)) {
@@ -2025,9 +2043,9 @@ room.onPlayerBallKick = function(player) {
 room.onTeamGoal = function(team) {
   if ( isTakingPenalty ) {
     clearTimeout(timeouts.toTakePenalty);
-    game.penalty.push(team == 1);
     getGameStats(room.getPlayerList().find(player => player.team == 1), game.penalty.getTurn() + 1)[(team == 1) ? "penaltiesScored" : "penaltiesMissed"]++;
     celebratePenalty(team);
+    game.penalty.push(team == 1);
     return;
   };
 
