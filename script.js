@@ -2031,6 +2031,7 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
       )
     ) {
       selectedCaptain = changedPlayer.id;
+      room.sendAnnouncement("❗❗ Bạn đã bị thay vào trận muộn nên vẫn sẽ được chọn làm đội trưởng trận sau", changedPlayer.id, YELLOW, "small-italic", 2);
     };
   };
 }
