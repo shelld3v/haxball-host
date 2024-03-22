@@ -390,7 +390,7 @@ function randomGameStat() {
           topPasser = stats;
         };
       };
-      if ( topPasseer.passes == 0 ) return;
+      if ( topPasser.passes == 0 ) return;
       fact = `Thực hiện nhiều đường chuyền nhất: ${stats.name} (${stats.passes} đường chuyền)`;
   };
   room.sendAnnouncement(`⏩⏩    ${fact}    ⏪⏪`, null, 0xCF9FFF, "small-bold");
@@ -737,17 +737,21 @@ async function celebrationEffect(player, hasScored) {
             player.id,
             {
               x: player.position.x + stadium.playerRadius * 3 * i * Math.cos(Math.PI * 2 * j / 5),
-              y: player.position.y + stadium.playerRadius * 3 * i * Math.sin(Math.PI * 2 * j / 5)
+              y: player.position.y + stadium.playerRadius * 3 * i * Math.sin(Math.PI * 2 * j / 5),
+              xspeed: 0,
+              yspeed: 0
             }
           ), (i - 1) * 500 + j * 100);
         };
       };
+      break;
     case 7:
       let originalColor = room.getDiscProperties(0).color;
       let colors = [0xFF0000, 0xFF8000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF80, 0x00FFFF, 0x0080FF, 0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F, 0x808080, 0xFFFFFF, originalColor];
       for (let i = 0; i < colors.length; i++) {
         setTimeout(room.setDiscProperties.bind(null, 0, {color: colors[i]}), 150 * i);
       };
+      break;
   };
 }
 
@@ -2031,7 +2035,7 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
       )
     ) {
       selectedCaptain = changedPlayer.id;
-      room.sendAnnouncement("❗❗ Bạn đã bị thay vào trận muộn nên vẫn sẽ được chọn làm đội trưởng trận sau", changedPlayer.id, YELLOW, "small-italic", 2);
+      room.sendAnnouncement(`❗❗ ${changedPlayer.name} đã bị thay vào trận muộn nên vẫn sẽ được chọn làm đội trưởng trận sau`, null, YELLOW, "small-italic");
     };
   };
 }
