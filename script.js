@@ -21,6 +21,7 @@ const RED = 0xFA3E3E;
 const GREEN = 0x5DB899;
 const YELLOW = 0xF1CC81;
 const BLUE = 0x047CC4;
+const BALL_COLORS = [0x9B5FE0, 0x16A4D8, 0x60DBE8, 0xEFDF48, 0xF9A52C, 0xD64E12];
 const TEAM_NAMES = {
   1: "RED",
   2: "BLUE",
@@ -230,6 +231,15 @@ class Game {
     return stats;
   }
 };
+class BallColor {
+  constructor() {
+    this.index = 0;
+  }
+  getColor() {
+    this.index++;
+    return BALL_COLORS[this.index % BALL_COLORS.length];
+  }
+}
 
 var commands = { // Format: "alias: [function, availableModes, minimumRole, captainOnly]"
   help: [helpFunc, ["rand", "pick"], ROLE.PLAYER, false],
@@ -290,6 +300,7 @@ var timeouts = {
 };
 var selectedCaptain = null;
 var quotes = [];
+var ballColor = new BallColor();
 
 var room = HBInit({
   roomName: `💥 [De Paul's auto room] 5v5 (${MODE})`,
@@ -343,7 +354,7 @@ function getPlayerStats() {
 
 async function randomAnnouncement() {
   let msg;
-  switch ( Math.floor(Math.random() * 3) ) {
+  switch ( getRandomInt(3) ) {
     case 0: // Send Discord link
       msg = `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`;
       break;
@@ -367,7 +378,7 @@ function randomGameStat() {
   let scores = room.getScores();
   if ( (scores == null) || (scores.time < 60) ) return;
   let fact;
-  switch ( Math.floor(Math.random() * 5) ) {
+  switch ( getRandomInt(5) ) {
     case 0:
       fact = `Kiểm soát bóng: 🟥 ${game.getStats().possession.map(possession => possession + "%").join(" - ")} 🟦`;
       break;
@@ -391,7 +402,7 @@ function randomGameStat() {
         };
       };
       if ( topPasser.passes == 0 ) return;
-      fact = `Thực hiện nhiều đường chuyền nhất: ${stats.name} (${stats.passes} đường chuyền)`;
+      fact = `Thực hiện nhiều đường chuyền nhất: ${topPasser.name} (${topPasser.passes} đường chuyền)`;
   };
   room.sendAnnouncement(`⏩⏩    ${fact}    ⏪⏪`, null, 0xCF9FFF, "small-bold");
 }
@@ -473,13 +484,18 @@ function getTag(name) {
 function getDisplayLength(string) {
   let canvas = document.createElement("canvas");
   let context = canvas.getContext("2d");
-  context.font = getComputedStyle(document.body).font;
+  context.font = "16px Arial"; // This is Discord font, because the purpose of doing all this is related to display of messages on Discord
   return Math.round([...string].reduce((size, char) => size + ((char.charCodeAt(0) > 255) ? context.measureText(char).width : 8.8), 0) / 8.8);
+}
+
+// Get a random number from a range (start from 0)
+function getRandomInt(rangeEnd) {
+  return Math.floor(Math.random() * rangeEnd);
 }
 
 // Get a random element from an array
 function randomChoice(array) {
-  return array[Math.floor(Math.random() * array.length)];
+  return array[getRandomInt(array.length)];
 }
 
 // Get value in meters from haxball length unit
@@ -681,7 +697,7 @@ async function avatarEffect(playerId, avatars) {
 }
 
 async function celebrationEffect(player, hasScored) {
-  switch ( Math.floor(Math.random() * 8) ) {
+  switch ( getRandomInt(8) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
       break;
@@ -1917,79 +1933,83 @@ function handlePostGame(winner) {
 }
 
 room.onPlayerJoin = async function(player) {
-  if ( !isPlayerValid(player) ) return;
-  saveIdentities(player);
-  initiateChat(player);
-  await updateTeamPlayers();
-  reorderPlayers();
-  if ( adminAuths.has(player.auth) ) { // Auto-login
-    room.setPlayerAdmin(player.id, true);
-  };
-  if ( MODE == "pick" ) {
-    // Assign captains if missing
-    for (let teamId = 1; teamId < 3; teamId++) {
-      if ( captains[teamId] == 0 ) {
-        updateCaptain(teamId, player);
-        break;
+  await navigator.locks.request("handle_player_join", async lock => {
+    if ( !isPlayerValid(player) ) return;
+    saveIdentities(player);
+    initiateChat(player);
+    await updateTeamPlayers();
+    reorderPlayers();
+    if ( adminAuths.has(player.auth) ) { // Auto-login
+      room.setPlayerAdmin(player.id, true);
+    };
+    if ( MODE == "pick" ) {
+      // Assign captains if missing
+      for (let teamId = 1; teamId < 3; teamId++) {
+        if ( captains[teamId] == 0 ) {
+          updateCaptain(teamId, player);
+          break;
+        };
+      };
+      showSpecTable();
+    };
+    if ( !isTakingPenalty ) {
+      switch ( getNonAfkPlayers().length ) {
+        case 2:
+          loadStadium("1v1");
+          break;
+        case 6:
+          loadStadium("3v3");
+          break;
+        case 8:
+          loadStadium("5v5");
       };
     };
-    showSpecTable();
-  };
-  if ( !isTakingPenalty ) {
-    switch ( getNonAfkPlayers().length ) {
-      case 2:
-        loadStadium("1v1");
-        break;
-      case 6:
-        loadStadium("3v3");
-        break;
-      case 8:
-        loadStadium("5v5");
-    };
-  };
+  });
 }
 
 room.onPlayerLeave = async function(player) {
-  delete identities[player.id]; // Delete unused record
-  if ( player.team != 0 ) {
-    await updateTeamPlayers();
-  } else if ( afkList.has(player.id) ) { // Player was in AFK list
-    // Remove from AFK list
-    afkList.delete(player.id);
-  };
+  await navigator.locks.request("handle_player_leave", async lock => {
+    delete identities[player.id]; // Delete unused record
+    if ( player.team != 0 ) {
+      await updateTeamPlayers();
+    } else if ( afkList.has(player.id) ) { // Player was in AFK list
+      // Remove from AFK list
+      afkList.delete(player.id);
+    };
 
-  if ( isTakingPenalty ) {
-    // A penalty taker left the room
-    for (let i = 0; i < 2; i++) {
-      let index = game.penalty.groups[i].indexOf(player.id);
-      if ( index == -1 ) continue;
-      game.penalty.groups[i].splice(index, 1);
-      if ( game.penalty.groups[i].length == 0 ) {
-        room.sendChat(`Toàn bộ cầu thủ sút luân lưu của ${TEAM_NAMES[i + 1]} đã rời phòng, ${TEAM_NAMES[i + 1]} đã bị xử thua`);
-        await endPenaltyShootout(2 - i);
-        break;
+    if ( isTakingPenalty ) {
+      // A penalty taker left the room
+      for (let i = 0; i < 2; i++) {
+        let index = game.penalty.groups[i].indexOf(player.id);
+        if ( index == -1 ) continue;
+        game.penalty.groups[i].splice(index, 1);
+        if ( game.penalty.groups[i].length == 0 ) {
+          room.sendChat(`Toàn bộ cầu thủ sút luân lưu của ${TEAM_NAMES[i + 1]} đã rời phòng, ${TEAM_NAMES[i + 1]} đã bị xử thua`);
+          await endPenaltyShootout(2 - i);
+          break;
+        };
+      };
+    } else {
+      switch ( getNonAfkPlayers().length ) {
+        case 7:
+          loadStadium("3v3");
+          break;
+        case 5:
+          loadStadium("1v1");
+          break;
+        case 1:
+          loadStadium("training");
       };
     };
-  } else {
-    switch ( getNonAfkPlayers().length ) {
-      case 7:
-        loadStadium("3v3");
-        break;
-      case 5:
-        loadStadium("1v1");
-        break;
-      case 1:
-        loadStadium("training");
-    };
-  };
 
-  // A captain left, assign another one
-  let isCaptainOf = ( player.id == captains[1] ) ? 1 : ( player.id == captains[2] ) ? 2 : 0;
-  if ( isCaptainOf != 0 ) {
-    await updateCaptain(isCaptainOf);
-  };
-  checkAutoPick() || showSpecTable();
-}
+    // A captain left, assign another one
+    let isCaptainOf = ( player.id == captains[1] ) ? 1 : ( player.id == captains[2] ) ? 2 : 0;
+    if ( isCaptainOf != 0 ) {
+      await updateCaptain(isCaptainOf);
+    };
+    checkAutoPick() || showSpecTable();
+  });
+};
 
 room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
   if ( isTakingPenalty ) {
@@ -2043,6 +2063,7 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
 room.onPlayerBallKick = function(player) {
   if ( isTakingPenalty ) return;
   updateBallKick(player);
+  (getRole(player) >= ROLE.VIP) && room.setDiscProperties(0, {color: ballColor.getColor()}); // Switch ball color
 }
 
 room.onTeamGoal = function(team) {
