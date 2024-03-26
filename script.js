@@ -12,6 +12,7 @@ const MAX_SUBSTITUTIONS = 2;
 const MAX_PLAYERS = 5;
 const TIME_LIMIT = 5;
 const SCORE_LIMIT = 4;
+const MIN_PLAYERS_FOR_STATS = MAX_PLAYERS - 1;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
 const MIN_TIME_FOR_SURRENDER = 2 * 60;
@@ -21,7 +22,7 @@ const RED = 0xFA3E3E;
 const GREEN = 0x5DB899;
 const YELLOW = 0xF1CC81;
 const BLUE = 0x047CC4;
-const BALL_COLORS = [0xFFFFCC, 0xCCFFCC, 0xFFCCFF, 0xCCCCFF, 0xCCFFFF, 0xE5E7E9];
+const BALL_COLORS = [0xFFFFCC, 0xCCFFFF, 0xE5CCFF, 0xCCFFCC, 0xFFCCFF, 0xE5E7E9];
 const TEAM_NAMES = {
   1: "RED",
   2: "BLUE",
@@ -1929,7 +1930,7 @@ function handlePostGame(winner) {
     winningStreak = 1;
     prevWinner = winner;
   };
-  if ( getNonAfkPlayers().length >= 10 ) reportStats();
+  if ( getNonAfkPlayers().length >= MIN_PLAYERS_FOR_STATS * 2 ) reportStats();
 }
 
 room.onPlayerJoin = async function(player) {
@@ -2192,7 +2193,7 @@ room.onGameStart = function(byPlayer) {
 room.onGameStop = async function(byPlayer) {
   isPlaying = false;
   clearAfkRecords(); // Stop monitoring AFK when the game is stopped
-  if ( getNonAfkPlayers().length >= 10 ) saveStats(); // Save stats of the previous game
+  if ( getNonAfkPlayers().length >= MIN_PLAYERS_FOR_STATS * 2 ) saveStats(); // Save stats of the previous game
   if ( (byPlayer !== null) && (byPlayer.id != 0) ) { // It wasn't a game over or stopped by host player
     room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
     room.stopRecording();
