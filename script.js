@@ -1083,6 +1083,11 @@ function showRankingsFunc(value, player) {
   msg += `\n👟 Danh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists})`).join("  •  ")}`;
   msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
+  // Sort players by cleansheets kept
+  playerList.sort((player1, player2) => player2.cleansheets - player1.cleansheets);
+  msg += `\n🧤 Danh sách giữ sạch lưới hàng đầu tháng ${getMonths()} 🧤: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.cleansheets})`).join("  •  ")}`;
+  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
+
   room.sendAnnouncement(msg, player.id, YELLOW, "small-italic", 0);
   return false;
 }
