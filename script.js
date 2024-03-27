@@ -1226,6 +1226,7 @@ function subFunc(value, player) {
   room.setPlayerTeam(inPlayer.id, player.team);
   room.setPlayerTeam(outPlayer.id, 0);
   game.teams[player.team].substitutions++;
+  room.sendAnnouncement(`Lượt thay người còn lại: ${MAX_SUBSTITUTIONS - game.teams[player.team].substitutions}`, null, yellow, "small-italic", 0);
   return false;
 }
 
@@ -1779,6 +1780,7 @@ async function endPenaltyShootout(winner) {
       await room.setPlayerTeam(id, i + 1);
     };
   };
+  room.reorderPlayers(Object.values(captains), true); // Move captains to top of the list
   handlePostGame(winner);
   isTakingPenalty = false;
   await room.stopGame();
