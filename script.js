@@ -1226,7 +1226,7 @@ function subFunc(value, player) {
   room.setPlayerTeam(inPlayer.id, player.team);
   room.setPlayerTeam(outPlayer.id, 0);
   game.teams[player.team].substitutions++;
-  room.sendAnnouncement(`Lượt thay người còn lại: ${MAX_SUBSTITUTIONS - game.teams[player.team].substitutions}`, null, yellow, "small-italic", 0);
+  room.sendAnnouncement(`Lượt thay người còn lại: ${MAX_SUBSTITUTIONS - game.teams[player.team].substitutions}`, null, YELLOW, "small-italic", 0);
   return false;
 }
 
@@ -1937,86 +1937,84 @@ function handlePostGame(winner) {
     winningStreak = 1;
     prevWinner = winner;
   };
-  if ( getNonAfkPlayers().length >= MIN_PLAYERS_FOR_STATS * 2 ) reportStats();
+  if ( getNonAfkPlayers().length < MIN_PLAYERS_FOR_STATS * 2 ) return;
+  reportStats();
+  saveStats();
 }
 
 room.onPlayerJoin = async function(player) {
-  await navigator.locks.request("handle_player_join", async lock => {
-    if ( !isPlayerValid(player) ) return;
-    saveIdentities(player);
-    initiateChat(player);
-    await updateTeamPlayers();
-    reorderPlayers();
-    if ( adminAuths.has(player.auth) ) { // Auto-login
-      room.setPlayerAdmin(player.id, true);
-    };
-    if ( MODE == "pick" ) {
-      // Assign captains if missing
-      for (let teamId = 1; teamId < 3; teamId++) {
-        if ( captains[teamId] == 0 ) {
-          updateCaptain(teamId, player);
-          break;
-        };
-      };
-      showSpecTable();
-    };
-    if ( !isTakingPenalty ) {
-      switch ( getNonAfkPlayers().length ) {
-        case 2:
-          loadStadium("1v1");
-          break;
-        case 6:
-          loadStadium("3v3");
-          break;
-        case 8:
-          loadStadium("5v5");
+  if ( !isPlayerValid(player) ) return;
+  saveIdentities(player);
+  initiateChat(player);
+  await updateTeamPlayers();
+  reorderPlayers();
+  if ( adminAuths.has(player.auth) ) { // Auto-login
+    room.setPlayerAdmin(player.id, true);
+  };
+  if ( MODE == "pick" ) {
+    // Assign captains if missing
+    for (let teamId = 1; teamId < 3; teamId++) {
+      if ( captains[teamId] == 0 ) {
+        updateCaptain(teamId, player);
+        break;
       };
     };
-  });
+    showSpecTable();
+  };
+  if ( !isTakingPenalty ) {
+    switch ( getNonAfkPlayers().length ) {
+      case 2:
+        loadStadium("1v1");
+        break;
+      case 6:
+        loadStadium("3v3");
+        break;
+      case 8:
+        loadStadium("5v5");
+    };
+  };
 }
 
 room.onPlayerLeave = async function(player) {
-  await navigator.locks.request("handle_player_leave", async lock => {
-    delete identities[player.id]; // Delete unused record
-    if ( player.team != 0 ) {
-      await updateTeamPlayers();
-    } else if ( afkList.has(player.id) ) { // Player was in AFK list
-      // Remove from AFK list
-      afkList.delete(player.id);
-    };
-
-    if ( isTakingPenalty ) {
-      // A penalty taker left the room
-      for (let i = 0; i < 2; i++) {
-        let index = game.penalty.groups[i].indexOf(player.id);
-        if ( index == -1 ) continue;
-        game.penalty.groups[i].splice(index, 1);
-        if ( game.penalty.groups[i].length == 0 ) {
-          room.sendChat(`Toàn bộ cầu thủ sút luân lưu của ${TEAM_NAMES[i + 1]} đã rời phòng, ${TEAM_NAMES[i + 1]} đã bị xử thua`);
-          await endPenaltyShootout(2 - i);
-          break;
-        };
-      };
-    } else {
-      switch ( getNonAfkPlayers().length ) {
-        case 7:
-          loadStadium("3v3");
-          break;
-        case 5:
-          loadStadium("1v1");
-          break;
-        case 1:
-          loadStadium("training");
+  delete identities[player.id]; // Delete unused record
+  if ( player.team != 0 ) {
+    await updateTeamPlayers();
+  } else if ( afkList.has(player.id) ) { // Player was in AFK list
+    // Remove from AFK list
+    afkList.delete(player.id);
+  };
+  
+  if ( isTakingPenalty ) {
+    // A penalty taker left the room
+    for (let i = 0; i < 2; i++) {
+      let index = game.penalty.groups[i].indexOf(player.id);
+      if ( index == -1 ) continue;
+      game.penalty.groups[i].splice(index, 1);
+      if ( game.penalty.groups[i].length == 0 ) {
+        room.sendChat(`Toàn bộ cầu thủ sút luân lưu của ${TEAM_NAMES[i + 1]} đã rời phòng, ${TEAM_NAMES[i + 1]} đã bị xử thua`);
+        await endPenaltyShootout(2 - i);
+        break;
       };
     };
-
-    // A captain left, assign another one
-    let isCaptainOf = ( player.id == captains[1] ) ? 1 : ( player.id == captains[2] ) ? 2 : 0;
-    if ( isCaptainOf != 0 ) {
-      await updateCaptain(isCaptainOf);
+  } else {
+    switch ( getNonAfkPlayers().length ) {
+      case 7:
+        loadStadium("3v3");
+        break;
+      case 5:
+        loadStadium("1v1");
+        break;
+      case 1:
+        loadStadium("training");
     };
-    checkAutoPick() || showSpecTable();
-  });
+  };
+
+  // A captain left, assign another one
+  let isCaptainOf = ( player.id == captains[1] ) ? 1 : ( player.id == captains[2] ) ? 2 : 0;
+  if ( isCaptainOf != 0 ) {
+    await updateCaptain(isCaptainOf);
+  };
+  checkAutoPick() || showSpecTable();
 };
 
 room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
@@ -2200,7 +2198,6 @@ room.onGameStart = function(byPlayer) {
 room.onGameStop = async function(byPlayer) {
   isPlaying = false;
   clearAfkRecords(); // Stop monitoring AFK when the game is stopped
-  if ( getNonAfkPlayers().length >= MIN_PLAYERS_FOR_STATS * 2 ) saveStats(); // Save stats of the previous game
   if ( (byPlayer !== null) && (byPlayer.id != 0) ) { // It wasn't a game over or stopped by host player
     room.sendChat("Trận đấu đã bị hủy bỏ vì thời tiết xấu");
     room.stopRecording();
