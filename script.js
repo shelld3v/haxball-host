@@ -439,6 +439,7 @@ function resetStorage() {
     return player2.assists - player1.assists;
   }).slice(0, 5);
   let topOwnGoalScorers = playerList.sort((player1, player2) => player2.ownGoals - player1.ownGoals).slice(0, 5);
+  let topGoalkeepers = playerList.sort((player1, player2) => player2.cleansheets - player1.cleansheets).slice(0, 5);
 
   let msg = `Danh sách vua phá lưới tháng ${getMonths()}:
 
@@ -457,6 +458,10 @@ ${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goa
     {
       name: "Vua báo",
       value: `============================\n\n*${topOwnGoalScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.ownGoals} bàn thắng phản lưới nhà`).join("\n")}*`,
+    },
+    {
+      name: "Vua sạch lưới",
+      value: `============================\n\n*${topGoalkeepers.map((player, index) => `${index + 1}. ${player.name} - ${player.cleansheets} trận sạch lưới`).join("\n")}*`,
     },
   ];
   sendWebhook(`✨ Số liệu thống kê trong tháng ${getMonths()}`, null, discordFields);
@@ -1226,7 +1231,7 @@ function subFunc(value, player) {
   room.setPlayerTeam(inPlayer.id, player.team);
   room.setPlayerTeam(outPlayer.id, 0);
   game.teams[player.team].substitutions++;
-  room.sendAnnouncement(`Lượt thay người còn lại: ${MAX_SUBSTITUTIONS - game.teams[player.team].substitutions}`, null, YELLOW, "small-italic", 0);
+  room.sendAnnouncement(`Lượt thay người còn lại: ${MAX_SUBSTITUTIONS - game.teams[player.team].substitutions}`, player.id, YELLOW, "small-italic", 0);
   return false;
 }
 
