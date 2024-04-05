@@ -319,7 +319,7 @@ setInterval(randomGameStat, 2.5 * 60 * 1000);
 if ( MODE == "pick" ) setInterval(showSpecTable.bind(null), 5 * 1000); // Send Spectators table once every few seconds to prevent it from being faded away by other messages
 updateMetadata();
 
-function loadStadium(name) {
+async function loadStadium(name) {
   let _stadium = {
     "penalty": [PENALTY_STADIUM, 0, 0],
     "5v5": [STADIUM, SCORE_LIMIT, TIME_LIMIT],
@@ -328,7 +328,7 @@ function loadStadium(name) {
     "training": [STADIUM_TRAINING, 0, 0],
   }[name];
   let wasPlaying = !!room.getScores();
-  room.stopGame();
+  await room.stopGame();
   room.setCustomStadium(_stadium[0]);
   room.setScoreLimit(_stadium[1]);
   room.setTimeLimit(_stadium[2]);
