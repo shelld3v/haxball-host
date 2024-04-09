@@ -438,8 +438,14 @@ function resetStorage() {
     };
     return player2.assists - player1.assists;
   }).slice(0, 5);
-  let topOwnGoalScorers = playerList.sort((player1, player2) => player2.ownGoals - player1.ownGoals).slice(0, 5);
+  let topMOTMs = playerList.sort(function(player1, player2) {
+    if ( player1.motms == player2.motms ) {
+      return (player2.goals + player2.assists) - (player1.goals + player1.assists);
+    };
+    return player2.motms - player1.motms;
+  }).slice(0, 5);
   let topGoalkeepers = playerList.sort((player1, player2) => player2.cleansheets - player1.cleansheets).slice(0, 5);
+  let topOwnGoalScorers = playerList.sort((player1, player2) => player2.ownGoals - player1.ownGoals).slice(0, 5);
 
   let msg = `Danh sách vua phá lưới tháng ${getMonths()}:
 
@@ -456,12 +462,16 @@ ${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goa
       value: `============================\n\n*${topAssisters.map((player, index) => `${index + 1}. ${player.name} - ${player.assists} kiến tạo`).join("\n")}*`,
     },
     {
-      name: "Vua báo",
-      value: `============================\n\n*${topOwnGoalScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.ownGoals} bàn thắng phản lưới nhà`).join("\n")}*`,
+      name: "Cầu thủ xuất sắc nhất",
+      value: `============================\n\n*${topMOTMs.map((player, index) => `${index + 1}. ${player.name} - ${player.motms} lần nhận MOTM`).join("\n")}*`,
     },
     {
-      name: "Vua sạch lưới",
+      name: "Giữ sạch lưới nhiều nhất",
       value: `============================\n\n*${topGoalkeepers.map((player, index) => `${index + 1}. ${player.name} - ${player.cleansheets} trận sạch lưới`).join("\n")}*`,
+    },
+    {
+      name: "Báo nhất",
+      value: `============================\n\n*${topOwnGoalScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.ownGoals} bàn thắng phản lưới nhà`).join("\n")}*`,
     },
   ];
   sendWebhook(`✨ Số liệu thống kê trong tháng ${getMonths()}`, null, discordFields);
