@@ -621,9 +621,9 @@ function getPlayerByPos(number) {
   return getNonAfkPlayers().filter(player => player.team == 0)[number - 1];
 }
 
-function getMotms() {
+function getMotm() {
   if ( getNonAfkPlayers().length < MAX_PLAYERS * 2 ) return {};
-  let MOTMs = {};
+  let motm;
   let highestPoints = Number.MIN_VALUE;
   for (let teamId = 1; teamId < 3; teamId++) {
     for (const [auth, stats] of Object.entries(game.teams[teamId].players)) {
@@ -633,16 +633,13 @@ function getMotms() {
         points += PLAYER_SCORING_RULES[statName] * value;
       };
       if ( teamId == prevWinner ) points++; // Winners get an extra point
-      if ( points >= highestPoints ) {
-        if ( points > highestPoints ) {
-          MOTMs = {};
-          highestPoints = points;
-        };
-        MOTMs[auth] = stats;
+      if ( (points > highestPoints) || ((points == highestPoints) && (stats.touches > motm[1].touches)) ) {
+        highestPoints = points;
+        motm = [auth, stats];
       };
     };
   };
-  return MOTMs;
+  return motm;
 }
 
 function getPredictionWinners() {
@@ -1557,7 +1554,7 @@ function updateGoalStats(team) {
 }
 
 function saveStats() {
-  let motms = Object.keys(getMotms());
+  let motmAuth = getMotm()[0];
   for (let teamId = 1; teamId < 3; teamId++) {
     for (const [auth, report] of Object.entries(game.teams[teamId].players)) {
       let item = getStats(auth);
@@ -1568,7 +1565,7 @@ function saveStats() {
       item.games++;
       if ( teamId == prevWinner ) item.wins++;
       if ( prevScore.split("0").length > (teamId != prevWinner) + 1 ) item.cleansheets++;
-      if ( motms.includes(auth) ) item.motms++;
+      if ( auth == motmAuth ) item.motms++;
       localStorage.setItem(auth, JSON.stringify(item));
     };
   };
@@ -1588,7 +1585,7 @@ function reportStats() {
   room.sendAnnouncement(scoreline, null, YELLOW, "bold", 0);
 
   let stats = game.getStats();
-  let MOTMs = Object.values(getMotms()).map(player => player.name).join(", ");
+  let motm = getMotm()[1];
   let contributions = [[], []];
   let playerStats = [["Người chơi                       ", "Đội ", "Bàn", "Kiến tạo", "Phản lưới", "Đường chuyền", "Sút trúng đích", "Chặn cú sút", "Nỗ lực tạo ra bàn thắng phản lưới", "Sai lầm dẫn đến bàn thua", "Penalty thành công", "Penalty không thành công", "Chạm bóng"]];
   playerStats.push(["-".repeat(playerStats[0].reduce((length, name) => length + name.length + 3, 0) - 3)]);
@@ -1630,7 +1627,7 @@ function reportStats() {
       contributions[i].push(msg);
     };
   };
-  playerStats.push([""], [`Man(s) of the Match: ${MOTMs}`])
+  playerStats.push([""], [`Man of the Match: ${motm}`])
 
   // Generate a room message about game statistics
   let statsMsg = `Kiểm soát bóng: 🔴 ${stats.possession.map(possession => possession + "%").join(" - ")} 🔵
@@ -1642,7 +1639,7 @@ Lượt chuyền bóng: 🔴 ${stats.passes.join(" - ")} 🔵`;
   if ( contributions[1].length != 0 ) {
     statsMsg += `\nBLUE: ${contributions[1].join("  •  ")}`;
   };
-  statsMsg += `\nCầu thủ xuất sắc nhất trận: ${MOTMs} 🎇`
+  statsMsg += `\nCầu thủ xuất sắc nhất trận: ${motm} 🎇`
   statsMsg += `\nChuỗi bất bại: ${winningStreak} trận 🔥`;
   room.sendAnnouncement(statsMsg, null, YELLOW, "small-bold", 0);
 
@@ -1671,7 +1668,7 @@ Lượt chuyền bóng: 🔴 ${stats.passes.join(" - ")} 🔵`;
     },
     {
       name: "",
-      value: `MOTM: ${MOTMs}\nThời gian: ${elapsedTime}\nChuỗi bất bại: ${winningStreak} trận`,
+      value: `MOTM: ${motm}\nThời gian: ${elapsedTime}\nChuỗi bất bại: ${winningStreak} trận`,
       inline: false,
     },
   ];
