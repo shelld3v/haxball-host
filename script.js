@@ -1595,7 +1595,7 @@ function reportStats() {
   room.sendAnnouncement(scoreline, null, YELLOW, "bold", 0);
 
   let stats = game.getStats();
-  let motm = getMotm()[1];
+  let motm = getMotm()[1].name;
   let contributions = [[], []];
   let playerStats = [["Người chơi                       ", "Đội ", "Bàn", "Kiến tạo", "Phản lưới", "Đường chuyền", "Sút trúng đích", "Chặn cú sút", "Nỗ lực tạo ra bàn thắng phản lưới", "Sai lầm dẫn đến bàn thua", "Penalty thành công", "Penalty không thành công", "Chạm bóng"]];
   playerStats.push(["-".repeat(playerStats[0].reduce((length, name) => length + name.length + 3, 0) - 3)]);
