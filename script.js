@@ -900,7 +900,7 @@ function updateBallKick(player) {
     game.ballRecords[1].isAShot = false;
   } else if ( game.ballRecords[0].isAShot ) {
     stats.shotsOnTarget++;
-  } else if ( Math.abs(ballProperties.x + ballProperties.xspeed * 100) < stadium.goalLine.x ) { // Switch to penalty shootout when it hits maximum added time
+  } else if ( Math.abs(ballProperties.x + ballProperties.xspeed * 100) < stadium.goalLine.x ) { // Switch to penalty shootout when maximum added time reached
     let scores = room.getScores();
     if ( (scores.timeLimit != 0) && (scores.time - scores.timeLimit > MAX_ADDED_TIME) ) {
       startPenaltyShootout();
@@ -912,7 +912,7 @@ function updateBallKick(player) {
   if ( (game.ballRecords[2] !== null) && game.ballRecords[2].isAShot && (game.ballRecords[1].player.team != game.ballRecords[2].player.team) ) stats.stoppedShots++;
   if ( player.team != game.ballRecords[1].player.team ) return; // Received the ball from an opponent player
   if ( player.id != game.ballRecords[1].player.id ) stats.passes++; // Received the ball from a teammate, so the previous kick was a pass
-  game.teams[player.team].possession += timeGap; // Received the ball from a teammate or from yourself, so it's in possession
+  game.teams[player.team].possession += timeGap; // Received the ball from a teammate or from yourself, so it was in possession
 }
 
 // Change captain of a specific team
@@ -2159,7 +2159,7 @@ room.onPlayerChat = function(player, message) {
       return false;
     };
     if ( getRole(player) < ROLE.ADMIN ) {
-      // Disallow Spectators from messaging when 2 teams are picking or taking penalty
+      // Disallow Spectators from messaging when 2 teams are taking penalty
       if ( isTakingPenalty && (player.team == 0) ) {
         room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
         return false;
