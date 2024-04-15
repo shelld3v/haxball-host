@@ -789,7 +789,7 @@ function showSpecTable() {
   if ( !isPicking ) return;
   let playerList = getSpectators().map((player, index) => `${player.name} (#${index + 1})`);
   let table = " ".repeat(85) + "DANH SÁCH DỰ BỊ\n" + "_".repeat(150) + "\n" + playerList.join("  •  ") + "\n" + "_".repeat(150);
-  room.sendAnnouncement(table, captains[pickTurn], BLUE, "small-bold", 0);
+  room.sendAnnouncement(table, captains[pickTurn], BLUE, "small-bold", 2);
   room.sendAnnouncement("Hướng dẫn: nhập số hoặc tag để chọn người chơi (VD: 2 hoặc @De_Paul). Nhập '0' để tự động chọn người chơi có thống kê tốt nhất", captains[pickTurn], YELLOW, "small", 0);
 }
 
