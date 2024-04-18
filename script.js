@@ -1585,7 +1585,7 @@ function reportStats() {
   let scoreline = ` RED ${prevScore} BLUE`;
   let time;
   if ( game.penalty.results[0].length != 0 ) {
-    scoreline += ` (Luân lưu: ${game.penalty.results.map(results => results.length).join("-")})`;
+    scoreline += ` (Luân lưu: ${game.penalty.results.map(results => results.filter(Boolean).length).join("-")})`;
     time = 60 * TIME_LIMIT + MAX_ADDED_TIME;
   } else {
     time = room.getScores().time;
