@@ -138,6 +138,7 @@ class PlayerReport {
     this.wins = 0;
     this.games = 0;
     this.motms = 0;
+    this.auth = null;
     if ( player !== null ) {
       Object.assign(this, player);
     };
@@ -349,7 +350,7 @@ function getPlayerStats() {
   for (let i = 0; i < localStorage.length; i++) {
     var key = localStorage.key(i);
     if ( key.length != 43 ) continue;
-    playerList.push({ ...JSON.parse(localStorage.getItem(key)), auth: key });
+    playerList.push(new PlayerReport({ ...JSON.parse(localStorage.getItem(key)), auth: key }));
   };
   return playerList;
 }
@@ -446,6 +447,7 @@ function resetStorage() {
     return player2.motms - player1.motms;
   }).slice(0, 5);
   let topGoalkeepers = playerList.sort((player1, player2) => player2.cleansheets - player1.cleansheets).slice(0, 5);
+  let topWinners = playerList.filter(player => player.games >= 50).sort((player1, player2) => player2.getWinRate() - player1.getWinRate()).slice(0, 5);
   let topOwnGoalScorers = playerList.sort((player1, player2) => player2.ownGoals - player1.ownGoals).slice(0, 5);
 
   let msg = `Danh sách vua phá lưới tháng ${getMonths()}:
@@ -469,6 +471,10 @@ ${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goa
     {
       name: "Giữ sạch lưới nhiều nhất",
       value: `============================\n\n*${topGoalkeepers.map((player, index) => `${index + 1}. ${player.name} - ${player.cleansheets} trận sạch lưới`).join("\n")}*`,
+    },
+    {
+      name: "Tỉ lệ win cao nhất (đã chơi trên 50 trận)",
+      value: `============================\n\n*${topWinners.map((player, index) => `${index + 1}. ${player.name} - tỉ lệ thắng ${player.getWinRate()}% (${player.games} trận)`).join("\n")}*`,
     },
     {
       name: "Báo nhất",
