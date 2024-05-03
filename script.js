@@ -320,7 +320,7 @@ if ( MODE == "pick" ) setInterval(showSpecTable.bind(null), 5 * 1000); // Send S
 updateMetadata();
 
 async function loadStadium(name) {
-  if ( isTakingPenalty ) return;
+  if ( isTakingPenalty && (name != "penalty") ) return;
   let _stadium = {
     "penalty": [PENALTY_STADIUM, 0, 0],
     "5v5": [STADIUM, SCORE_LIMIT, TIME_LIMIT],
@@ -1804,6 +1804,7 @@ Discord: ${DISCORD_LINK}`;
 }
 
 async function startPenaltyShootout() {
+  isTakingPenalty = true;
   prevScore = Array(2).fill(room.getScores().red).join("-");
   let deepestPositions = [Number.MAX_NUMBER, Number.MIN_NUMBER];
   // Store players' team and role (GK or not) for the penalty shootout
@@ -1822,7 +1823,6 @@ async function startPenaltyShootout() {
   });
   await room.stopGame();
   loadStadium("penalty");
-  isTakingPenalty = true;
   room.sendChat("Vậy là những phút thi đấu chính thức của trận đấu đã hết, 2 đội sẽ bước đến loạt sút luân lưu");
   await new Promise(r => setTimeout(r, AFTER_GAME_REST * 1000));
   takePenalty();
