@@ -16,6 +16,7 @@ const MIN_PLAYERS_FOR_STATS = MAX_PLAYERS - 1;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
 const MIN_TIME_FOR_SURRENDER = 2 * 60;
+const LATE_SUBSTITUTION_PERIOD = 20;
 const MAX_AFK_PLAYERS = 3;
 const SAVE_RECORDINGS = true;
 const RED = 0xFA3E3E;
@@ -2110,7 +2111,7 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
       (MODE == "pick") &&
       (selectedCaptain === null) &&
       (
-        (scores.timeLimit && (scores.timeLimit - scores.time < 15)) ||
+        (scores.timeLimit && (scores.timeLimit - scores.time < LATE_SUBSTITUTION_PERIOD)) ||
         (scores.scoreLimit && (Math.max(scores.red, scores.blue) == scores.scoreLimit))
       )
     ) {
