@@ -125,7 +125,7 @@ class Kick {
     this.isAShot = (
       (xOpponentGoal * ballProperties.xspeed > 0) && // It's a kick toward the opponent goal
       (Math.abs(ballProperties.x + ballProperties.xspeed * 97.5) > stadium.goalLine.x) && // At this speed, the ball can cross the goal line
-      (Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x) / ballProperties.xspeed) < stadium.goalLine.y) // Check if it's on target (not really accurate because it might hit the post)
+      (Math.abs(ballProperties.y + ballProperties.yspeed * (xOpponentGoal - ballProperties.x - stadium.ballRadius) / ballProperties.xspeed) < stadium.goalLine.y) // Check if it's on target (not really accurate because it might hit the post)
     );
   }
 };
