@@ -309,7 +309,7 @@ var ballColor = new BallColor();
 var room = HBInit({
   roomName: `💥 [De Paul's auto room] 5v5 (${MODE})`,
   maxPlayers: 30,
-  playerName: "BLV Khảnh Dơi",
+  playerName: "BLV Trương Anh Ngọc",
   public: true,
 });
 room.setTeamsLock(1);
@@ -1032,7 +1032,7 @@ function requestPick() {
   room.sendAnnouncement("Đã đến lượt bạn chọn người chơi", captains[pickTurn], YELLOW, "bold", 2);
   // Kick if captain doesn't pick in time
   timeouts.toPick = setTimeout(
-    room.kickPlayer.bind(null, captains[pickTurn], "AFK"),
+    room.kickPlayer.bind(null, captains[pickTurn], "Bạn đã không chọn người chơi trong thời gian quy định"),
     (( Math.min(redPlayersCount, bluePlayersCount) > 1 ) ? PICK_TIMEOUT : FIRST_PICK_TIMEOUT) * 1000,
   );
 }
