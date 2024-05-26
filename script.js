@@ -488,7 +488,6 @@ ${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goa
     localStorage.removeItem(key);
   }
   localStorage.setItem("starting_month", new Date().getMonth() + 1);
-  localStorage.setItem("conn_to_auth", "{}");
 }
 
 // Get months that are being monitored for statistics
@@ -827,22 +826,6 @@ function isPlayerValid(player) {
 
 function saveIdentities(player) {
   identities[player.id] = [player.auth, player.conn];
-  let CAPairs = JSON.parse(localStorage.getItem("conn_to_auth"));
-  let oldAuth = CAPairs[player.conn];
-  if ( (oldAuth !== undefined) && (oldAuth != player.auth) ) { // The device just changed its public ID, migrate the old data/setting
-    let data = localStorage.getItem(oldAuth);
-    if ( data !== null ) {
-      localStorage.setItem(player.auth, data);
-      localStorage.removeItem(oldAuth);
-    };
-    let setting = localStorage.getItem(`setting_${oldAuth}`);
-    if ( setting !== null ) {
-      localStorage.setItem(`setting_${player.auth}`, setting);
-      localStorage.removeItem(`setting_${oldAuth}`);
-    };
-  };
-  CAPairs[player.conn] = player.auth;
-  localStorage.setItem("conn_to_auth", JSON.stringify(CAPairs));
 }
 
 function canUseCommand(command, player) {
