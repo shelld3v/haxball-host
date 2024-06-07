@@ -1550,7 +1550,7 @@ function updateGoalStats(team) {
       assist && // Someone's kick resulted in this goal
       assist.isAShot && // The previous kick was a shot on target
       (assist.player.team == team) && // The previous kick came from an opponent player
-      (stadium.goalLine.x - Math.abs(shot.properties.x) < stadium.playerRadius * 3) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
+      (stadium.goalLine.x - Math.abs(shot.properties.x) < stadium.playerRadius * 3.5) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
       (shot.time - assist.time < 3) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
     ) {
       // Correct the credits
