@@ -894,13 +894,14 @@ function updateBallKick(player) {
   };
 
   let timeGap = game.ballRecords[0].time - game.ballRecords[1].time;
+  let travelingDistance = getDistance(ballProperties.x - game.ballRecords[1].properties.x, ballProperties.y - game.ballRecords[1].properties.y);
   let stats = getGameStats(player);
   stats.touches++;
   // If the previous kick was a shot on goal, check whether it was blocked and exclude that shot if it was
   if (
     game.ballRecords[1].isAShot &&
     (timeGap < 1) &&
-    (getDistance(ballProperties.x - game.ballRecords[1].properties.x, ballProperties.y - game.ballRecords[1].properties.y) < stadium.playerRadius * 1.25)
+    (travelingDistance < stadium.playerRadius * 1.25)
   ) {
     getGameStats(game.ballRecords[1].player.id).shotsOnTarget--;
     game.ballRecords[1].isAShot = false;
@@ -917,7 +918,7 @@ function updateBallKick(player) {
   stats = getGameStats(game.ballRecords[1].player);
   if ( (game.ballRecords[2] !== null) && game.ballRecords[2].isAShot && (game.ballRecords[1].player.team != game.ballRecords[2].player.team) ) stats.stoppedShots++;
   if ( player.team != game.ballRecords[1].player.team ) return; // Received the ball from an opponent player
-  if ( player.id != game.ballRecords[1].player.id ) stats.passes++; // Received the ball from a teammate, so the previous kick was a pass
+  if ( (player.id != game.ballRecords[1].player.id) && (travelingDistance < 12) ) stats.passes++; // Received the ball from a teammate, so the previous kick was a pass
   game.teams[player.team].possession += timeGap; // Received the ball from a teammate or from yourself, so it was in possession
 }
 
