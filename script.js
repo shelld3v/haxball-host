@@ -710,13 +710,13 @@ function setRandomColors() {
 async function avatarEffect(playerId, avatars) {
   for (const avatar of avatars) {
     await room.setPlayerAvatar(playerId, avatar);
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 200));
   };
   room.setPlayerAvatar(playerId, null);
 }
 
 async function celebrationEffect(player, hasScored) {
-  switch ( getRandomInt(8) ) {
+  switch ( getRandomInt(7) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
       break;
@@ -724,34 +724,17 @@ async function celebrationEffect(player, hasScored) {
       avatarEffect(player.id, ["😴", "💤", "😴", "💤"]);
       break;
     case 2:
-      let avatars;
-      switch ( hasScored ) {
-        case 2:
-          avatars = ["✌", "2", "✌🏻", "2", "✌🏿"];
-          break;
-        case 3:
-          avatars = ["👌", "3", "👌🏻", "3️", "👌🏿"];
-          break;
-        case 4:
-          avatars = ["✌✌", "4", "✌🏻✌🏻", "4", "✌🏿✌🏿"];
-          break;
-        default:
-          avatars = ["🌟", "⭐", "✨", "💫"];
-      };
-      avatarEffect(player.id, avatars, 250);
-      break;
-    case 3:
       let originalRadius = room.getPlayerDiscProperties(player.id).radius;
       for (let i = 1; i <= 5; i += 1) {
         await room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius - stadium.playerRadius * (i % 2) / 2 });
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise(r => setTimeout(r, 200));
       };
       room.setPlayerDiscProperties(player.id, { radius: originalRadius });
       break;
-    case 4:
+    case 3:
       room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius * 2 });
       break;
-    case 5:
+    case 4:
       let players = room.getPlayerList().flatMap(player_ => (player_.team == player.team) && (player_.id != player.id) ? [player_.id] : []);
       if ( players.length == 0 ) return;
       for (let i = 0; i < players.length; i++) {
@@ -764,11 +747,10 @@ async function celebrationEffect(player, hasScored) {
         );
       };
       break;
-    case 6:
+    case 5:
       for (let i = 1; i < 3; i++) {
         for (let j = 0; j < 5; j++) {
-          setTimeout(room.setPlayerDiscProperties.bind(
-            null,
+          await room.setPlayerDiscProperties(
             player.id,
             {
               x: player.position.x + stadium.playerRadius * 3 * i * Math.cos(Math.PI * 2 * j / 5),
@@ -776,16 +758,18 @@ async function celebrationEffect(player, hasScored) {
               xspeed: 0,
               yspeed: 0
             }
-          ), (i - 1) * 500 + j * 100);
+          );
+          await new Promise(r => setTimeout(r, 75));
         };
       };
       break;
-    case 7:
+    case 6:
       let originalColor = room.getDiscProperties(0).color;
-      let colors = [0xFF0000, 0xFF8000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF80, 0x00FFFF, 0x0080FF, 0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F, 0x808080, 0xFFFFFF, originalColor];
-      for (let i = 0; i < colors.length; i++) {
-        setTimeout(room.setDiscProperties.bind(null, 0, {color: colors[i]}), 150 * i);
+      for (const color of [0xFF0000, 0xFF8000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF80, 0x00FFFF, 0x0080FF, 0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F, 0x808080, 0xFFFFFF]) {
+        await room.setDiscProperties(0, {color: color});
+        await new Promise(r => setTimeout(r, 150));
       };
+      room.setDiscProperties(0, {color: originalColor});
       break;
   };
 }
