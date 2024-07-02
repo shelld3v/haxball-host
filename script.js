@@ -258,6 +258,7 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   captains: [listCaptainsFunc, ["pick"], ROLE.PLAYER, false],
   surrender: [surrenderFunc, ["pick"], ROLE.PLAYER, true],
   sub: [subFunc, ["pick"], ROLE.PLAYER, true],
+  leavecap: [leaveCaptainFunc, ["pick"], ROLE.PLAYER, true],
   pause: [pauseFunc, ["pick"], ROLE.PLAYER, true],
   resume: [resumeFunc, ["pick"], ROLE.PLAYER, true],
   msgcolor: [setMsgColorFunc, ["rand", "pick"], ROLE.VIP, false],
@@ -1319,6 +1320,24 @@ function assignCaptainFunc(value, player) {
     return false;
   };
   updateCaptain(teamIds[team], assignedPlayer);
+  return true;
+}
+
+function leaveCaptainFunc(value, player) {
+  let assignedPlayer = getPlayerByName(value);
+  if ( !assignedPlayer ) {
+    room.sendAnnouncement(`Người chơi "${value}" không tồn tại hoặc đã rời đi`, player.id, RED);
+    return false;
+  };
+  if ( afkList.has(assignedPlayer.id) ) {
+    room.sendAnnouncement("Người chơi đang ở trạng thái AFK", player.id, RED);
+    return false;
+  };
+  if ( assignedPlayer.team == getOppositeTeamId(player.team) ) {
+    room.sendAnnouncement("Người chơi đang chơi cho đội khác", player.id, RED);
+    return false;
+  };
+  updateCaptain(player.team, assignedPlayer);
   return true;
 }
 
