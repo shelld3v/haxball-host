@@ -15,7 +15,7 @@ const SCORE_LIMIT = 4;
 const MIN_PLAYERS_FOR_STATS = MAX_PLAYERS - 1;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
-const LATE_SUBSTITUTION_PERIOD = 20;
+const LATE_SUBSTITUTION_PERIOD = 25;
 const MAX_AFK_PLAYERS = 3;
 const SAVE_RECORDINGS = true;
 const RED = 0xFA3E3E;
@@ -839,7 +839,13 @@ function penaltyTimeoutCallback() {
 }
 
 async function updateTeamPlayers() {
-  if ( room.getScores() === null ) return;
+  let scores = room.getScores();
+  // The game is not yet started or is technically "over"
+  if (
+    (scores === null) ||
+    (scores.time == scores.timeLimit) ||
+    (Math.max(scores.red, scores.blue, 0.5) == scores.scoreLimit)
+  ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
     let players = getNonAfkPlayers();
@@ -1534,7 +1540,7 @@ function updateGoalStats(team) {
       assist && // Someone's kick resulted in this goal
       assist.isAShot && // The previous kick was a shot on target
       (assist.player.team == team) && // The previous kick came from an opponent player
-      (stadium.goalLine.x - Math.abs(shot.properties.x) < stadium.playerRadius * 3.5) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
+      (stadium.goalLine.x - Math.abs(shot.properties.x) < stadium.playerRadius * 4) && // The gap between the ball and the goal-line was pretty small it probably was an effort to clear the ball
       (shot.time - assist.time < 3) // The time between 2 kicks wasn't too big, otherwise, it sounds nothing like a save
     ) {
       // Correct the credits
@@ -2077,10 +2083,8 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
     if (
       (MODE == "pick") &&
       (selectedCaptain === null) &&
-      (
-        (scores.timeLimit && (scores.timeLimit - scores.time < LATE_SUBSTITUTION_PERIOD)) ||
-        (scores.scoreLimit && (Math.max(scores.red, scores.blue) == scores.scoreLimit))
-      )
+      scores.timeLimit &&
+      (scores.timeLimit - scores.time < LATE_SUBSTITUTION_PERIOD)
     ) {
       selectedCaptain = changedPlayer.id;
       room.sendAnnouncement(`❗❗ ${changedPlayer.name} đã bị thay vào trận muộn nên vẫn sẽ được chọn làm đội trưởng trận sau`, null, YELLOW, "small-italic");
