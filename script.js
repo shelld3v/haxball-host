@@ -892,7 +892,7 @@ function updateBallKick(player) {
   if (
     game.ballRecords[1].isAShot &&
     (timeGap < 1) &&
-    (travelingDistance < stadium.playerRadius * 1.25)
+    (travelingDistance < stadium.playerRadius)
   ) {
     getGameStats(game.ballRecords[1].player.id).shotsOnTarget--;
     game.ballRecords[1].isAShot = false;
