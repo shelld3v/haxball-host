@@ -717,7 +717,7 @@ async function avatarEffect(playerId, avatars) {
 }
 
 async function celebrationEffect(player, hasScored) {
-  switch ( getRandomInt(7) ) {
+  switch ( getRandomInt(6) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
       break;
@@ -749,29 +749,29 @@ async function celebrationEffect(player, hasScored) {
       };
       break;
     case 5:
-      for (let i = 1; i < 3; i++) {
-        for (let j = 0; j < 5; j++) {
-          await room.setPlayerDiscProperties(
-            player.id,
-            {
-              x: player.position.x + stadium.playerRadius * 3 * i * Math.cos(Math.PI * 2 * j / 5),
-              y: player.position.y + stadium.playerRadius * 3 * i * Math.sin(Math.PI * 2 * j / 5),
-              xspeed: 0,
-              yspeed: 0
-            }
-          );
-          await new Promise(r => setTimeout(r, 75));
-        };
-      };
-      break;
-    case 6:
       let originalColor = room.getDiscProperties(0).color;
       for (const color of [0xFF0000, 0xFF8000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF80, 0x00FFFF, 0x0080FF, 0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F, 0x808080, 0xFFFFFF]) {
         await room.setDiscProperties(0, {color: color});
-        await new Promise(r => setTimeout(r, 150));
+        await new Promise(r => setTimeout(r, 100));
       };
       room.setDiscProperties(0, {color: originalColor});
       break;
+    //case 6:
+    //  for (let i = 1; i < 3; i++) {
+    //    for (let j = 0; j < 5; j++) {
+    //      await room.setPlayerDiscProperties(
+    //        player.id,
+    //        {
+    //          x: player.position.x + stadium.playerRadius * 3 * i * Math.cos(Math.PI * 2 * j / 5),
+    //          y: player.position.y + stadium.playerRadius * 3 * i * Math.sin(Math.PI * 2 * j / 5),
+    //          xspeed: 0,
+    //          yspeed: 0
+    //        }
+    //      );
+    //      await new Promise(r => setTimeout(r, 75));
+    //    };
+    //  };
+    //  break;
   };
 }
 
@@ -2272,4 +2272,3 @@ room.onTeamsLockChange = function(locked, byPlayer) {
   // Make sure teams are always locked
   !locked && room.setTeamsLock(true);
 }
-
