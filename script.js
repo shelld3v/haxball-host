@@ -844,8 +844,8 @@ async function updateTeamPlayers() {
   // The game is not yet started or is technically "over"
   if (
     (scores === null) ||
-    (scores.time == scores.timeLimit) ||
-    (Math.max(scores.red, scores.blue, 0.5) == scores.scoreLimit)
+    (Math.max(scores.red, scores.blue, 0.5) == scores.scoreLimit) ||
+    ((scores.red != scores.blue) && (scores.time >= scores.timeLimit))
   ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
