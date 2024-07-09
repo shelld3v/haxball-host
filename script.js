@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "malone";
+const ADMIN_PASSWORD = "drake";
 const MODE = "pick"; // can be "rand" or "pick"
 const ACTIVITY_TIMEOUT = 10;
 const AFK_TIMEOUT = 10 * 60;
@@ -287,7 +287,7 @@ var captains = {1: 0, 2: 0};
 var kits = {red: null, blue: null};
 var prevScore = null;
 var predictions = {};
-var lastMessage = [null, null, null]; // The last message with the player ID and sending time
+var lastMessages = []; // The last 4 messages in the form of [message, playerId, sendingTime]
 var game = null;
 var penalty = null;
 var stadium = { // Stadium attributes
@@ -1756,11 +1756,24 @@ function celebratePenalty(team) {
 
 function checkSpam(player, message) {
   let time = new Date().getTime();
-  if ( (message === lastMessage[0]) && (player.id === lastMessage[1]) && (time - lastMessage[2] < 3000) ) { // The message is duplicated
+  if (
+    (lastMessages.length > 0) &&
+    (message === lastMessages[0][0]) &&
+    (player.id === lastMessages[0][1]) &&
+    (time - lastMessages[0][2] < 3000)
+  ) { // 2 duplicate messages in a row
     muteFunc(`${getTag(player.name)} 1 Spam`, room.getPlayer(0));
     return true;
+  } else if (
+    (lastMessages.length == 4) &&
+    (lastMessages.every(message => message[1] == player.id)) &&
+    (time - lastMessages.pop().time < 8000)
+  ) { // Sending too many messages in a short period of time
+    muteFunc(`${getTag(player.name)} 3 Nhắn quá nhanh`, room.getPlayer(0));
+    return true;
   };
-  lastMessage = [message, player.id, time];
+  lastMessages.unshift([message, player.id, time]);
+  if ( lastMessages.length > 4 ) lastMessages.pop();
   return false;
 }
 
