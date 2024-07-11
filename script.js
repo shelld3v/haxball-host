@@ -1767,7 +1767,7 @@ function checkSpam(player, message) {
   } else if (
     (lastMessages.length == 4) &&
     (lastMessages.every(message => message[1] == player.id)) &&
-    (time - lastMessages.pop().time < 8000)
+    (time - lastMessages.pop()[2] < 8000)
   ) { // Sending too many messages in a short period of time
     muteFunc(`${getTag(player.name)} 3 Nhắn quá nhanh`, room.getPlayer(0));
     return true;
