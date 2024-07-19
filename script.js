@@ -108,7 +108,7 @@ const NEW_UPDATE_MESSAGE = "MỚI: Người chơi có thể trở thành VIP m�
 class Setting {
   constructor(setting) {
     this.msgColor = "normal";
-    this.sizeDecreasement = 0;
+    this.sizeAdjustment = 0;
     if ( setting !== null ) {
       Object.assign(this, setting);
     };
@@ -262,7 +262,7 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   pause: [pauseFunc, ["pick"], ROLE.PLAYER, true],
   resume: [resumeFunc, ["pick"], ROLE.PLAYER, true],
   msgcolor: [setMsgColorFunc, ["rand", "pick"], ROLE.VIP, false],
-  reducesize: [reduceSizeFunc, ["rand", "pick"], ROLE.VIP, false],
+  adjustsize: [adjustSizeFunc, ["rand", "pick"], ROLE.VIP, false],
   yellow: [yellowCardFunc, ["rand", "pick"], ROLE.ADMIN, false],
   clearyellow: [clearYellowCardFunc, ["rand", "pick"], ROLE.ADMIN, false],
   mute: [muteFunc, ["rand", "pick"], ROLE.ADMIN, false],
@@ -309,7 +309,7 @@ var ballColor = new BallColor();
 var room = HBInit({
   roomName: `💥 [De Paul's auto room] 5v5 (${MODE})`,
   maxPlayers: 30,
-  playerName: "BLV Trương Anh Ngọc",
+  playerName: "BLV Zoi Đẹp Trai",
   public: true,
 });
 room.setTeamsLock(1);
@@ -687,9 +687,9 @@ function isCaptain(id) {
 
 function resizePlayer(id) {
   let setting = getSetting(id);
-  if ( setting.sizeDecreasement == 0 ) return;
+  if ( setting.sizeAdjustment == 0 ) return;
   let playerDiscProperties = room.getPlayerDiscProperties(id);
-  room.setPlayerDiscProperties(id, { radius: playerDiscProperties.radius - setting.sizeDecreasement });
+  room.setPlayerDiscProperties(id, { radius: playerDiscProperties.radius + setting.sizeAdjustment });
 }
 
 // Change players' size according to their settings
@@ -1278,22 +1278,26 @@ function setMsgColorFunc(value, player) {
   return false;
 }
 
-function reduceSizeFunc(value, player) {
+function adjustSizeFunc(value, player) {
   if ( !value || isNaN(value) ) {
-    room.sendAnnouncement("Vui lòng cung cấp số đơn vị muốn giảm, dùng 0 để chỉnh lại về bình thường (VD: !reducesize 2)", player.id, RED);
+    room.sendAnnouncement("Vui lòng cung cấp số đơn vị muốn thay đổi, dùng 0 để chỉnh lại về bình thường (VD: !adjustsize -2)", player.id, RED);
     return false;
   };
-  let setting = getSetting(player.id);
-  if ( (value < 0) || (value > stadium.playerRadius / 3) ) {
+  if ( (value > 0) && (getRole(player) < ROLE.ADMIN) ) {
+    room.sendAnnouncement("Chỉ admin mới được phép tăng kích cỡ cầu thủ", player.id, RED);
+    return false;
+  };
+  if ( Math.abs(value) > stadium.playerRadius / 3 ) {
     room.sendAnnouncement("Kích cỡ cầu thủ đã bị chỉnh tới mức không hợp lệ", player.id, RED);
     return false;
   };
-  let gap = value - setting.sizeDecreasement;
-  setting.sizeDecreasement = value;
+  let setting = getSetting(player.id);
+  let gap = value - setting.sizeAdjustment;
+  setting.sizeAdjustment = value;
   saveSetting(player.id, setting);
 
   let playerDiscProperties = room.getPlayerDiscProperties(player.id);
-  (playerDiscProperties !== null) && room.setPlayerDiscProperties(player.id, { radius: playerDiscProperties.radius - gap });
+  (playerDiscProperties !== null) && room.setPlayerDiscProperties(player.id, { radius: playerDiscProperties.radius + gap });
   room.sendAnnouncement("Đã chỉnh và lưu kích thước cầu thủ", player.id, GREEN);
   return false;
 }
