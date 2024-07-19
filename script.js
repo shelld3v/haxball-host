@@ -17,6 +17,7 @@ const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
 const LATE_SUBSTITUTION_PERIOD = 25;
 const MAX_AFK_PLAYERS = 3;
+const MAX_SIZE_ADJUSTMENT_RATIO = 0.4;
 const SAVE_RECORDINGS = true;
 const RED = 0xFA3E3E;
 const GREEN = 0x5DB899;
@@ -1287,7 +1288,7 @@ function adjustSizeFunc(value, player) {
     room.sendAnnouncement("Chỉ admin mới được phép tăng kích cỡ cầu thủ", player.id, RED);
     return false;
   };
-  if ( Math.abs(value) > stadium.playerRadius / 3 ) {
+  if ( Math.abs(value) > stadium.playerRadius * MAX_SIZE_ADJUSTMENT_RATIO ) {
     room.sendAnnouncement("Kích cỡ cầu thủ đã bị chỉnh tới mức không hợp lệ", player.id, RED);
     return false;
   };
