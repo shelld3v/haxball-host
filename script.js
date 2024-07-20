@@ -690,7 +690,7 @@ function resizePlayer(id) {
   let setting = getSetting(id);
   if ( setting.sizeAdjustment == 0 ) return;
   let playerRadius = stadium.playerRadius || room.getPlayerDiscProperties(id).radius;
-  room.setPlayerDiscProperties(id, { radius: playerRadius + setting.sizeAdjustment });
+  room.setPlayerDiscProperties(id, { radius: (+playerRadius) + (+setting.sizeAdjustment) });
 }
 
 // Change players' size according to their settings
