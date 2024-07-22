@@ -751,9 +751,9 @@ async function celebrationEffect(player, hasScored) {
       break;
     case 5:
       let originalColor = room.getDiscProperties(0).color;
-      for (const color of [0xFF0000, 0xFF8000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF80, 0x00FFFF, 0x0080FF, 0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F, 0x808080, 0xFFFFFF]) {
+      for (const color of [0xFF0000, 0xFF8000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF80, 0x00FFFF, 0x0080FF, 0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F]) {
         await room.setDiscProperties(0, {color: color});
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise(r => setTimeout(r, 50));
       };
       room.setDiscProperties(0, {color: originalColor});
       break;
