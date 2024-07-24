@@ -910,7 +910,7 @@ function updateBallKick(player) {
   stats = getGameStats(game.ballRecords[1].player);
   if ( (game.ballRecords[2] !== null) && game.ballRecords[2].isAShot && (game.ballRecords[1].player.team != game.ballRecords[2].player.team) ) stats.stoppedShots++;
   if ( player.team != game.ballRecords[1].player.team ) return; // Received the ball from an opponent player
-  if ( (player.id != game.ballRecords[1].player.id) && (travelingDistance < 12) ) stats.passes++; // Received the ball from a teammate, so the previous kick was a pass
+  if ( (player.id != game.ballRecords[1].player.id) && (travelingDistance > 12) ) stats.passes++; // Received the ball from a teammate, so the previous kick was a pass
   game.teams[player.team].possession += timeGap; // Received the ball from a teammate or from yourself, so it was in possession
 }
 
