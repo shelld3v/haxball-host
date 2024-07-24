@@ -13,6 +13,7 @@ const MAX_PLAYERS = 5;
 const TIME_LIMIT = 5;
 const SCORE_LIMIT = 4;
 const MIN_PLAYERS_FOR_STATS = MAX_PLAYERS - 1;
+const MIN_VOTES_FOR_SURRENDER = MAX_PLAYERS - 2;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
 const LATE_SUBSTITUTION_PERIOD = 25;
@@ -242,6 +243,31 @@ class BallColor {
   getColor() {
     this.index++;
     return BALL_COLORS[this.index % BALL_COLORS.length];
+  }
+}
+class Surrender {
+  constructor() {
+    this.votes = [new Set, new Set];
+  }
+  vote(teamId, player) {
+    if ( (teamId != 1) && (teamId != 2) ) return;
+    this.votes[teamId - 1].add(player.id);
+    let count = 0;
+    for (voter of this.votes[teamId - 1]) {
+      let player = room.getPlayer(voter);
+      if ( !player || (player.team != teamId) ) continue;
+      count++;
+    };
+    room.sendAnnouncement(`${player.name} đã bỏ phiếu đầu hàng cho ${TEAM_NAMES[teamId]} (${count}/${MIN_VOTES_FOR_SURRENDER})`);
+    if ( count >= MIN_VOTES_FOR_SURRENDER ) {
+      prevScore = `${scores.red}-${scores.blue}`;
+      handlePostGame(getOppositeTeamId(player.team));
+      room.stopGame();
+    } else {
+      room.get
+  }
+  reset() {
+    this.votes.every((votes) => votes.clear());
   }
 }
 
@@ -1995,6 +2021,7 @@ function personalizeMsg(message, player) {
 function reset() {
   game = new Game();
   predictions = {};
+  Surrender.reset();
 }
 
 function handlePostGame(winner) {
