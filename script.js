@@ -175,7 +175,7 @@ class TeamStats {
   resetStats() {
     this.substitutions = 0;
     this.possession = 0;
-    for (const playerId of this.players) {
+    for (const playerId in this.players) {
       delete this.players[playerId];
     };
   }
