@@ -13,6 +13,7 @@ const MAX_PLAYERS = 5;
 const TIME_LIMIT = 5;
 const SCORE_LIMIT = 4;
 const MIN_PLAYERS_FOR_STATS = MAX_PLAYERS - 1;
+const MIN_VOTES_FOR_SURRENDER = MAX_PLAYERS - 2;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
 const LATE_SUBSTITUTION_PERIOD = 25;
@@ -171,6 +172,13 @@ class TeamStats {
     this.possession = 0;
     this.players = {};
   }
+  resetStats() {
+    this.substitutions = 0;
+    this.possession = 0;
+    for (const playerId of this.players) {
+      delete this.players[playerId];
+    };
+  }
 };
 class Penalty {
   constructor() {
@@ -203,6 +211,10 @@ class Penalty {
   push(result) {
     this.results[this.getTurn()].push(result);
   }
+  clear() {
+    this.groups = [[], []];
+    this.results = [[], []];
+  }
 };
 class Game {
   constructor() {
@@ -213,9 +225,6 @@ class Game {
     this.penalty = new Penalty();
     this.ballRecords = [null, null, null];
   }
-  resetBallRecords() {
-    this.ballRecords = [null, null, null];
-  } 
   getStats() {
     let stats = {
       possession: [50, 50],
@@ -234,6 +243,15 @@ class Game {
     };
     return stats;
   }
+  resetBallRecords() {
+    this.ballRecords = [null, null, null];
+  }
+  reset() {
+    this.resetBallRecords();
+    this.penalty.clear();
+    this.teams[1].resetStats();
+    this.teams[2].resetStats();
+  }
 };
 class BallColor {
   constructor() {
@@ -242,6 +260,33 @@ class BallColor {
   getColor() {
     this.index++;
     return BALL_COLORS[this.index % BALL_COLORS.length];
+  }
+}
+class Surrender {
+  constructor() {
+    this.votes = [new Set, new Set];
+  }
+  vote(player) {
+    if ( player.team == 0 ) return;
+    if ( isCaptain(player.id) ) surrender(player.team); // Captains can surrender anytime
+    this.votes[player.team - 1].add(player.id);
+    let count = 0;
+    for (voterId of this.votes[player.team - 1]) {
+      let voter = room.getPlayer(voterId);
+      if ( voter && (voter.team == player.team) ) count++;
+    };
+    room.sendAnnouncement(`${player.name} đã bỏ phiếu đầu hàng cho ${TEAM_NAMES[player.team]} (${count}/${MIN_VOTES_FOR_SURRENDER})`, null, GREEN, "small", 0);
+
+    if ( count >= MIN_VOTES_FOR_SURRENDER ) {
+      surrender(player.team);
+    };
+  }
+  hasVoted(player) {
+    if ( player.team == 0 ) return false;
+    return this.votes[player.team - 1].has(player.id);
+  }
+  reset() {
+    this.votes.every((votes) => votes.clear());
   }
 }
 
@@ -257,7 +302,7 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   afk: [afkFunc, ["rand", "pick"], ROLE.PLAYER, false],
   predict: [predictFunc, ["rand", "pick"], ROLE.PLAYER, false],
   captains: [listCaptainsFunc, ["pick"], ROLE.PLAYER, false],
-  surrender: [surrenderFunc, ["pick"], ROLE.PLAYER, true],
+  surrender: [surrenderFunc, ["pick"], ROLE.PLAYER, false],
   sub: [subFunc, ["pick"], ROLE.PLAYER, true],
   leavecap: [leaveCaptainFunc, ["pick"], ROLE.PLAYER, true],
   pause: [pauseFunc, ["pick"], ROLE.PLAYER, true],
@@ -289,8 +334,8 @@ var kits = {red: null, blue: null};
 var prevScore = null;
 var predictions = {};
 var lastMessages = []; // The last 4 messages in the form of [message, playerId, sendingTime]
-var game = null;
-var penalty = null;
+var game = new Game;
+var surrenderVoter = new Surrender;
 var stadium = { // Stadium attributes
   goalLine: { x: 0, y: 0 },
   ballRadius: 0,
@@ -684,6 +729,13 @@ function getBestSpectatorByStats() {
 
 function isCaptain(id) {
   return Object.values(captains).includes(id);
+}
+
+function surrender(teamId) {
+  prevScore = `${scores.red}-${scores.blue}`;
+  handlePostGame(getOppositeTeamId(teamId));
+  room.stopGame();
+  room.sendAnnouncement(`🏴 Đội ${TEAM_NAMES[teamId]} đã đầu hàng`, null, 0x00FFFF, "small-italic", 0)
 }
 
 function resizePlayer(id) {
@@ -1192,11 +1244,12 @@ function surrenderFunc(value, player) {
     room.sendAnnouncement("Bạn chỉ có thể đầu hàng khi đội đang thua", player.id, RED);
     return false;
   };
+  if ( surrenderVoter.hasVoted(player) ) {
+    room.sendAnnouncement("Bạn đã bỏ phiếu đầu hàng trước đó", player.id, RED);
+    return false;
+  }
 
-  room.sendChat(`Đội trưởng của ${TEAM_NAMES[player.team]} đã lựa chọn đầu hàng, ${TEAM_NAMES[player.team]} đã bị xử thua`);
-  prevScore = `${scores.red}-${scores.blue}`;
-  handlePostGame(getOppositeTeamId(player.team));
-  room.stopGame();
+  surrenderVoter.vote(player);
   return false;
 }
 
@@ -1993,7 +2046,8 @@ function personalizeMsg(message, player) {
 }
 
 function reset() {
-  game = new Game();
+  game.reset();
+  surrenderVoter.reset();
   predictions = {};
 }
 
