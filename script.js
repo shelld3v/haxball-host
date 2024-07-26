@@ -294,7 +294,7 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   help: [helpFunc, ["rand", "pick"], ROLE.PLAYER, false],
   discord: [discordFunc, ["rand", "pick"], ROLE.PLAYER, false],
   bye: [byeFunc, ["rand", "pick"], ROLE.PLAYER, false],
-  stats: [showStatsFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  stat: [showStatsFunc, ["rand", "pick"], ROLE.PLAYER, false],
   rank: [showRankingsFunc, ["rand", "pick"], ROLE.PLAYER, false],
   kickafk: [kickAfkFunc, ["rand", "pick"], ROLE.PLAYER, false],
   spec: [specFunc, ["rand", "pick"], ROLE.PLAYER, false],
