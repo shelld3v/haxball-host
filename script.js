@@ -1231,6 +1231,10 @@ function predictFunc(prediction, player) {
 }
 
 function surrenderFunc(value, player) {
+  if ( player.team == 0 ) {
+    room.sendAnnouncement("Bạn không thể sử dụng lệnh này", player.id, RED);
+    return false;
+  };
   let scores = room.getScores();
   if ( isTakingPenalty || (scores === null) ) {
     room.sendAnnouncement("Lệnh không khả dụng lúc này", player.id, RED);
