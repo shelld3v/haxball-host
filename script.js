@@ -271,7 +271,7 @@ class Surrender {
     if ( isCaptain(player.id) ) surrender(player.team); // Captains can surrender anytime
     this.votes[player.team - 1].add(player.id);
     let count = 0;
-    for (voterId of this.votes[player.team - 1]) {
+    for (const voterId of this.votes[player.team - 1]) {
       let voter = room.getPlayer(voterId);
       if ( voter && (voter.team == player.team) ) count++;
     };
@@ -314,6 +314,7 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   mute: [muteFunc, ["rand", "pick"], ROLE.ADMIN, false],
   unmute: [unmuteFunc, ["rand", "pick"], ROLE.ADMIN, false],
   clearmutes: [clearMutesFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  ban: [banFunc, ["rand", "pick"], ROLE.ADMIN, false],
   clearbans: [clearBansFunc, ["rand", "pick"], ROLE.ADMIN, false],
   assigncap: [assignCaptainFunc, ["pick"], ROLE.ADMIN, false],
 };
@@ -1527,6 +1528,26 @@ function clearMutesFunc(value, player) {
   return false;
 }
 
+function banFunc(value, player) {
+  if ( !value ) {
+    room.sendAnnouncement("Vui lòng cung cấp người chơi, thời hạn ban (đơn vị giờ, để 0 để cấm vĩnh viễn) và lý do nếu có (VD: !ban @ân 24 / !ban paul 0 Phá room)", player.id, RED);
+    return false;
+  };
+
+  value = value.split(" ");
+  let [name, period, reason] = [value.shift(), value.shift(), value.join(" ")];
+  let toPlayer = getPlayerByName(name);
+  if ( !toPlayer ) {
+    room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
+    return false;
+  };
+  if ( isNaN(period) || period < 0 ) {
+    room.sendAnnouncement("Vui lòng cung cấp một thời hạn cấm chat hợp lệ (VD: !mute @De_Paul 3)", player.id, RED);
+    return false;
+  };
+  ban(toPlayer.id, reason, +period);
+}
+
 function clearBansFunc(value, player) {
   room.clearBans();
   room.sendAnnouncement("Đã xóa các lượt ban", null, GREEN);
@@ -1582,6 +1603,20 @@ function afkFunc(value, player) {
   showSpecTable();
   return false;
 };
+
+function ban(playerId, reason, timeout) {
+  if ( timeout != 0 ) {
+    reason = reason.length ? reason + ` (Ban sẽ hết hạn sau ${period}:00:00)` : `Ban sẽ hết hạn sau ${period}:00:00`;
+  };
+
+  if ( room.getPlayer(playerId) === null ) {
+    let bans = JSON.parse(localStorage.getItem("bans")) || [];
+    bans.push([playerId, reason, timeout]);
+  } else {
+    setTimeout(room.clearBan.bind(playerId), period * 60 * 60 * 1000);
+    room.kickPlayer(playerId, reason, true);
+  };
+}
 
 // Pick a player from the Spectators to move to a team
 async function pick(pickedPlayer, team) {
