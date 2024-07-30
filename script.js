@@ -909,14 +909,18 @@ function penaltyTimeoutCallback() {
   takePenalty();
 }
 
-async function updateTeamPlayers() {
+// Return true if the game is ongoing, false if the game is not yet started or is technically "over"
+function getGameStatus() {
   let scores = room.getScores();
-  // The game is not yet started or is technically "over"
-  if (
-    (scores === null) ||
-    (Math.max(scores.red, scores.blue, 0.5) == scores.scoreLimit) ||
-    ((scores.red != scores.blue) && (scores.time >= scores.timeLimit))
-  ) return;
+  return (
+    (scores !== null) &&
+    (Math.max(scores.red, scores.blue, 0.5) != scores.scoreLimit) &&
+    ((scores.red == scores.blue) || (scores.time < scores.timeLimit))
+  );
+}
+
+async function updateTeamPlayers() {
+  if ( getGameStatus() === false ) return;
 
   await navigator.locks.request("update_team_players", async lock => {
     let players = getNonAfkPlayers();
@@ -1623,14 +1627,18 @@ function afkFunc(value, player) {
 };
 
 function punishQuitGame(player) {
-  if ( (getRole(player) >= ROLE.VIP) || (getNonAfkPlayers().length > 13) ) return; // VIP players receive no punishment;)
+  if (
+    (getRole(player) >= ROLE.VIP) || // VIP players receive no punishment;)
+    (getGameStatus() === false) || // No punishment if the player quits after the game is over
+    (getNonAfkPlayers().length <= 13) // No punishment if the room has less than 14 players (the "captain slot" isn't that desired)
+  ) return;
   let banMessage = "Bạn đã mắc quá nhiều lỗi vi phạm";
   let playerConn = getConn(player.id);
-  if ( !(playerConn in violations) ) {
+  if ( playerConn in violations ) {
+    violations[playerConn]++;
+  } else {
     violations[playerConn] = 1;
-    return;
   };
-  violations[playerConn]++;
   room.sendAnnouncement(`${player.name} đã mắc ${violations[playerConn]}/${VIOLATIONS_LIMIT} lỗi vi phạm (rời trận) trong ngày`, null, RED, "small-italic", 0);
   if ( violations[playerConn] < VIOLATIONS_LIMIT ) return;
   delete violations[playerConn]; // Reset violations record after punishment
@@ -1646,8 +1654,8 @@ function punishQuitGame(player) {
 
 function ban(playerId, reason, timeout) {
   if ( timeout != 0 ) {
-    reason = reason.length ? reason + ` (Ban sẽ hết hạn sau ${period}:00:00)` : `Ban sẽ hết hạn sau ${period}:00:00`;
-    setTimeout(room.clearBan.bind(null, playerId), period * 60 * 60 * 1000);
+    reason = reason.length ? reason + `. Ban sẽ hết hạn sau ${timeout} giờ` : `Ban sẽ hết hạn sau ${timeout} giờ`;
+    setTimeout(room.clearBan.bind(null, playerId), timeout * 60 * 60 * 1000);
   };
   room.kickPlayer(playerId, reason, true);
 }
