@@ -863,13 +863,12 @@ function isPlayerValid(player) {
       return false;
     };
   };
-  checkBan(player);
   return true;
 }
 
-function checkBan(player) {
+async function checkBan(player) {
   let bans = JSON.parse(localStorage.getItem("bans")) || [];
-  for (const i = 0; i < bans.length; i++) {
+  for (let i = 0; i < bans.length; i++) {
     if ( bans[i][0] != player.conn ) continue;
     ban(...bans[i]);
     bans.splice(i, 1);
@@ -2150,6 +2149,7 @@ room.onPlayerJoin = async function(player) {
   initiateChat(player);
   await updateTeamPlayers();
   reorderPlayers();
+  checkBan(player);
   if ( adminAuths.has(player.auth) ) { // Auto-login
     room.setPlayerAdmin(player.id, true);
   };
@@ -2367,9 +2367,9 @@ room.onPlayerActivity = function(player) {
   clearAfkRecord(player.id);
 }
 
-room.onPlayerKicked = function(kickedPlayer, reason, ban, byPlayer) {
+room.onPlayerKicked = function(kickedPlayer, reason, banned, byPlayer) {
   // Log this for admin to monitor kicking activity
-  let action = ban ? "banned" : "kicked";
+  let action = banned ? "banned" : "kicked";
   console.log(`${kickedPlayer.name} was ${action} by ${byPlayer.name} (reason: ${reason})`);
 }
 
