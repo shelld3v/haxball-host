@@ -1751,6 +1751,7 @@ function saveStats() {
       if ( teamId == prevWinner ) item.wins++;
       if ( prevScore.split("0").length > (teamId != prevWinner) + 1 ) item.cleansheets++;
       if ( auth == motmAuth ) item.motms++;
+      delete item.auth; // Unused value
       localStorage.setItem(auth, JSON.stringify(item));
     };
   };
