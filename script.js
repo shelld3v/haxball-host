@@ -269,9 +269,16 @@ class Surrender {
   constructor() {
     this.votes = [new Set, new Set];
   }
+  surrender(teamId) {
+    let scores = room.getScores();
+    prevScore = `${scores.red}-${scores.blue}`;
+    handlePostGame(getOppositeTeamId(teamId));
+    room.stopGame();
+    room.sendAnnouncement(`🏴 Đội ${TEAM_NAMES[teamId]} đã đầu hàng`, null, 0x00FFFF, "small-italic", 0)
+  }
   vote(player) {
     if ( player.team == 0 ) return;
-    if ( isCaptain(player.id) ) surrender(player.team); // Captains can surrender anytime
+    if ( isCaptain(player.id) ) this.surrender(player.team); // Captains can surrender anytime
     this.votes[player.team - 1].add(player.id);
     let count = 0;
     for (const voterId of this.votes[player.team - 1]) {
@@ -280,13 +287,7 @@ class Surrender {
     };
     room.sendAnnouncement(`${player.name} đã bỏ phiếu đầu hàng cho ${TEAM_NAMES[player.team]} (${count}/${MIN_VOTES_FOR_SURRENDER})`, null, GREEN, "small", 0);
 
-    if ( count >= MIN_VOTES_FOR_SURRENDER ) {
-      let scores = room.getScores();
-      prevScore = `${scores.red}-${scores.blue}`;
-      handlePostGame(getOppositeTeamId(player.team));
-      room.stopGame();
-      room.sendAnnouncement(`🏴 Đội ${TEAM_NAMES[player.team]} đã đầu hàng`, null, 0x00FFFF, "small-italic", 0)
-    };
+    if ( count >= MIN_VOTES_FOR_SURRENDER ) this.surrender(player.team);
   }
   hasVoted(player) {
     if ( player.team == 0 ) return false;
