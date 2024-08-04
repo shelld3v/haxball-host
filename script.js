@@ -1626,7 +1626,7 @@ function punishQuitGame(player) {
   if (
     (getRole(player) >= ROLE.VIP) || // VIP players receive no punishment;)
     (getGameStatus() === false) || // No punishment if the player quits after the game is over
-    (getNonAfkPlayers().length <= 13) // No punishment if the room has less than 14 players (the "captain slot" isn't that desired)
+    (getNonAfkPlayers().length < MAX_PLAYERS * 2 + 3) // No punishment if there are less than 3 spectators (the "captain slot" isn't that desired)
   ) return;
   let banMessage = "Bạn đã mắc quá nhiều lỗi vi phạm";
   let playerConn = getConn(player.id);
@@ -2057,7 +2057,7 @@ async function randPlayers() {
   let players = getNonAfkPlayers();
   // Get player list and suffle it
   let idList = players.sort(function(player1, player2) {
-    if ( players.length <= MAX_PLAYERS * 2 ) return Math.random() - 0.5;
+    if ( players.length <= MAX_PLAYERS * 2 + 1 ) return Math.random() - 0.5;
     // Sort players of the winning team to be on top of the list so they will be picked up in the same team  
     if ( player1.team == prevWinner ) return -1;
     if ( player2.team == prevWinner ) return 1;
@@ -2100,7 +2100,10 @@ async function pickPlayers() {
   await updateCaptain(getOppositeTeamId(prevWinner), captain);
   // Move players to Spectators
   for (const player of players) {
-    if ( isCaptain(player.id) || ((players.length > 10) && (player.team == prevWinner)) ) continue;
+    if (
+      isCaptain(player.id) ||
+      ((players.length > MAX_PLAYERS * 2 + 1) && (player.team == prevWinner))
+    ) continue;
     await room.setPlayerTeam(player.id, 0);
   };
   isPicking = true;
