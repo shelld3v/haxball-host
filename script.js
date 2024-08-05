@@ -21,7 +21,7 @@ const MAX_AFK_PLAYERS = 3;
 const MAX_SIZE_ADJUSTMENT_RATIO = 0.4;
 const SAVE_RECORDINGS = true;
 const VIOLATIONS_LIMIT = 3;
-const VIOLATION_BAN_PERIOD = 5;
+const VIOLATION_BAN_PERIOD = 3;
 const YELLOW_BAN_PERIOD = 10;
 const RED = 0xFA3E3E;
 const GREEN = 0x5DB899;
@@ -868,7 +868,8 @@ async function checkBan(player) {
   let bans = JSON.parse(localStorage.getItem("bans")) || [];
   for (let i = 0; i < bans.length; i++) {
     if ( bans[i][0] != player.conn ) continue;
-    ban(...bans[i]);
+    bans[i][0] = player.id;
+    setTimeout(ban.bind(null, ...bans[i]), 3000);
     bans.splice(i, 1);
     break;
   };
