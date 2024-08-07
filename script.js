@@ -20,7 +20,7 @@ const LATE_SUBSTITUTION_PERIOD = 30;
 const MAX_AFK_PLAYERS = 3;
 const MAX_SIZE_ADJUSTMENT_RATIO = 0.4;
 const SAVE_RECORDINGS = true;
-const VIOLATIONS_LIMIT = 3;
+const MAX_WARNINGS_PER_PLAYER = 3;
 const VIOLATION_BAN_PERIOD = 3;
 const YELLOW_BAN_PERIOD = 10;
 const RED = 0xFA3E3E;
@@ -108,7 +108,6 @@ const STADIUM = '{"name":"De Paul Stadium","width":900,"height":404,"bg":{"type"
 const PENALTY_STADIUM = '{"name":"De Paul Stadium | PEN","width":420,"height":200,"spawnDistance":310,"bg":{"type":"grass","width":400,"height":260,"kickOffRadius":0,"cornerRadius":0,"color":"718B5B"},"vertexes":[{"x":323,"y":260,"bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":-30},{"x":323,"y":100,"bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":-30},{"x":323,"y":-100,"bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":30},{"x":323,"y":-260,"bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":30},{"x":370,"y":-100,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0},{"x":370,"y":100,"bCoef":0.1,"cMask":["ball"],"trait":"goalNet","radius":0},{"x":332,"y":-98,"bCoef":1,"cMask":["ball"],"trait":"line"},{"x":323,"y":260,"bCoef":0,"trait":"line"},{"x":323,"y":-260,"bCoef":0,"trait":"line"},{"x":0,"y":-260,"bCoef":0,"trait":"line"},{"x":0,"y":260,"bCoef":0,"trait":"line"},{"x":323,"y":200,"bCoef":0,"trait":"line"},{"x":110,"y":200,"bCoef":0,"trait":"line"},{"x":110,"y":-200,"bCoef":0,"trait":"line"},{"x":323,"y":-200,"bCoef":0,"trait":"line"},{"x":0,"y":100,"bCoef":0,"trait":"line"},{"x":0,"y":-100,"bCoef":0,"trait":"line"},{"x":110,"y":5,"bCoef":0,"trait":"line"},{"x":110,"y":-5,"bCoef":0,"trait":"line"},{"x":55,"y":-260,"bCoef":0,"cMask":["red"],"trait":"penArea"},{"x":65,"y":260,"bCoef":0,"cMask":["red"],"trait":"penArea"},{"x":300,"y":-90,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"x":365,"y":-90,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"x":365,"y":90,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"x":300,"y":90,"bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"}],"segments":[{"v0":0,"v1":1,"trait":"ballArea"},{"v0":2,"v1":3,"trait":"ballArea"},{"v0":2,"v1":4,"vis":true,"color":"FFFFFF","cMask":["ball"],"trait":"goalNet","y":-100},{"v0":1,"v1":5,"vis":true,"color":"FFFFFF","cMask":["ball"],"trait":"goalNet","y":100},{"v0":1,"v1":0,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":-30,"x":665},{"v0":2,"v1":3,"vis":true,"color":"FFFFFF","bCoef":1,"cMask":["ball"],"trait":"ballArea","bias":30,"x":665},{"v0":2,"v1":1,"curve":0,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":10,"v1":7,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":10,"v1":9,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":9,"v1":8,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":11,"v1":12,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":12,"v1":13,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":13,"v1":14,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":15,"v1":16,"curve":150,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":18,"v1":17,"curve":180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":17,"v1":18,"curve":180,"vis":true,"color":"FFFFFF","bCoef":0,"trait":"line"},{"v0":5,"v1":4,"vis":true,"color":"FFFFFF","cMask":["ball"],"trait":"goalNet"},{"v0":19,"v1":20,"curve":45,"vis":false,"bCoef":0,"cMask":["red"],"trait":"penArea"},{"v0":21,"v1":22,"vis":false,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"v0":22,"v1":23,"vis":false,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"v0":23,"v1":24,"vis":false,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"},{"v0":24,"v1":21,"vis":false,"color":"FFFFFF","bCoef":0.1,"cMask":["red","blue"],"cGroup":["redKO","blueKO"],"trait":"kickOffBarrier"}],"goals":[{"p0":[332,100],"p1":[332,-100],"team":"blue"},{"p0":[325,-100],"p1":[100,0],"team":"red"},{"p0":[100,0],"p1":[320,100],"team":"red"}],"discs":[{"radius":6.5,"color":"FFDEAD","bCoef":0.465,"invMass":1.4,"pos":[110,0],"cGroup":["ball","kick","score"]},{"pos":[323,100],"trait":"goalPost"},{"pos":[323,-100],"trait":"goalPost"}],"planes":[{"normal":[0,1],"dist":-260,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,1],"dist":-260,"canvas_rect":[-710,-260,710,260],"a":[-710,-260],"b":[710,-260]}}},{"normal":[0,-1],"dist":-260,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[0,-1],"dist":-260,"canvas_rect":[-710,-260,710,260],"a":[-710,260],"b":[710,260]}}},{"normal":[1,0],"dist":-499,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[1,0],"dist":-499,"canvas_rect":[-710,-260,710,260],"a":[-499,-260],"b":[-499,260]}}},{"normal":[-1,0],"dist":-376,"bCoef":0.2,"cMask":["all"],"_data":{"extremes":{"normal":[-1,0],"dist":-376,"canvas_rect":[-710,-260,710,260],"a":[376,-260],"b":[376,260]}}}],"traits":{"ballArea":{"vis":false,"bCoef":1,"cMask":["ball"]},"goalPost":{"radius":4.5,"invMass":0,"color":"C6D881","bCoef":1},"goalNet":{"vis":true,"bCoef":0.2,"cMask":["all"]},"kickOffBarrier":{"vis":false,"bCoef":0.1,"cGroup":["redKO","blueKO"],"cMask":["red","blue"]},"line":{"vis":true,"bCoef":0,"cMask":[""]},"arco":{"radius":2,"cMask":["n/d"],"color":"cccccc"},"penArea":{"vis":false,"bCoef":0,"cMask":["red"]}},"playerPhysics":{"acceleration":0.11,"kickingAcceleration":0.083,"kickStrength":4.9,"bCoef":0.26},"ballPhysics":"disc0","joints":[],"canBeStored":false,"redSpawnPoints":[[-100,0]],"blueSpawnPoints":[[323,0]],"kickOffReset":"full"}';
 const DISCORD_LINK = "https://discord.gg/DYWZFFsSYu";
 const COMMANDS_TO_VALIDATE = ["discord", "kickafk", "afk", "captains", "unmute", "clearmutes"]; // These commands can cause spam in the chat or bypass the mute
-const NEW_UPDATE_MESSAGE = "MỚI: Mọi người chơi nay đều có thể bỏ phiếu đầu hàng bằng lệnh !surrender";
 
 class Setting {
   constructor(setting) {
@@ -308,6 +307,7 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   spec: [specFunc, ["rand", "pick"], ROLE.PLAYER, false],
   login: [loginFunc, ["rand", "pick"], ROLE.PLAYER, false],
   afk: [afkFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  afks: [showAfksFunc, ["rand", "pick"], ROLE.PLAYER, false],
   predict: [predictFunc, ["rand", "pick"], ROLE.PLAYER, false],
   captains: [listCaptainsFunc, ["pick"], ROLE.PLAYER, false],
   surrender: [surrenderFunc, ["pick"], ROLE.PLAYER, false],
@@ -323,6 +323,8 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   unmute: [unmuteFunc, ["rand", "pick"], ROLE.ADMIN, false],
   clearmutes: [clearMutesFunc, ["rand", "pick"], ROLE.ADMIN, false],
   ban: [banFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  bans: [showBansFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  clearban: [clearBanFunc, ["rand", "pick"], ROLE.ADMIN, false],
   clearbans: [clearBansFunc, ["rand", "pick"], ROLE.ADMIN, false],
   assigncap: [assignCaptainFunc, ["pick"], ROLE.ADMIN, false],
 };
@@ -330,6 +332,7 @@ var identities = {}; // Store connection string/public IDs of players
 var adminAuths = new Set(); // Remember admin's auth for auto-login
 var afkList = new Set([0]); // Host player is always in AFK mode
 var muteList = new Set();
+var banList = [];
 var isPlaying = false;
 var isPicking = false;
 var isTakingPenalty = false;
@@ -342,7 +345,7 @@ var captains = {1: 0, 2: 0};
 var kits = {red: null, blue: null};
 var prevScore = null;
 var predictions = {};
-var violations = {};
+var warnings = {};
 var lastMessages = []; // The last 4 messages in the form of [message, playerId, sendingTime]
 var game = new Game;
 var surrenderVoter = new Surrender;
@@ -1567,6 +1570,26 @@ function banFunc(value, player) {
   ban(toPlayer.id, reason, +period);
 }
 
+function showBansFunc(value, player) {
+  room.sendAnnouncement(`Danh sách người chơi đã bị ban:\n${banList.map(details => `• [${details[0]}] ${details[1]} (Lí do: ${details[2] || "Không có"})`).join("\n")}`, player.id, GREEN);
+}
+
+function clearBanFunc(value, player) {
+  if ( !value || isNaN(value) ) {
+    room.sendAnnouncement("Vui lòng cung cấp ID người chơi bị cấm, dùng !bans để xem danh sách cấm (VD: !clearban 133)", player.id, RED);
+    return false;
+  };
+  for (let i = 0; i < banList.length; i++) {
+    if ( banList[i][0] != value ) continue;
+    room.clearBan(value);
+    room.sendAnnouncement(`Đã bỏ cấm người chơi ${banList[i][1]}`, null, GREEN);
+    banList.splice(i, 1);
+    return false;
+  };
+  room.sendAnnouncement(`Không tìm thấy người chơi bị cấm với ID ${value}`, player.id, RED);
+  return false;
+}
+
 function clearBansFunc(value, player) {
   room.clearBans();
   room.sendAnnouncement("Đã xóa các lượt ban", null, GREEN);
@@ -1624,6 +1647,10 @@ function afkFunc(value, player) {
   return false;
 };
 
+function showAfksFunc(value, player) {
+  room.sendAnnouncement(`Danh sách những người chơi đang AFK: ${Array.from(afkList).map(id => room.getPlayer(id).name).join(", ")}`, player.id, GREEN);
+}
+
 function punishQuitGame(player) {
   if (
     (getRole(player) >= ROLE.VIP) || // VIP players receive no punishment;)
@@ -1632,14 +1659,14 @@ function punishQuitGame(player) {
   ) return;
   let banMessage = "Bạn đã mắc quá nhiều lỗi vi phạm";
   let playerConn = getConn(player.id);
-  if ( playerConn in violations ) {
-    violations[playerConn]++;
+  if ( playerConn in warnings ) {
+    warnings[playerConn]++;
   } else {
-    violations[playerConn] = 1;
+    warnings[playerConn] = 1;
   };
-  room.sendAnnouncement(`${player.name} đã mắc ${violations[playerConn]}/${VIOLATIONS_LIMIT} lỗi vi phạm (rời trận) trong ngày`, null, RED, "small-italic", 0);
-  if ( violations[playerConn] < VIOLATIONS_LIMIT ) return;
-  delete violations[playerConn]; // Reset violations record after punishment
+  room.sendAnnouncement(`${player.name} đã mắc ${warnings[playerConn]}/${MAX_WARNINGS_PER_PLAYER} lỗi vi phạm (rời trận) trong ngày`, null, RED, "small-italic", 0);
+  if ( warnings[playerConn] < MAX_WARNINGS_PER_PLAYER ) return;
+  delete warnings[playerConn]; // Reset warnings record after punishment
   room.sendAnnouncement(`${player.name} đã nhận hình phạt (ban ${VIOLATION_BAN_PERIOD} giờ) do vi phạm quá số lần cho phép`, null, RED, "small-bold", 0);
   if ( room.getPlayer(player.id) === null ) { // Player left, save ban record so the next time the player joins, ban them
     let bans = JSON.parse(localStorage.getItem("bans")) || [];
@@ -1943,8 +1970,7 @@ function initiateChat(player) {
   let msg = `Nhập !help để xem các câu lệnh
 Discord: ${DISCORD_LINK}`;
   room.sendAnnouncement(msg, player.id, GREEN, "normal", 0);
-  room.sendAnnouncement(`Số người chơi đang AFK: ${afkList.size - 1}`, player.id, YELLOW, "normal", 0);
-  room.sendAnnouncement(NEW_UPDATE_MESSAGE, player.id, YELLOW, "small-italic", 0);
+  room.sendAnnouncement(`Số cảnh cáo của bạn đã nhận trong ngày: ${warnings[player.conn]}/${MAX_WARNINGS_PER_PLAYER}`, player.id, RED, "small-italic", 0);
 }
 
 async function startPenaltyShootout() {
@@ -2371,8 +2397,12 @@ room.onPlayerActivity = function(player) {
 }
 
 room.onPlayerKicked = function(kickedPlayer, reason, banned, byPlayer) {
-  // Log this for admin to monitor kicking activity
-  let action = banned ? "banned" : "kicked";
+  let action = "kicked";
+  if ( banned ) {
+    banList.push([kickedPlayer.id, kickedPlayer.name, reason]);
+    action = "banned";
+  };
+  // Log this to monitor kicking activity
   console.log(`${kickedPlayer.name} was ${action} by ${byPlayer.name} (reason: ${reason})`);
 }
 
