@@ -1579,19 +1579,19 @@ function clearBanFunc(value, player) {
     room.sendAnnouncement("Vui lòng cung cấp ID người chơi bị cấm, dùng !bans để xem danh sách cấm (VD: !clearban 133)", player.id, RED);
     return false;
   };
-  for (let i = 0; i < banList.length; i++) {
-    if ( banList[i][0] != value ) continue;
-    room.clearBan(value);
-    room.sendAnnouncement(`Đã bỏ cấm người chơi ${banList[i][1]}`, null, GREEN);
-    banList.splice(i, 1);
+  let banDetails = banList.find(details => details[0] == value);
+  if ( !banDetails ) {
+    room.sendAnnouncement(`Không tìm thấy người chơi bị cấm với ID ${value}`, player.id, RED);
     return false;
-  };
-  room.sendAnnouncement(`Không tìm thấy người chơi bị cấm với ID ${value}`, player.id, RED);
+  }
+  unban(banDetails[0]);
+  room.sendAnnouncement(`Đã bỏ cấm người chơi ${banDetails[1]}`, null, GREEN);
   return false;
 }
 
 function clearBansFunc(value, player) {
   room.clearBans();
+  banList.length = 0;
   room.sendAnnouncement("Đã xóa các lượt ban", null, GREEN);
   return false;
 }
@@ -1677,10 +1677,15 @@ function punishQuitGame(player) {
   ban(player.id, banMessage, VIOLATION_BAN_PERIOD);
 }
 
+function unban(playerId) {
+  room.clearBan(playerId);
+  banList = banList.filter(details => details[0] != playerId);
+}
+
 function ban(playerId, reason, timeout) {
   if ( timeout != 0 ) {
     reason = reason.length ? reason + `. Cấm sẽ hết hạn sau ${timeout} giờ` : `Cấm sẽ hết hạn sau ${timeout} giờ`;
-    setTimeout(room.clearBan.bind(null, playerId), timeout * 60 * 60 * 1000);
+    setTimeout(unban.bind(null, playerId), timeout * 60 * 60 * 1000);
   };
   room.kickPlayer(playerId, reason, true);
 }
