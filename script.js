@@ -1571,7 +1571,10 @@ function banFunc(value, player) {
 }
 
 function showBansFunc(value, player) {
-  room.sendAnnouncement(`Danh sách người chơi đã bị ban:\n${banList.map(details => `• [${details[0]}] ${details[1]} (Lí do: ${details[2] || "Không có"})`).join("\n")}`, player.id, GREEN);
+  room.sendAnnouncement(`Danh sách người chơi đã bị ban:`, player.id, GREEN);
+  for (const details of banList) {
+    room.sendAnnouncement(`• [${details[0]}] ${details[1]} (Lí do: ${details[2]})`, player.id, GREEN, "small", 0);
+  };
 }
 
 function clearBanFunc(value, player) {
