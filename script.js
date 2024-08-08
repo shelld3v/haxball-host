@@ -324,8 +324,10 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   clearmutes: [clearMutesFunc, ["rand", "pick"], ROLE.ADMIN, false],
   ban: [banFunc, ["rand", "pick"], ROLE.ADMIN, false],
   bans: [showBansFunc, ["rand", "pick"], ROLE.ADMIN, false],
-  clearban: [clearBanFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  unban: [unbanFunc, ["rand", "pick"], ROLE.ADMIN, false],
   clearbans: [clearBansFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  lock: [lockFunc, ["rand", "pick"], ROLE.ADMIN, false],
+  unlock: [unlockFunc, ["rand", "pick"], ROLE.ADMIN, false],
   assigncap: [assignCaptainFunc, ["pick"], ROLE.ADMIN, false],
 };
 var identities = {}; // Store connection string/public IDs of players
@@ -336,6 +338,7 @@ var banList = [];
 var isPlaying = false;
 var isPicking = false;
 var isTakingPenalty = false;
+var isChatLocked = false;
 var canPause = false;
 var winningStreak = 0;
 var prevWinner = 1;
@@ -1550,6 +1553,20 @@ function clearMutesFunc(value, player) {
   return false;
 }
 
+function lockFunc(value, player) {
+  if ( isChatLocked ) return false;
+  isChatLocked = true;
+  room.sendAnnouncement(`${player.name} đã khóa khung chat`, null, YELLOW);
+  return false;
+}
+
+function unlockFunc(value, player) {
+  if ( !isChatLocked ) return false;
+  isChatLocked = false;
+  room.sendAnnouncement(`${player.name} đã mở khóa khung chat`, null, YELLOW);
+  return false
+}
+
 function banFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp người chơi, thời hạn ban (đơn vị giờ, để 0 để cấm vĩnh viễn) và lý do nếu có (VD: !ban @ân 24 / !ban paul 0 Phá room)", player.id, RED);
@@ -1577,7 +1594,7 @@ function showBansFunc(value, player) {
   };
 }
 
-function clearBanFunc(value, player) {
+function unbanFunc(value, player) {
   if ( !value || isNaN(value) ) {
     room.sendAnnouncement("Vui lòng cung cấp ID người chơi bị cấm, dùng !bans để xem danh sách cấm (VD: !clearban 133)", player.id, RED);
     return false;
@@ -1978,7 +1995,7 @@ function initiateChat(player) {
   let msg = `Nhập !help để xem các câu lệnh
 Discord: ${DISCORD_LINK}`;
   room.sendAnnouncement(msg, player.id, GREEN, "normal", 0);
-  room.sendAnnouncement(`Số cảnh cáo của bạn đã nhận trong ngày: ${warnings[player.conn]}/${MAX_WARNINGS_PER_PLAYER}`, player.id, RED, "small-italic", 0);
+  room.sendAnnouncement(`Số cảnh cáo của bạn đã nhận trong ngày: ${warnings[player.conn] || 0}/${MAX_WARNINGS_PER_PLAYER}`, player.id, YELLOW, "small-italic", 0);
 }
 
 async function startPenaltyShootout() {
@@ -2382,6 +2399,10 @@ room.onPlayerChat = function(player, message) {
       return false;
     };
     if ( getRole(player) < ROLE.ADMIN ) {
+      if ( isChatLocked ) {
+        room.sendAnnouncement("Khung chat hiện đang bị khóa", player.id, RED);
+        return false;
+      }
       // Disallow Spectators from messaging when 2 teams are taking penalty
       if ( isTakingPenalty && (player.team == 0) ) {
         room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
