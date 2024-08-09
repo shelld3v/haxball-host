@@ -1684,10 +1684,10 @@ function punishQuitGame(player) {
   } else {
     warnings[playerConn] = 1;
   };
-  room.sendAnnouncement(`${player.name} đã mắc ${warnings[playerConn]}/${MAX_WARNINGS_PER_PLAYER} lỗi vi phạm (rời trận) trong ngày`, null, RED, "small-italic", 0);
+  room.sendAnnouncement(`${player.name} đã nhận ${warnings[playerConn]}/${MAX_WARNINGS_PER_PLAYER} cảnh cáo trong ngày do hành vi rời trận`, null, RED, "small-italic", 0);
   if ( warnings[playerConn] < MAX_WARNINGS_PER_PLAYER ) return;
   delete warnings[playerConn]; // Reset warnings record after punishment
-  room.sendAnnouncement(`${player.name} đã nhận hình phạt (ban ${VIOLATION_BAN_PERIOD} giờ) do vi phạm quá số lần cho phép`, null, RED, "small-bold", 0);
+  room.sendAnnouncement(`${player.name} đã nhận hình phạt (ban ${VIOLATION_BAN_PERIOD} giờ) do mắc quá nhiều lỗi vi phạm`, null, RED, "small-bold", 0);
   if ( room.getPlayer(player.id) === null ) { // Player left, save ban record so the next time the player joins, ban them
     let bans = JSON.parse(localStorage.getItem("bans")) || [];
     bans.push([playerConn, banMessage, VIOLATION_BAN_PERIOD]);
@@ -1995,7 +1995,7 @@ function initiateChat(player) {
   let msg = `Nhập !help để xem các câu lệnh
 Discord: ${DISCORD_LINK}`;
   room.sendAnnouncement(msg, player.id, GREEN, "normal", 0);
-  room.sendAnnouncement(`Số cảnh cáo của bạn đã nhận trong ngày: ${warnings[player.conn] || 0}/${MAX_WARNINGS_PER_PLAYER}`, player.id, YELLOW, "small-italic", 0);
+  room.sendAnnouncement(`Số cảnh cáo bạn đã nhận trong ngày: ${warnings[player.conn] || 0}/${MAX_WARNINGS_PER_PLAYER}`, player.id, YELLOW, "small-italic", 0);
 }
 
 async function startPenaltyShootout() {
