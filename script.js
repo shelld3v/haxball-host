@@ -863,7 +863,7 @@ function isPlayerValid(player) {
     };
     // Duplicate tag
     if ( getTag(_player.name.trim()) == tag ) {
-      room.kickPlayer(player.id, "Vui lòng đổi tên");
+      room.kickPlayer(player.id, "Bạn đã trùng tên với một người khác trong room, xin vui lòng đổi lại");
       return false;
     };
   };
