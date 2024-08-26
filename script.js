@@ -1669,6 +1669,7 @@ function afkFunc(value, player) {
 
 function showAfksFunc(value, player) {
   room.sendAnnouncement(`Danh sách những người chơi đang AFK: ${Array.from(afkList).map(id => room.getPlayer(id).name).join(", ")}`, player.id, GREEN);
+  return false;
 }
 
 function punishQuitGame(player) {
