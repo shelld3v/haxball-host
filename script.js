@@ -1591,6 +1591,7 @@ function banFunc(value, player) {
     return false;
   };
   ban(toPlayer.id, reason, +period);
+  return false;
 }
 
 function showBansFunc(value, player) {
@@ -1598,6 +1599,7 @@ function showBansFunc(value, player) {
   for (const details of banList) {
     room.sendAnnouncement(`• [${details[0]}] ${details[1]} (Lí do: ${details[2]})`, player.id, GREEN, "small", 0);
   };
+  return false;
 }
 
 function unbanFunc(value, player) {
