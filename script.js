@@ -492,7 +492,7 @@ function updateMetadata() {
 // Reset data saved in the localStorage
 function resetStorage() {
   let playerList = getPlayerStats();
-  let topPlayers = let topScorers = playerList.sort(function(player1, player2) {
+  let topPlayers = playerList.sort(function(player1, player2) {
     if ( player1.stars == player2.stars ) {
       return player2.goals + player2.assists - player1.goals - player1.assists;
     };
@@ -1158,7 +1158,20 @@ Sút trúng đích: ${stats.shotsOnTarget}`, player.id, BLUE, "small-bold", 0);
 
 function showRankingsFunc(value, player) {
   let playerList = getPlayerStats();
+  if ( playerList.length == 0 ) {
+    room.sendAnnouncement("Chưa có dữ liệu người chơi", player.id, RED);
+    return false;
+  };
 
+  // Sort players by stars
+  playerList.sort(function(player1, player2) {
+    if ( player1.stars == player2.stars ) {
+      return player2.goals + player2.assists - player1.goals - player1.assists;
+    };
+    return player2.stars - player1.stars;
+  })
+  let msg = `⭐ Danh sách cầu thủ hàng đầu tháng ${getMonths()} ⭐: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.stars} ⭐)`).join("  •  ")}`;
+  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
   // Sort players by goals scored
   playerList.sort(function(player1, player2) {
     if ( player1.goals == player2.goals ) {
@@ -1166,11 +1179,7 @@ function showRankingsFunc(value, player) {
     };
     return player2.goals - player1.goals;
   })
-  if ( playerList.length == 0 ) {
-    room.sendAnnouncement("Chưa có dữ liệu người chơi", player.id, RED);
-    return false;
-  };
-  let msg = `⚽ Danh sách ghi bàn hàng đầu tháng ${getMonths()} ⚽: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals})`).join("  •  ")}`;
+  msg += `\n⚽ Danh sách ghi bàn hàng đầu tháng ${getMonths()} ⚽: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals} ⚽)`).join("  •  ")}`;
   msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
   // Sort players by assists made
@@ -1180,12 +1189,7 @@ function showRankingsFunc(value, player) {
     };
     return player2.assists - player1.assists;
   });
-  msg += `\n👟 Danh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists})`).join("  •  ")}`;
-  msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
-
-  // Sort players by cleansheets kept
-  playerList.sort((player1, player2) => player2.cleansheets - player1.cleansheets);
-  msg += `\n🧤 Danh sách giữ sạch lưới hàng đầu tháng ${getMonths()} 🧤: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.cleansheets})`).join("  •  ")}`;
+  msg += `\n👟 Danh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists} 👟)`).join("  •  ")}`;
   msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
   room.sendAnnouncement(msg, player.id, YELLOW, "small-italic", 0);
@@ -2184,7 +2188,7 @@ async function pickPlayers() {
 }
 
 function personalizeMsg(message, player) {
-  let newMessage = `[${getStats(getAuth(player.id)).stars} sao] ${player.name.trim()}: ${message}`;
+  let newMessage = `[${getStats(getAuth(player.id)).stars}★] ${player.name.trim()}: ${message}`;
   let color = getSetting(player.id).msgColor;
   if ( color == "normal" ) color = 0xFFFFFF;
   if ( message.includes("@") ) {
@@ -2432,8 +2436,8 @@ room.onPlayerChat = function(player, message) {
       if ( (getRole(player) < ROLE.VIP) && checkSpam(player, message) ) return false;
     };
   };
-  if ( message.startsWith("!") ) { // Indicating a command
-    return handleCommand(player, message.slice(1));
+  if ( message.startsWith("!") && !handleCommand(player, message.slice(1)) ) {
+    return false;
   };
   personalizeMsg(message, player);
   return false;
