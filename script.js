@@ -143,6 +143,7 @@ class PlayerReport {
     this.wins = 0;
     this.games = 0;
     this.motms = 0;
+    this.stars = 0;
     this.auth = null;
     if ( player !== null ) {
       Object.assign(this, player);
@@ -491,6 +492,12 @@ function updateMetadata() {
 // Reset data saved in the localStorage
 function resetStorage() {
   let playerList = getPlayerStats();
+  let topPlayers = let topScorers = playerList.sort(function(player1, player2) {
+    if ( player1.stars == player2.stars ) {
+      return player2.goals + player2.assists - player1.goals - player1.assists;
+    };
+    return player2.stars - player1.stars;
+  }).slice(0, 5);
   let topScorers = playerList.sort(function(player1, player2) {
     if ( player1.goals == player2.goals ) {
       return player2.assists - player1.assists;
@@ -510,7 +517,6 @@ function resetStorage() {
     return player2.motms - player1.motms;
   }).slice(0, 5);
   let topGoalkeepers = playerList.sort((player1, player2) => player2.cleansheets - player1.cleansheets).slice(0, 5);
-  let topWinners = playerList.filter(player => player.games >= 50).sort((player1, player2) => player2.getWinRate() - player1.getWinRate()).slice(0, 5);
   let topOwnGoalScorers = playerList.sort((player1, player2) => player2.ownGoals - player1.ownGoals).slice(0, 5);
 
   let msg = `Danh sách vua phá lưới tháng ${getMonths()}:
@@ -520,6 +526,10 @@ ${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goa
 
   let discordFields = [
     {
+      name: "Cầu thủ xuất sắc nhất",
+      value: `============================\n\n*${topPlayers.map((player, index) => `${index + 1}. ${player.name} - ${player.stars} sao`).join("\n")}*`,
+    },
+    {
       name: "Vua phá lưới",
       value: `============================\n\n*${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goals} bàn thắng`).join("\n")}*`,
     },
@@ -528,16 +538,12 @@ ${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goa
       value: `============================\n\n*${topAssisters.map((player, index) => `${index + 1}. ${player.name} - ${player.assists} kiến tạo`).join("\n")}*`,
     },
     {
-      name: "Cầu thủ xuất sắc nhất",
+      name: "Cầu thủ nhiều MOTM nhất",
       value: `============================\n\n*${topMOTMs.map((player, index) => `${index + 1}. ${player.name} - ${player.motms} lần nhận MOTM`).join("\n")}*`,
     },
     {
       name: "Giữ sạch lưới nhiều nhất",
       value: `============================\n\n*${topGoalkeepers.map((player, index) => `${index + 1}. ${player.name} - ${player.cleansheets} trận sạch lưới`).join("\n")}*`,
-    },
-    {
-      name: "Tỉ lệ win cao nhất (đã chơi trên 50 trận)",
-      value: `============================\n\n*${topWinners.map((player, index) => `${index + 1}. ${player.name} - tỉ lệ thắng ${player.getWinRate()}% (${player.games} trận)`).join("\n")}*`,
     },
     {
       name: "Báo nhất",
@@ -1128,7 +1134,7 @@ function showStatsFunc(value, player) {
     };
   };
   let item = getStats(getAuth(showPlayer.id));
-  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${showPlayer.name}:`, player.id, BLUE, "bold", 0);
+  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${showPlayer.name} (${item.stars} sao):`, player.id, BLUE, "bold", 0);
   room.sendAnnouncement(`⚽ Bàn thắng: ${item.goals}
 🤝🏻 Kiến tạo: ${item.assists}
 ❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
@@ -1807,7 +1813,12 @@ function saveStats() {
       item.assists += report.assists;
       item.ownGoals += report.ownGoals;
       item.games++;
-      if ( teamId == prevWinner ) item.wins++;
+      if ( teamId == prevWinner ) {
+        item.wins++;
+        item.stars++;
+      } else if ( (item.stars != 0) && (auth != motmAuth) ) {
+        item.stars--;
+      };
       if ( prevScore.split("0").length > (teamId != prevWinner) + 1 ) item.cleansheets++;
       if ( auth == motmAuth ) item.motms++;
       delete item.auth; // Unused value
@@ -2173,8 +2184,9 @@ async function pickPlayers() {
 }
 
 function personalizeMsg(message, player) {
-  let newMessage = `${player.name.trim()}: ${message}`;
+  let newMessage = `[${getStats(getAuth(player.id)).stars} sao] ${player.name.trim()}: ${message}`;
   let color = getSetting(player.id).msgColor;
+  if ( color == "normal" ) color = 0xFFFFFF;
   if ( message.includes("@") ) {
     for (const _player of room.getPlayerList()) {
       if ( message.includes(getTag(_player.name)) ) {
@@ -2423,11 +2435,8 @@ room.onPlayerChat = function(player, message) {
   if ( message.startsWith("!") ) { // Indicating a command
     return handleCommand(player, message.slice(1));
   };
-  if ( getSetting(player.id).msgColor != "normal" ) {
-    personalizeMsg(message, player);
-    return false;
-  };
-  return true;
+  personalizeMsg(message, player);
+  return false;
 }
 
 room.onPlayerActivity = function(player) {
