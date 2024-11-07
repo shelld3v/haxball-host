@@ -377,7 +377,7 @@ var room = HBInit({
   public: true,
 });
 room.setTeamsLock(1);
-room.setKickRateLimit(6, 15, 4);
+room.setKickRateLimit(5, 15, 4);
 loadStadium("training").then(_ => { room.startGame() });
 setInterval(randomAnnouncement, NOTIFICATION_INTERVAL * 1000);
 setInterval(randomGameStat, 2.5 * 60 * 1000);
