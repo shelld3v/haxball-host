@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "drake";
+const ADMIN_PASSWORD = "travis";
 const MODE = "pick"; // can be "rand" or "pick"
 const ACTIVITY_TIMEOUT = 10;
 const AFK_TIMEOUT = 10 * 60;
