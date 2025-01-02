@@ -1012,10 +1012,12 @@ async function updateCaptain(teamId, newCaptain) {
     // How new captain is picked:
     // - Find a player who is already in the team first
     // - If 2 teams are taking penalty, get that team player from `game.penalty.groups`
-    // - As the last option, find someone in the Spectators
+    // - If no one left in the team, find someone from the Spectators
+    // - As the last option, get someone from the opposite team
     newCaptain = isTakingPenalty ? room.getPlayer(game.penalty.groups[teamId - 1].at(0)) : (
       players.find(player => (player.team == teamId) && !isCaptain(player.id)) ||
-      players.find(player => player.team == 0)
+      players.find(player => player.team == 0) ||
+      players.find(player => (player.team == getOppositeTeamId(teamId)) && !isCaptain(player.id))
     );
     // No player left to assign
     if ( !newCaptain ) {
