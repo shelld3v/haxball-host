@@ -34,8 +34,7 @@ const TEAM_NAMES = {
 };
 const ROLE = {
   PLAYER: 0,
-  VIP: 1,
-  ADMIN: 2,
+  ADMIN: 1,
 };
 const PLAYER_SCORING_RULES = {
   goals: 5,
@@ -317,8 +316,8 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   leavecap: [leaveCaptainFunc, ["pick"], ROLE.PLAYER, true],
   pause: [pauseFunc, ["pick"], ROLE.PLAYER, true],
   resume: [resumeFunc, ["pick"], ROLE.PLAYER, true],
-  msgcolor: [setMsgColorFunc, ["rand", "pick"], ROLE.VIP, false],
-  adjustsize: [adjustSizeFunc, ["rand", "pick"], ROLE.VIP, false],
+  msgcolor: [setMsgColorFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  adjustsize: [adjustSizeFunc, ["rand", "pick"], ROLE.PLAYER, false],
   yellow: [yellowCardFunc, ["rand", "pick"], ROLE.ADMIN, false],
   clearyellow: [clearYellowCardFunc, ["rand", "pick"], ROLE.ADMIN, false],
   mute: [muteFunc, ["rand", "pick"], ROLE.ADMIN, false],
@@ -377,7 +376,7 @@ var room = HBInit({
   public: true,
 });
 room.setTeamsLock(1);
-room.setKickRateLimit(6, 12, 6);
+room.setKickRateLimit(6, 0, 0);
 loadStadium("training").then(_ => { room.startGame() });
 setInterval(randomAnnouncement, NOTIFICATION_INTERVAL * 1000);
 setInterval(randomGameStat, 2.5 * 60 * 1000);
@@ -421,12 +420,9 @@ function getPlayerStats() {
 
 async function randomAnnouncement() {
   let msg;
-  switch ( getRandomInt(3) ) {
+  switch ( getRandomInt(2) ) {
     case 0: // Send Discord link
       msg = `🔔 Đừng quên vào server Discord của De Paul: ${DISCORD_LINK}`;
-      break;
-    case 1:
-      msg = `Donate cho room để trở thành người chơi VIP với khả năng đổi màu tin nhắn, thu nhỏ cầu thủ, hiệu ứng ăn mừng, ... Vào Discord để biết thêm chi tiết: ${DISCORD_LINK}`;
       break;
     default: // Send a random quote
       try {
@@ -654,8 +650,7 @@ function getConn(id) {
 }
 
 function getRole(player) {
-  if ( player.admin ) return 2;
-  return +localStorage.getItem("vip").includes(getAuth(player.id));
+  return player.admin ? ROLE.ADMIN: ROLE.PLAYER;
 }
 
 function getSetting(id) {
@@ -1125,10 +1120,6 @@ function showStatsFunc(value, player) {
   if ( !value ) {
     showPlayer = player;
   } else {
-    if ( getRole(player) < ROLE.VIP ) {
-      room.sendAnnouncement("Bạn cần phải là người chơi VIP để có thể xem thống kê người khác", player.id, RED);
-      return false;
-    };
     showPlayer = getPlayerByName(value);
     if ( showPlayer === undefined ) {
       room.sendAnnouncement(`Người chơi "${value}" không tồn tại hoặc đã rời đi`, player.id, RED);
@@ -1653,7 +1644,7 @@ function afkFunc(value, player) {
         loadStadium("1v1");
     };
   } else {
-    if ( getRole(player) < ROLE.VIP ) {
+    if ( getRole(player) < ROLE.ADMIN ) {
       // Only allows a limited number of AFK players including the host
       if ( afkList.size == MAX_AFK_PLAYERS ) {
         room.sendAnnouncement("Đã có quá nhiều người chơi AFK, bạn không thể AFK", player.id, RED);
@@ -1694,7 +1685,7 @@ function showAfksFunc(value, player) {
 
 function punishQuitGame(player) {
   if (
-    (getRole(player) >= ROLE.VIP) || // VIP players receive no punishment;)
+    (getRole(player) == ROLE.ADMIN) || // Admins receive no punishment
     (getGameStatus() === false) || // No punishment if the player quits after the game is over
     (getNonAfkPlayers().length < MAX_PLAYERS * 2 + 3) // No punishment if there are less than 3 spectators (the "captain slot" isn't that desired)
   ) return;
@@ -1787,7 +1778,7 @@ function updateGoalStats(team) {
   shooterStats.goals++;
   let comment = SCORER_COMMENTARIES[shooterStats.goals] || `Thật điên rồ, bàn thắng thứ ${shooterStats.goals} trong trận đấu này của`;
   comment = comment.concat(" ", getTag(shot.player.name));
-  if ( getRole(shot.player) >= ROLE.VIP ) celebrationEffect(shot.player, shooterStats.goals);
+  celebrationEffect(shot.player, shooterStats.goals);
   if ( assist !== null ) {
     let assisterStats = getGameStats(assist.player);
     if ( assist.player.team != team ) {
@@ -2349,7 +2340,7 @@ room.onPlayerTeamChange = async function(changedPlayer, byPlayer) {
 room.onPlayerBallKick = function(player) {
   if ( isTakingPenalty ) return;
   updateBallKick(player);
-  (getRole(player) == ROLE.VIP) && room.setDiscProperties(0, {color: ballColor.getColor()}); // Switch ball color
+  // (getRole(player) == ROLE.VIP) && room.setDiscProperties(0, {color: ballColor.getColor()}); // Switch ball color
 }
 
 room.onTeamGoal = function(team) {
@@ -2435,7 +2426,7 @@ room.onPlayerChat = function(player, message) {
         room.sendAnnouncement("Bạn chưa thể chat vào lúc này", player.id, RED);
         return false;
       };
-      if ( (getRole(player) < ROLE.VIP) && checkSpam(player, message) ) return false;
+      if ( (getRole(player) < ROLE.ADMIN) && checkSpam(player, message) ) return false;
     };
   };
   if ( message.startsWith("!") && !handleCommand(player, message.slice(1)) ) {
