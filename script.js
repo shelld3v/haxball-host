@@ -1,5 +1,6 @@
 const ADMIN_PASSWORD = "travis";
 const MODE = "pick"; // can be "rand" or "pick"
+const PUBLIC = true;
 const ACTIVITY_TIMEOUT = 10;
 const AFK_TIMEOUT = 10 * 60;
 const FIRST_PICK_TIMEOUT = 15;
@@ -373,7 +374,7 @@ var room = HBInit({
   roomName: `💥 [De Paul's auto room] 5v5 (${MODE})`,
   maxPlayers: 30,
   playerName: "BLV Zoi Đẹp Trai",
-  public: true,
+  public: PUBLIC,
 });
 room.setTeamsLock(1);
 room.setKickRateLimit(6, 0, 0);
