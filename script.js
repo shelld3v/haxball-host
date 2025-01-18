@@ -1,4 +1,5 @@
-const ADMIN_PASSWORD = "travis";
+const SUPER_ADMIN_PASSOWRD = "super_admin";
+const ADMIN_PASSWORD = "admin";
 const MODE = "pick"; // can be "rand" or "pick"
 const PUBLIC = true;
 const ACTIVITY_TIMEOUT = 10;
@@ -317,7 +318,7 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   leavecap: [leaveCaptainFunc, ["pick"], ROLE.PLAYER, true],
   pause: [pauseFunc, ["pick"], ROLE.PLAYER, true],
   resume: [resumeFunc, ["pick"], ROLE.PLAYER, true],
-  msgcolor: [setMsgColorFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  //msgcolor: [setMsgColorFunc, ["rand", "pick"], ROLE.PLAYER, false],
   adjustsize: [adjustSizeFunc, ["rand", "pick"], ROLE.PLAYER, false],
   yellow: [yellowCardFunc, ["rand", "pick"], ROLE.ADMIN, false],
   clearyellow: [clearYellowCardFunc, ["rand", "pick"], ROLE.ADMIN, false],
@@ -1445,6 +1446,11 @@ function loginFunc(password, player) {
       room.sendAnnouncement("Vui lòng đính kèm mật khẩu (VD: !login mk)", player.id, RED);
       break;
     case ADMIN_PASSWORD:
+      admins
+      room.setPlayerAdmin(player.id, true);
+      room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN);
+      break;
+    case SUPER_ADMIN_PASSWORD:
       adminAuths.add(getAuth(player.id));
       room.setPlayerAdmin(player.id, true);
       room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN);
