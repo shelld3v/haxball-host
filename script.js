@@ -1,5 +1,7 @@
-const ADMIN_PASSWORD = "travis";
+const SUPER_ADMIN_PASSWORD = "super_admin";
+const ADMIN_PASSWORD = "admin";
 const MODE = "pick"; // can be "rand" or "pick"
+const ROOM_NAME = `💥 [De Paul's auto room] 5v5 (${MODE})`;
 const PUBLIC = true;
 const ACTIVITY_TIMEOUT = 10;
 const AFK_TIMEOUT = 10 * 60;
@@ -36,6 +38,7 @@ const TEAM_NAMES = {
 const ROLE = {
   PLAYER: 0,
   ADMIN: 1,
+  SUPER_ADMIN: 2,
 };
 const PLAYER_SCORING_RULES = {
   goals: 5,
@@ -317,7 +320,7 @@ var commands = { // Format: "alias: [function, availableModes, minimumRole, capt
   leavecap: [leaveCaptainFunc, ["pick"], ROLE.PLAYER, true],
   pause: [pauseFunc, ["pick"], ROLE.PLAYER, true],
   resume: [resumeFunc, ["pick"], ROLE.PLAYER, true],
-  msgcolor: [setMsgColorFunc, ["rand", "pick"], ROLE.PLAYER, false],
+  //msgcolor: [setMsgColorFunc, ["rand", "pick"], ROLE.PLAYER, false],
   adjustsize: [adjustSizeFunc, ["rand", "pick"], ROLE.PLAYER, false],
   yellow: [yellowCardFunc, ["rand", "pick"], ROLE.ADMIN, false],
   clearyellow: [clearYellowCardFunc, ["rand", "pick"], ROLE.ADMIN, false],
@@ -371,7 +374,7 @@ var quotes = [];
 var ballColor = new BallColor();
 
 var room = HBInit({
-  roomName: `💥 [De Paul's auto room] 5v5 (${MODE})`,
+  roomName: ROOM_NAME,
   maxPlayers: 30,
   playerName: "BLV Zoi Đẹp Trai",
   public: PUBLIC,
@@ -651,7 +654,7 @@ function getConn(id) {
 }
 
 function getRole(player) {
-  return player.admin ? ROLE.ADMIN: ROLE.PLAYER;
+  return player.admin ? ROLE.SUPER_ADMIN: adminAuths.has(getAuth(player.id)) ? ROLE.ADMIN: ROLE.PLAYER;
 }
 
 function getSetting(id) {
@@ -1377,8 +1380,8 @@ function adjustSizeFunc(value, player) {
     room.sendAnnouncement("Vui lòng cung cấp số đơn vị muốn thay đổi, dùng 0 để chỉnh lại về bình thường (VD: !adjustsize -2)", player.id, RED);
     return false;
   };
-  if ( (value > 0) && (getRole(player) < ROLE.ADMIN) ) {
-    room.sendAnnouncement("Chỉ admin mới được phép tăng kích cỡ cầu thủ", player.id, RED);
+  if ( value > 0 ) {
+    room.sendAnnouncement("Bạn thể tăng kích cỡ cầu thủ", player.id, RED);
     return false;
   };
   if ( Math.abs(value) > stadium.playerRadius * MAX_SIZE_ADJUSTMENT_RATIO ) {
@@ -1446,8 +1449,11 @@ function loginFunc(password, player) {
       break;
     case ADMIN_PASSWORD:
       adminAuths.add(getAuth(player.id));
+      room.sendAnnouncement(`${player.name} đã đăng nhập thành công dưới tư cách là Admin`, null, GREEN, "bold");
+      break;
+    case SUPER_ADMIN_PASSWORD:
       room.setPlayerAdmin(player.id, true);
-      room.sendAnnouncement("Đăng nhập thành công", player.id, GREEN);
+      room.sendAnnouncement(`${player.name} đã đăng nhập thành công dưới tư cách là Siêu Admin`, null, GREEN, "bold");
       break;
     default:
       room.kickPlayer(player.id, "Bạn đã nhập sai mật khẩu, vui lòng thử lại");
@@ -1466,6 +1472,10 @@ function yellowCardFunc(value, player) {
   let toPlayer = getPlayerByName(name);
   if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
+    return false;
+  };
+  if ( getRole(player) < getRole(toPlayer) ) {
+    room.sendAnnouncement(`Bạn không có quyền phạt thẻ vàng người chơi "${name}"`, player.id, RED);
     return false;
   };
 
@@ -1520,6 +1530,10 @@ function muteFunc(value, player) {
   let toPlayer = getPlayerByName(name);
   if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
+    return false;
+  };
+  if ( getRole(player) < getRole(toPlayer) ) {
+    room.sendAnnouncement(`Bạn không có quyền cấm chat người chơi "${name}"`, player.id, RED);
     return false;
   };
 
@@ -1588,6 +1602,10 @@ function banFunc(value, player) {
   let toPlayer = getPlayerByName(name);
   if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
+    return false;
+  };
+  if ( getRole(player) < getRole(toPlayer) ) {
+    room.sendAnnouncement(`Bạn không có quyền cấm người chơi "${name}"`, player.id, RED);
     return false;
   };
   if ( isNaN(period) || period < 0 ) {
@@ -1686,7 +1704,7 @@ function showAfksFunc(value, player) {
 
 function punishQuitGame(player) {
   if (
-    (getRole(player) == ROLE.ADMIN) || // Admins receive no punishment
+    (getRole(player) >= ROLE.ADMIN) || // Admins receive no punishment
     (getGameStatus() === false) || // No punishment if the player quits after the game is over
     (getNonAfkPlayers().length < MAX_PLAYERS * 2 + 3) // No punishment if there are less than 3 spectators (the "captain slot" isn't that desired)
   ) return;
@@ -1967,7 +1985,7 @@ function checkSpam(player, message) {
   if (
     (lastMessages.length > 0) &&
     (message === lastMessages[0][0]) &&
-    (player.id === lastMessages[0][1]) &&
+    (message === lastMessages[1][0]) &&
     (time - lastMessages[0][2] < 3000)
   ) { // 2 duplicate messages in a row
     muteFunc(`${getTag(player.name)} 1 Spam`, room.getPlayer(0));
@@ -1977,7 +1995,7 @@ function checkSpam(player, message) {
     (lastMessages.every(message => message[1] == player.id)) &&
     (time - lastMessages.pop()[2] < 8000)
   ) { // Sending too many messages in a short period of time
-    muteFunc(`${getTag(player.name)} 3 Nhắn quá nhanh`, room.getPlayer(0));
+    muteFunc(`${getTag(player.name)} 1 Nhắn quá nhanh`, room.getPlayer(0));
     return true;
   };
   lastMessages.unshift([message, player.id, time]);
@@ -2182,9 +2200,11 @@ async function pickPlayers() {
 }
 
 function personalizeMsg(message, player) {
-  let newMessage = `[${getStats(getAuth(player.id)).stars}★] ${player.name.trim()}: ${message}`;
-  let color = getSetting(player.id).msgColor;
-  if ( color == "normal" ) color = 0xFFFFFF;
+  let roleName = getRole(player) == ROLE.SUPER_ADMIN ? "SUPER ADMIN" : getRole(player) == ROLE.ADMIN ? "ADMIN" : "PLAYER";
+  let color = getRole(player) == ROLE.SUPER_ADMIN ? 0xDE3163 : getRole(player) == ROLE.ADMIN ? 0xFFD580 : 0xFFFFFF;
+  let newMessage = `[${roleName}] [${getStats(getAuth(player.id)).stars}★] ${player.name.trim()}: ${message}`;
+  //let color = getSetting(player.id).msgColor;
+  //if ( color == "normal" ) color = 0xFFFFFF;
   if ( message.includes("@") ) {
     for (const _player of room.getPlayerList()) {
       if ( message.includes(getTag(_player.name)) ) {
