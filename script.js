@@ -779,7 +779,7 @@ function setRandomColors() {
 async function avatarEffect(playerId, avatars) {
   for (const avatar of avatars) {
     await room.setPlayerAvatar(playerId, avatar);
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 500));
   };
   room.setPlayerAvatar(playerId, null);
 }
@@ -796,7 +796,7 @@ async function celebrationEffect(player, hasScored) {
       let originalRadius = room.getPlayerDiscProperties(player.id).radius;
       for (let i = 1; i <= 5; i += 1) {
         await room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius - stadium.playerRadius * (i % 2) / 2 });
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 500));
       };
       room.setPlayerDiscProperties(player.id, { radius: originalRadius });
       break;
