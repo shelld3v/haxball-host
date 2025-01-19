@@ -2243,9 +2243,6 @@ room.onPlayerJoin = async function(player) {
   await updateTeamPlayers();
   reorderPlayers();
   checkBan(player);
-  if ( adminAuths.has(player.auth) ) { // Auto-login
-    room.setPlayerAdmin(player.id, true);
-  };
   if ( MODE == "pick" ) {
     // Assign captains if missing
     for (let teamId = 1; teamId < 3; teamId++) {
