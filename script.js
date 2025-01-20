@@ -785,6 +785,7 @@ async function avatarEffect(playerId, avatars) {
 }
 
 async function celebrationEffect(player, hasScored) {
+  let players;
   switch ( getRandomInt(8) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
@@ -804,7 +805,7 @@ async function celebrationEffect(player, hasScored) {
       room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius * 2 });
       break;
     case 4:
-      let players = room.getPlayerList().flatMap(player_ => (player_.team == player.team) && (player_.id != player.id) ? [player_.id] : []);
+      players = room.getPlayerList().flatMap(player_ => (player_.team == player.team) && (player_.id != player.id) ? [player_.id] : []);
       for (let i = 0; i < players.length; i++) {
         room.setPlayerDiscProperties(
           players[i],
