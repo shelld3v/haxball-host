@@ -633,7 +633,7 @@ async function sendWebhook(title, content, fields, attachments) {
     if ( !attachment[1] ) continue;
     let form = new FormData();
     form.append(null, new File([attachment[1]], attachment[0], { "type": "text/plain" }));
-    fetch(DISCORD_WEBHOOK, {
+    await fetch(DISCORD_WEBHOOK, {
       method: "POST",
       body: form,
     });
