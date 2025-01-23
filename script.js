@@ -2226,7 +2226,7 @@ async function pickPlayers() {
 function personalizeMsg(message, player) {
   let roleName = getRole(player) == ROLE.SUPER_ADMIN ? "SUPER ADMIN" : getRole(player) == ROLE.ADMIN ? "ADMIN" : "PLAYER";
   let color = getRole(player) == ROLE.SUPER_ADMIN ? 0xDE3163 : getRole(player) == ROLE.ADMIN ? 0xFFD580 : 0xFFFFFF;
-  let newMessage = `[${roleName}] [${getStats(getAuth(player.id)).stars}★] ${player.name.trim()}: ${message}`;
+  let newMessage = `[${roleName} | ${getStats(getAuth(player.id)).stars}★] ${player.name.trim()}: ${message}`;
   //let color = getSetting(player.id).msgColor;
   //if ( color == "normal" ) color = 0xFFFFFF;
   if ( message.includes("@") ) {
