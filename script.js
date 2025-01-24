@@ -827,21 +827,21 @@ async function celebrationEffect(player, hasScored) {
     case 6:
       players = room.getPlayerList().flatMap(player_ => (player_.team == player.team) && (player_.id != player.id) ? [player_.id] : []);
       for (const player_ of players) {
-        await room.setPlayerAvatar(playerId, "👏🏻");
+        await room.setPlayerAvatar(player_.id, "👏🏻");
       };
       await new Promise(r => setTimeout(r, 2000));
       for (const player_ of players) {
-        room.setPlayerAvatar(playerId, null);
+        room.setPlayerAvatar(player_.id, null);
       };
       break;
     case 7:
       players = room.getPlayerList().flatMap(player_ => player_.team == getOppositeTeamId(player.team) ? [player_.id] : []);
       for (const player_ of players) {
-        await room.setPlayerAvatar(playerId, "🐷");
+        await room.setPlayerAvatar(player_.id, "🐷");
       };
       await new Promise(r => setTimeout(r, 2000));
       for (const player_ of players) {
-        room.setPlayerAvatar(playerId, null);
+        room.setPlayerAvatar(player_.id, null);
       };
       break;
     //case 8:
