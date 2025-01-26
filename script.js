@@ -426,7 +426,7 @@ async function randomAnnouncement() {
   let msg;
   switch ( getRandomInt(2) ) {
     case 0: // Send Discord link
-      msg = `🔔 Mã nguồn được viết bởi shelld3v (Discord)`;
+      msg = "🔔 Mã nguồn được viết bởi shelld3v (Discord)";
       break;
     default: // Send a random quote
       try {
