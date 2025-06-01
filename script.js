@@ -376,7 +376,7 @@ var ballColor = new BallColor();
 var room = HBInit({
   roomName: ROOM_NAME,
   maxPlayers: 30,
-  playerName: "BLV Zoi Đẹp Trai",
+  playerName: "BLV De Paul",
   public: PUBLIC,
 });
 room.setTeamsLock(1);
@@ -426,7 +426,7 @@ async function randomAnnouncement() {
   let msg;
   switch ( getRandomInt(2) ) {
     case 0: // Send Discord link
-      msg = "🔔 Mã nguồn được viết bởi shelld3v (Discord)";
+      msg = "🔔 Mã nguồn được viết bởi shelld3v (Discord). Mã nguồn: https://github.com/shelld3v/haxball-host";
       break;
     default: // Send a random quote
       try {
