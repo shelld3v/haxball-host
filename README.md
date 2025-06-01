@@ -10,6 +10,7 @@ Cách mở room tự động bằng mã nguồn:
 
 ## Lưu ý (phải đọc)
 - **ĐẢM BẢO BẢN THÂN ĐÃ THAY MẬT KHẨU MẶC ĐỊNH BẰNG MẬT KHẨU KHÁC AN TOÀN HƠN**
+
 Dành cho ai không biết code, thay 2 dòng đầu bằng
 ```javascript
 const SUPER_ADMIN_PASSWORD = "MẬT KHẨU SIÊU CẤP ADMIN CỦA MÀY Ở ĐÂY";
