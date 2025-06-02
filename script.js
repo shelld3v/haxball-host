@@ -21,7 +21,7 @@ const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 2 * 60;
 const LATE_SUBSTITUTION_PERIOD = 30;
 const MAX_AFK_PLAYERS = 3;
-const MAX_SIZE_ADJUSTMENT_RATIO = 0.4;
+const MAX_SIZE_ADJUSTMENT_RATIO = 0.3;
 const SAVE_RECORDINGS = true;
 const MAX_WARNINGS_PER_PLAYER = 3;
 const VIOLATION_BAN_PERIOD = 3;
@@ -69,15 +69,62 @@ const GOALKEEPER_COLORS = {
   blue: [0, 0xFFFFFF, [0x13A720, 0x2FD835, 0x13A720]],
 };
 const GOAL_COMMENTARIES = {
-  "-3": "một bàn thắng danh dự",
-  "-2": "liệu sẽ có một cuộc lội ngược dòng xảy ra?",
-  "-1": "cách biệt chỉ còn là 1 bàn mong manh",
-  "0": "một bàn thắng gỡ hòa vô cùng quan trọng",
-  "1": "một cách biệt đã được tạo ra",
-  "2": "cách biệt đã được nâng lên 2 bàn",
-  "3": "cách biệt đã trở nên quá lớn để hy vọng cho một cuộc lội ngược dòng",
-  "4": "một cơn ác mộng",
-  "5": "hết cứu thật rồi",
+  "-3": [
+    "Một bàn thắng danh dự!",
+    "Một niềm an ủi nhỏ nhoi cho đội bóng.",
+  ],
+  "-2": [
+    "Liệu sẽ có một cuộc lội ngược dòng xảy ra?",
+    "Một tia hy vọng vừa được nhen nhóm!",
+    "Tỉ số đã được rút ngắn còn 2 bàn.",
+    "Họ chưa chịu đầu hàng!",
+    "Liệu đây có phải là sự khởi đầu của một điều kỳ diệu?",
+  ],
+  "-1": [
+    "Cách biệt chỉ còn là 1 bàn mong manh!",
+    "Áp lực đang đè nặng lên đôi vai đội dẫn trước!",
+    "Chỉ cần một bàn nữa thôi và mọi thứ sẽ quay trở lại vạch xuất phát!",
+    "Trận đấu giờ sẽ trở nên hấp dẫn và kịch tính hơn bao giờ hết!",
+  ],
+  "0": [
+    "Một bàn thắng gỡ hòa vô cùng quan trọng!",
+    "Trận đấu đã trở lại vạch xuất phát!",
+    "Tất cả bắt đầu lại từ đầu! Và không ai muốn thua ngay lúc này!",
+    "Mọi thứ như nổ tung sau bàn gỡ hòa!",
+    "Thế trận đang cân bằng tuyệt đối!",
+  ],
+  "1": [
+    "Một cách biệt đã được tạo ra!",
+    "Pha ghi bàn mở ra lợi thế cho đội bóng!",
+    "Lợi thế mong manh nhưng cực kỳ quý giá.",
+    "Một bàn thắng có thể đã thay đổi cả cục diện trận đấu.",
+  ],
+  "2": [
+    "Cách biệt đã được nâng lên 2 bàn!",
+    "Họ đang kiểm soát hoàn toàn thế trận!",
+    "Áp lực đè nặng lên hàng phòng ngự đối phương!",
+    "Một khoảng cách an toàn cho đội bóng.",
+    "Đội bóng đang chơi như lên đồng!",
+  ],
+  "3": [
+    "Cách biệt đã trở nên quá lớn để hy vọng cho một cuộc lội ngược dòng.",
+    "Một trận đấu gần như đã ngã ngũ.",
+    "Họ đang dạy cho đối phương một bài học!",
+    "Chiến thắng gần như nằm trong tay họ.",
+    "Sự chênh lệch đẳng cấp đang được thể hiện rõ rệt.",
+  ],
+  "4": [
+    "Một cơn ác mộng thực sự cho hàng thủ đối phương!",
+    "Thế trận hoàn toàn một chiều trong trận đấu này.",
+    "Họ đang bị nghiền nát không thương tiếc!",
+    "Một tỉ số không thể cứu vãn được nữa rồi.",
+    "Đây là lúc để nghĩ đến danh dự hơn là chiến thắng.",
+  ],
+  "5": [
+    "Trận đấu đã trở thành cuộc dạo chơi.",
+    "Không ai có thể ngờ tỉ số lại chênh lệch đến mức này.",
+    "Một thảm họa thực sự cho đội bóng bị dẫn!",
+  ],
 };
 const WINNING_GOAL_COMMENTARIES = [
   "VÀ ĐÓ LÀ BÀN THẮNG QUYẾT ĐỊNH",
@@ -85,23 +132,29 @@ const WINNING_GOAL_COMMENTARIES = [
   "ĐỘI BÓNG MẠNH HƠN ĐÃ LÊN TIẾNG",
   "MỘT CHIẾN THẮNG KHUẤT PHỤC",
   "CUỘC CHƠI KẾT THÚC",
+  "KHÔNG THỂ NGĂN CẢN! BÀN THẮNG ẤN ĐỊNH CHIẾN THẮNG!",
+  "VẬY TRẬN ĐẤU ĐƯỢC ĐÓNG LẠI VỚI BÀN THẮNG NÀY",
+  "MỘT KHOẢNH KHẮC NGÔI SAO",
 ];
 const SCORER_COMMENTARIES = {
   "1": "Pha lập công do công của",
   "2": "Cú đúp dành cho",
-  "3": "Hattrick của",
-  "4": "Thật không thể tin được, một cú poker đến từ",
-  "5": "Vâng, không ai khác, một cú repoker cho",
+  "3": "Hattrick đến từ",
+  "4": "THẬT KHÔNG THỂ TIN ĐƯỢC, poker cho",
+  "5": "REPOCKER CHO NGƯỜI NGOÀI HÀNH TINH",
 };
 const PENALTY_GOAL_COMMENTARIES = [
   "Rất lạnh lùng và vô cùng bản lĩnh",
   "Rất quyết đoán, một cú sút với lực căng",
   "Vàoooo, tỉ số luân lưu đã được nâng lên",
   "Quá đơn giản và nhẹ nhàng",
+  "Chính xác đến từng centimet",
 ];
 const PENALTY_MISS_COMMENTARIES = [
   "Áp lực quá lớn đã khiến cho cầu thủ thực hiện quả luân lưu không thành công",
-  "Không vàooooo, rất đáng tiếc",
+  "Không vàooooooo, rất đáng tiếc",
+  "Không vàooooo, cái duyên trên chấm 11 mét đã không xuất hiện ngày hôm nay",
+  "Không vàooo, quá thiếu may mắn",
 ];
 const DISCORD_WEBHOOK = null;
 const STADIUM_TRAINING = '{"name":"Practice","width":420,"height":200,"spawnDistance":170,"bg":{"type":"grass","width":370,"height":170,"kickOffRadius":75,"cornerRadius":0},"vertexes":[{"x":-370,"y":170,"trait":"ballArea"},{"x":-370,"y":-170,"trait":"ballArea"},{"x":370,"y":170,"trait":"ballArea"},{"x":370,"y":-170,"trait":"ballArea"},{"x":0,"y":200,"trait":"kickOffBarrier"},{"x":0,"y":-200,"trait":"kickOffBarrier"}],"segments":[],"goals":[],"discs":[],"planes":[{"normal":[0,1],"dist":-170,"trait":"ballArea","_data":{"extremes":{"normal":[0,1],"dist":-170,"canvas_rect":[-661,-212,661,213],"a":[-661,-170],"b":[661,-170]}}},{"normal":[0,-1],"dist":-170,"trait":"ballArea","_data":{"extremes":{"normal":[0,-1],"dist":-170,"canvas_rect":[-661,-212,661,213],"a":[-661,170],"b":[661,170]}}},{"normal":[0,1],"dist":-200,"bCoef":0.1,"_data":{"extremes":{"normal":[0,1],"dist":-200,"canvas_rect":[-661,-212,661,213],"a":[-661,-200],"b":[661,-200]}}},{"normal":[0,-1],"dist":-200,"bCoef":0.1,"_data":{"extremes":{"normal":[0,-1],"dist":-200,"canvas_rect":[-661,-212,661,213],"a":[-661,200],"b":[661,200]}}},{"normal":[1,0],"dist":-420,"bCoef":0.1,"_data":{"extremes":{"normal":[1,0],"dist":-420,"canvas_rect":[-661,-212,661,213],"a":[-420,-212],"b":[-420,213]}}},{"normal":[-1,0],"dist":-420,"bCoef":0.1,"_data":{"extremes":{"normal":[-1,0],"dist":-420,"canvas_rect":[-661,-212,661,213],"a":[420,-212],"b":[420,213]}}},{"normal":[1,0],"dist":-370,"bCoef":1,"cMask":["ball"],"trait":"ballArea","_data":{"extremes":{"normal":[1,0],"dist":-370,"canvas_rect":[-661,-212,661,213],"a":[-370,-212],"b":[-370,213]}}},{"normal":[-1,0],"dist":-370,"bCoef":1,"cMask":["ball"],"trait":"ballArea","_data":{"extremes":{"normal":[-1,0],"dist":-370,"canvas_rect":[-661,-212,661,213],"a":[370,-212],"b":[370,213]}}}],"traits":{"ballArea":{"vis":false,"bCoef":1,"cMask":["ball"]},"goalPost":{"radius":8,"invMass":0,"bCoef":0.5},"goalNet":{"vis":true,"bCoef":0.1,"cMask":["ball"]},"kickOffBarrier":{"vis":false,"bCoef":0.1,"cGroup":["redKO","blueKO"],"cMask":["red","blue"]}},"joints":[],"redSpawnPoints":[],"blueSpawnPoints":[],"ballPhysics":{"radius":6.4},"playerPhysics":{"kickStrength":6.7},"canBeStored":false}';
@@ -1405,7 +1458,7 @@ function adjustSizeFunc(value, player) {
     return false;
   };
   if ( value > 0 ) {
-    room.sendAnnouncement("Bạn thể tăng kích cỡ cầu thủ", player.id, RED);
+    room.sendAnnouncement("Bạn không thể tăng kích cỡ cầu thủ", player.id, RED);
     return false;
   };
   if ( Math.abs(value) > stadium.playerRadius * MAX_SIZE_ADJUSTMENT_RATIO ) {
@@ -1984,16 +2037,18 @@ function celebrateGoal(team) {
   // Design a good comment :P
   if (
     ((scores.scoreLimit != 0) && [scores.red, scores.blue].includes(scores.scoreLimit)) || // Maximum goals reached
-    ((scores.timeLimit != 0) && (scores.time > scores.timeLimit)) // Overtime goal
+    ((scores.timeLimit != 0) && (scores.time > scores.timeLimit - 7.5)) // Overtime or last-second goal
   ) {
     scream = "VÀOOOOOOOO";
     // Pick a random comment
     comment = randomChoice(WINNING_GOAL_COMMENTARIES);
   } else {
-    comment = GOAL_COMMENTARIES[goalDiff] || comment;
+    if ( (scores.timeLimit != 0) && (scores.time > scores.timeLimit - 10) ) goalDiff = -3;
+    var comments = GOAL_COMMENTARIES[goalDiff];
+    if ( comments ) comment = comments[Math.floor(Math.random() * comments.length)];
   };
 
-  room.sendChat(`${scream} ${scoreline}, ${comment}`);
+  room.sendChat(`${scream} ${scoreline}! ${comment}`);
 }
 
 function celebratePenalty(team) {
@@ -2509,8 +2564,7 @@ room.onGameStart = function(byPlayer) {
   setRandomColors();
   trackAfk();
   if ( DISCORD_WEBHOOK && SAVE_RECORDINGS ) room.startRecording();
-  room.sendChat("Vậy là trận đấu đã chính thức được bắt đầu");
-  room.sendChat(`Quý vị khán giả có ${PREDICTION_PERIOD} giây để dự đoán tỉ số và có cơ hội nhận được 1 suất đá chính, cú pháp "!predict RED-BLUE" (VD: !predict 1-2)`);
+  room.sendChat(`Quý vị khán giả có ${PREDICTION_PERIOD} giây để dự đoán tỉ số với !predict và có cơ hội nhận 1 suất đá chính.`);
 }
 
 room.onGameStop = async function(byPlayer) {
