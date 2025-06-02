@@ -1,5 +1,5 @@
-const SUPER_ADMIN_PASSWORD = "egod_va_depaul";
-const ADMIN_PASSWORD = "egod_goat_depaul";
+const SUPER_ADMIN_PASSWORD = "Password ghi ở đây";
+const ADMIN_PASSWORD = "Password ghi ở đây";
 const MODE = "pick"; // can be "rand" or "pick"
 const ROOM_NAME = `💥 Room chính thức của De Paul [5v5] 💥`;
 const PUBLIC = true;
@@ -482,7 +482,7 @@ async function randomAnnouncement() {
     let msg;
     switch (getRandomInt(2)) {
     case 0: // Send Discord link
-        msg = "🔔 Script gốc được viết bởi shelld3v (Discord), egodtheturtle đã tinh chỉnh lại cho phù hợp hơn."
+        msg = "🔔 Script gốc được viết bởi shelld3v (Discord)."
         break;
     default: // Send a random quote
         try {
