@@ -1239,11 +1239,11 @@ function showStatsFunc(value, player) {
 function showGameStatsFunc(value, player) {
     let stats = game[player.team][getAuth(showPlayer.id)];
     room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${player.name}:`, player.id, BLUE, "bold", 0);
-    room.sendAnnouncement(`Bàn thắng: ${stats.goals}
-Kiến tạo: ${stats.assists}
-Bàn thắng phản lưới nhà: ${stats.ownGoals}
-Đường chuyền: ${stats.passes}
-Sút trúng đích: ${stats.shotsOnTarget}`, player.id, BLUE, "small-bold", 0);
+    room.sendAnnouncement(`Bàn thắng⚽: ${stats.goals}
+Kiến tạo🤝🏻: ${stats.assists}
+Bàn thắng phản lưới nhà🤡: ${stats.ownGoals}
+Đường chuyền👟: ${stats.passes}
+Sút trúng đích🏆: ${stats.shotsOnTarget}`, player.id, BLUE, "small-bold", 0);
     return false;
 }
 
@@ -1262,7 +1262,7 @@ function showRankingsFunc(value, player) {
         return player2.stars - player1.stars;
     })
     let msg = `⭐ Danh sách cầu thủ hàng đầu tháng ${getMonths()} ⭐: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.stars} ⭐)`).join("  •  ")}`;
-    msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
+    msg += `\n     (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
     // Sort players by goals scored
     playerList.sort(function (player1, player2) {
         if (player1.goals == player2.goals) {
@@ -1271,7 +1271,7 @@ function showRankingsFunc(value, player) {
         return player2.goals - player1.goals;
     })
     msg += `\n⚽ Danh sách ghi bàn hàng đầu tháng ${getMonths()} ⚽: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.goals} ⚽)`).join("  •  ")}`;
-    msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
+    msg += `\n     (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
     // Sort players by assists made
     playerList.sort(function (player1, player2) {
@@ -1281,7 +1281,7 @@ function showRankingsFunc(value, player) {
         return player2.assists - player1.assists;
     });
     msg += `\n👟 Danh sách kiến tạo hàng đầu tháng ${getMonths()} 👟: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.assists} 👟)`).join("  •  ")}`;
-    msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
+    msg += `\n     (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
     room.sendAnnouncement(msg, player.id, YELLOW, "small-italic", 0);
     return false;
