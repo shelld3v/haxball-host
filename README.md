@@ -73,3 +73,20 @@ const ADMIN_PASSWORD = "MẬT KHẨU ADMIN CỦA MÀY Ở ĐÂY";
 - **`!unlock` - Bỏ khóa khung chat.**
 - **`!assigncap` - Chỉ định đội trưởng. Dành riêng cho room pick.**
 *Cách dùng: `!assigncap <red|blue> <người chơi>` (VD: `!assigncap blue @De_Paul` hoặc `!assigncap red paul`)*
+
+## Một số câu hỏi thường gặp
+
+### Lỗi "Connection error"
+Hiện tại haxball đang có lỗi người chơi khi bị kick sẽ báo lỗi "Connection error" thay vì tin nhắn bị kick kèm lí do. Xem xét một trong các lí do sau:
+- Tên người chơi không hợp lệ: tên người chơi trống hoặc chỉ có dấu cách.
+- Tên trùng với một người chơi khác trong room, hãy thử đổi tên.
+
+### Mất thống kê sau khi đổi máy/xóa dữ liệu web
+Để đề phòng trường hợp này, hãy lưu **privateKey** vào đâu đó đề phòng mất nó. Bằng cách:
+- Truy cập https://www.haxball.com/playerauth, copy **privateKey** ở dòng cuối cùxng, có dạng `idkey.xxxxxx`
+- Lưu giá trị này vào đâu đó để backup, VD như 1 file text
+- Khi mất dữ liệu, hãy truy cập lại https://www.haxball.com/playerauth, chọn **Change key** và điền key đã lưu từ trước
+
+### Tại sao tôi không được pick dù ở vị trí cao nhất
+Nếu một người chơi được thay vào trong 30 giây cuối trận hoặc trong khoảng thời gian bù giờ thì người chơi đó vẫn được pick trận tiếp theo, khi máy tính đã chọn được người pick cho trận sau thì những ng bị thay vô muộn sau đó sẽ không được hưởng đặc quyền này
+
