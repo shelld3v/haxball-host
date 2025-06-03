@@ -878,24 +878,16 @@ async function celebrationEffect(player, hasScored) {
       room.setDiscProperties(0, {color: originalColor});
       break;
     case 6:
-      players = room.getPlayerList().flatMap(player_ => (player_.team == player.team) && (player_.id != player.id) ? [player_.id] : []);
-      for (const player_ of players) {
-        await room.setPlayerAvatar(player_.id, "👏🏻");
-      };
-      await new Promise(r => setTimeout(r, 2000));
-      for (const player_ of players) {
-        room.setPlayerAvatar(player_.id, null);
-      };
+      players = room.getPlayerList().flatMap(player_ => (player_.team == player.team && player_.id != player.id) ? [player_.id] : []);
+      await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, "👏🏻")));
+      await new Promise(r => setTimeout(r, 2500));
+      await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, null)));
       break;
     case 7:
       players = room.getPlayerList().flatMap(player_ => player_.team == getOppositeTeamId(player.team) ? [player_.id] : []);
-      for (const player_ of players) {
-        await room.setPlayerAvatar(player_.id, "🐷");
-      };
-      await new Promise(r => setTimeout(r, 2000));
-      for (const player_ of players) {
-        room.setPlayerAvatar(player_.id, null);
-      };
+      await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, "🐷")));
+      await new Promise(r => setTimeout(r, 2500));
+      await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, null)));
       break;
     //case 8:
     //  for (let i = 1; i < 3; i++) {
@@ -1209,13 +1201,13 @@ function showStatsFunc(value, player) {
   };
   let item = getStats(getAuth(showPlayer.id));
   room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${showPlayer.name} (${item.stars} sao):`, player.id, BLUE, "bold", 0);
-  room.sendAnnouncement(`⚽ Bàn thắng: ${item.goals}
-🤝🏻 Kiến tạo: ${item.assists}
-❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
-🧤 Sạch lưới: ${item.cleansheets}
-✨ Cầu thủ xuất sắc nhất trận: ${item.motms}
-🔰 Số trận đã chơi: ${item.games}
-🏆 Tỉ lệ thắng: ${item.getWinRate()}%`, player.id, BLUE, "small-bold", 0);
+  room.sendAnnouncement(`│⚽ Bàn thắng: ${item.goals}
+│🤝🏻 Kiến tạo: ${item.assists}
+│❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
+│🧤 Sạch lưới: ${item.cleansheets}
+│✨ Cầu thủ xuất sắc nhất trận: ${item.motms}
+│🔰 Số trận đã chơi: ${item.games}
+│🏆 Tỉ lệ thắng: ${item.getWinRate()}%`, player.id, BLUE, "small-bold", 0);
   return false;
 }
 
@@ -2565,6 +2557,7 @@ room.onGameStart = function(byPlayer) {
   trackAfk();
   if ( DISCORD_WEBHOOK && SAVE_RECORDINGS ) room.startRecording();
   room.sendChat(`Quý vị khán giả có ${PREDICTION_PERIOD} giây để dự đoán tỉ số với !predict và có cơ hội nhận 1 suất đá chính.`);
+  
 }
 
 room.onGameStop = async function(byPlayer) {
