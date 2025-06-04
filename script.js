@@ -18,7 +18,7 @@ const SCORE_LIMIT = 4;
 const MIN_PLAYERS_FOR_STATS = MAX_PLAYERS - 1;
 const MIN_VOTES_FOR_SURRENDER = MAX_PLAYERS - 2;
 const MAX_ADDED_TIME = 90;
-const NOTIFICATION_INTERVAL = 2 * 60;
+const NOTIFICATION_INTERVAL = 5 * 60;
 const LATE_SUBSTITUTION_PERIOD = 30;
 const MAX_AFK_PLAYERS = 3;
 const MAX_SIZE_ADJUSTMENT_RATIO = 0.3;
@@ -2515,6 +2515,7 @@ room.onPlayerChat = function(player, message) {
     return false;
   };
   personalizeMsg(message, player);
+  console.log(`${player.name}: ${message}`);
   return false;
 }
 
