@@ -199,7 +199,7 @@ class PlayerReport {
     this.wins = 0;
     this.games = 0;
     this.motms = 0;
-    this.stars = 0;
+    this.points = 0;
     this.auth = null;
     if ( player !== null ) {
       Object.assign(this, player);
@@ -546,10 +546,10 @@ function updateMetadata() {
 function resetStorage() {
   let playerList = getPlayerStats();
   let topPlayers = playerList.sort(function(player1, player2) {
-    if ( player1.stars == player2.stars ) {
+    if ( player1.points == player2.points ) {
       return player2.goals + player2.assists - player1.goals - player1.assists;
     };
-    return player2.stars - player1.stars;
+    return player2.points - player1.points;
   }).slice(0, 5);
   let topScorers = playerList.sort(function(player1, player2) {
     if ( player1.goals == player2.goals ) {
@@ -580,7 +580,7 @@ ${topScorers.map((player, index) => `${index + 1}. ${player.name} - ${player.goa
   let discordFields = [
     {
       name: "Cầu thủ xuất sắc nhất",
-      value: `============================\n\n*${topPlayers.map((player, index) => `${index + 1}. ${player.name} - ${player.stars} sao`).join("\n")}*`,
+      value: `============================\n\n*${topPlayers.map((player, index) => `${index + 1}. ${player.name} - ${player.points} sao`).join("\n")}*`,
     },
     {
       name: "Vua phá lưới",
@@ -789,15 +789,15 @@ function getPredictionWinners() {
   }, []);
 }
 
-// Get the spectator with the most stars
+// Get the spectator with the most points
 function getBestSpectatorByStats() {
   let bestPlayer = null;
   let highest = -1;
   for (const player of getSpectators()) {
     let stats = getStats(getAuth(player.id));
-    if ( stats.stars < highest ) continue;
+    if ( stats.points < highest ) continue;
     bestPlayer = player;
-    highest = stats.stars;
+    highest = stats.points;
   };
   return bestPlayer;
 }
@@ -873,7 +873,7 @@ async function celebrationEffect(player, hasScored) {
       let originalColor = room.getDiscProperties(0).color;
       for (const color of [0xFF0000, 0xFF8000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF80, 0x00FFFF, 0x0080FF, 0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F]) {
         await room.setDiscProperties(0, {color: color});
-        await new Promise(r => setTimeout(r, 50));
+        await new Promise(r => setTimeout(r, 500));
       };
       room.setDiscProperties(0, {color: originalColor});
       break;
@@ -1200,7 +1200,7 @@ function showStatsFunc(value, player) {
     };
   };
   let item = getStats(getAuth(showPlayer.id));
-  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${showPlayer.name} (${item.stars} sao):`, player.id, BLUE, "bold", 0);
+  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${showPlayer.name} (${item.points} sao):`, player.id, BLUE, "bold", 0);
   room.sendAnnouncement(`│⚽ Bàn thắng: ${item.goals}
 │🤝🏻 Kiến tạo: ${item.assists}
 │❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
@@ -1229,14 +1229,14 @@ function showRankingsFunc(value, player) {
     return false;
   };
 
-  // Sort players by stars
+  // Sort players by points
   playerList.sort(function(player1, player2) {
-    if ( player1.stars == player2.stars ) {
+    if ( player1.points == player2.points ) {
       return player2.goals + player2.assists - player1.goals - player1.assists;
     };
-    return player2.stars - player1.stars;
+    return player2.points - player1.points;
   })
-  let msg = `⭐ Danh sách cầu thủ hàng đầu tháng ${getMonths()} ⭐: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.stars} ⭐)`).join("  •  ")}`;
+  let msg = `⭐ Danh sách cầu thủ hàng đầu tháng ${getMonths()} ⭐: ${playerList.slice(0, 5).map((player, index) => `${index + 1}. ${player.name} (${player.points} ⭐)`).join("  •  ")}`;
   msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
   // Sort players by goals scored
   playerList.sort(function(player1, player2) {
@@ -1900,9 +1900,9 @@ function saveStats() {
       item.games++;
       if ( teamId == prevWinner ) {
         item.wins++;
-        item.stars++;
-      } else if ( (item.stars != 0) && (auth != motmAuth) ) {
-        item.stars--;
+        item.points++;
+      } else if ( (item.points != 0) && (auth != motmAuth) ) {
+        item.points--;
       };
       if ( prevScore.split("0").length > (teamId != prevWinner) + 1 ) item.cleansheets++;
       if ( auth == motmAuth ) item.motms++;
@@ -2273,7 +2273,7 @@ async function pickPlayers() {
 function personalizeMsg(message, player) {
   let roleName = getRole(player) == ROLE.SUPER_ADMIN ? "SUPER ADMIN" : getRole(player) == ROLE.ADMIN ? "ADMIN" : "PLAYER";
   let color = getRole(player) == ROLE.SUPER_ADMIN ? 0xDE3163 : getRole(player) == ROLE.ADMIN ? 0xFFD580 : 0xFFFFFF;
-  let newMessage = `[${roleName} | ${getStats(getAuth(player.id)).stars}★] ${player.name.trim()}: ${message}`;
+  let newMessage = `[${roleName} | ${getStats(getAuth(player.id)).points}★] ${player.name.trim()}: ${message}`;
   //let color = getSetting(player.id).msgColor;
   //if ( color == "normal" ) color = 0xFFFFFF;
   if ( message.includes("@") ) {
@@ -2557,7 +2557,17 @@ room.onGameStart = function(byPlayer) {
   trackAfk();
   if ( DISCORD_WEBHOOK && SAVE_RECORDINGS ) room.startRecording();
   room.sendChat(`Quý vị khán giả có ${PREDICTION_PERIOD} giây để dự đoán tỉ số với !predict và có cơ hội nhận 1 suất đá chính.`);
-  
+  let red_points = 0;
+  let blue_points = 0;
+  for (const player of room.getPlayerList()) {
+    if ( player.team == 1 ) red_points += getStats(getAuth(player.id)).points;
+    if ( player.team == 2 ) blue_points += getStats(getAuth(player.id)).points;
+  };
+  let red_chance = ~~((50 + red_points) / (100 + red_points + blue_points) * 100); // 50 is the pseudocount in Bayesian probability
+  setTimeout(
+    room.sendAnnouncement.bind(null, `Máy tính dự đoán tỉ lệ thắng: ${red_chance}% ${"🟥".repeat(~~(red_chance / 10))}${"🟦".repeat(10 - ~~(red_chance / 10))} ${100 - red_chance}%`, null, YELLOW, "small", 0),
+    3000,
+  );
 }
 
 room.onGameStop = async function(byPlayer) {
