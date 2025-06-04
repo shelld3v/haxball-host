@@ -839,7 +839,7 @@ async function avatarEffect(playerId, avatars) {
 
 async function celebrationEffect(player, hasScored) {
   let players;
-  switch ( getRandomInt(8) ) {
+  switch ( getRandomInt(9) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
       break;
@@ -847,6 +847,9 @@ async function celebrationEffect(player, hasScored) {
       avatarEffect(player.id, ["😴", "💤", "😴", "💤"]);
       break;
     case 2:
+      avatarEffect(player.id, ["🖕", "🤣", "🖕", "🤣"]);
+      break;
+    case 3:
       let originalRadius = room.getPlayerDiscProperties(player.id).radius;
       for (let i = 1; i <= 5; i += 1) {
         await room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius - stadium.playerRadius * (i % 2) / 2 });
@@ -854,10 +857,10 @@ async function celebrationEffect(player, hasScored) {
       };
       room.setPlayerDiscProperties(player.id, { radius: originalRadius });
       break;
-    case 3:
+    case 4:
       room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius * 2 });
       break;
-    case 4:
+    case 5:
       players = room.getPlayerList().flatMap(player_ => (player_.team == player.team) && (player_.id != player.id) ? [player_.id] : []);
       for (let i = 0; i < players.length; i++) {
         room.setPlayerDiscProperties(
@@ -869,7 +872,7 @@ async function celebrationEffect(player, hasScored) {
         );
       };
       break;
-    case 5:
+    case 6:
       let originalColor = room.getDiscProperties(0).color;
       for (const color of [0xFF0000, 0xFF8000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF80, 0x00FFFF, 0x0080FF, 0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F]) {
         await room.setDiscProperties(0, {color: color});
@@ -877,13 +880,13 @@ async function celebrationEffect(player, hasScored) {
       };
       room.setDiscProperties(0, {color: originalColor});
       break;
-    case 6:
+    case 7:
       players = room.getPlayerList().flatMap(player_ => (player_.team == player.team && player_.id != player.id) ? [player_.id] : []);
       await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, "👏🏻")));
       await new Promise(r => setTimeout(r, 2500));
       await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, null)));
       break;
-    case 7:
+    case 8:
       players = room.getPlayerList().flatMap(player_ => player_.team == getOppositeTeamId(player.team) ? [player_.id] : []);
       await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, "🐷")));
       await new Promise(r => setTimeout(r, 2500));
