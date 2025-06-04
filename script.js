@@ -839,7 +839,7 @@ async function avatarEffect(playerId, avatars) {
 
 async function celebrationEffect(player, hasScored) {
   let players;
-  switch ( getRandomInt(9) ) {
+  switch ( getRandomInt(10) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
       break;
@@ -861,13 +861,13 @@ async function celebrationEffect(player, hasScored) {
       room.setPlayerDiscProperties(player.id, { radius: stadium.playerRadius * 2 });
       break;
     case 5:
-      players = room.getPlayerList().flatMap(player_ => (player_.team == player.team) && (player_.id != player.id) ? [player_.id] : []);
+      playerIds = room.getPlayerList().flatMap(player_ => (player_.team == player.team) && (player_.id != player.id) ? [player_.id] : []);
       for (let i = 0; i < players.length; i++) {
         room.setPlayerDiscProperties(
-          players[i],
+          playerIds[i],
           {
-            x: player.position.x + stadium.playerRadius * 4 * Math.cos(Math.PI * 2 * i / players.length),
-            y: player.position.y + stadium.playerRadius * 4 * Math.sin(Math.PI * 2 * i / players.length)
+            x: player.position.x + stadium.playerRadius * 4 * Math.cos(Math.PI * 2 * i / playerIds.length),
+            y: player.position.y + stadium.playerRadius * 4 * Math.sin(Math.PI * 2 * i / playerIds.length)
           }
         );
       };
@@ -881,33 +881,23 @@ async function celebrationEffect(player, hasScored) {
       room.setDiscProperties(0, {color: originalColor});
       break;
     case 7:
-      players = room.getPlayerList().flatMap(player_ => (player_.team == player.team && player_.id != player.id) ? [player_.id] : []);
-      await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, "👏🏻")));
+      playerIds = room.getPlayerList().flatMap(player_ => (player_.team == player.team && player_.id != player.id) ? [player_.id] : []);
+      await Promise.all(playerIds.map(id => room.setPlayerAvatar(id, "👏🏻")));
       await new Promise(r => setTimeout(r, 2500));
-      await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, null)));
+      await Promise.all(playerIds.map(id => room.setPlayerAvatar(id, null)));
       break;
     case 8:
-      players = room.getPlayerList().flatMap(player_ => player_.team == getOppositeTeamId(player.team) ? [player_.id] : []);
-      await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, "🐷")));
+      playerIds = room.getPlayerList().flatMap(player_ => player_.team == getOppositeTeamId(player.team) ? [player_.id] : []);
+      await Promise.all(playerIds.map(player_ => room.setPlayerAvatar(id, "🐷")));
       await new Promise(r => setTimeout(r, 2500));
-      await Promise.all(players.map(player_ => room.setPlayerAvatar(player_.id, null)));
+      await Promise.all(playerIds.map(player_ => room.setPlayerAvatar(id, null)));
       break;
-    //case 8:
-    //  for (let i = 1; i < 3; i++) {
-    //    for (let j = 0; j < 5; j++) {
-    //      await room.setPlayerDiscProperties(
-    //        player.id,
-    //        {
-    //          x: player.position.x + stadium.playerRadius * 3 * i * Math.cos(Math.PI * 2 * j / 5),
-    //          y: player.position.y + stadium.playerRadius * 3 * i * Math.sin(Math.PI * 2 * j / 5),
-    //          xspeed: 0,
-    //          yspeed: 0
-    //        }
-    //      );
-    //      await new Promise(r => setTimeout(r, 75));
-    //    };
-    //  };
-    //  break;
+    case 9:
+      for (const player_ of room.getPlayerList()) {
+        if ( player_.team == 0 || player_.id == player.id ) continue;
+        room.setPlayerDiscProperties(player_.id, {xspeed: 10 * ((player.team == 1) ? 1 : -1)});
+      };
+      break;
   };
 }
 
@@ -2568,7 +2558,14 @@ room.onGameStart = function(byPlayer) {
   };
   let red_chance = ~~((50 + red_points) / (100 + red_points + blue_points) * 100); // 50 is the pseudocount in Bayesian probability
   setTimeout(
-    room.sendAnnouncement.bind(null, `Máy tính dự đoán tỉ lệ thắng: ${red_chance}% ${"🟥".repeat(~~(red_chance / 10))}${"🟦".repeat(10 - ~~(red_chance / 10))} ${100 - red_chance}%`, null, YELLOW, "small", 0),
+    room.sendAnnouncement.bind(
+      null,
+      `Máy tính dự đoán tỉ lệ thắng: ${red_chance}% ${"🟥".repeat(~~(red_chance / 10))}${"🟦".repeat(10 - ~~(red_chance / 10))} ${100 - red_chance}%`,
+      null,
+      YELLOW,
+      "small",
+      0
+    ),
     3000,
   );
 }
