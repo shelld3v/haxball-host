@@ -2551,24 +2551,26 @@ room.onGameStart = function(byPlayer) {
   trackAfk();
   if ( DISCORD_WEBHOOK && SAVE_RECORDINGS ) room.startRecording();
   room.sendChat(`Quý vị khán giả có ${PREDICTION_PERIOD} giây để dự đoán tỉ số với !predict và có cơ hội nhận 1 suất đá chính.`);
-  let red_points = 0;
-  let blue_points = 0;
-  for (const player of room.getPlayerList()) {
-    if ( player.team == 1 ) red_points += getStats(getAuth(player.id)).points;
-    if ( player.team == 2 ) blue_points += getStats(getAuth(player.id)).points;
+  let players = getNonAfkPlayers();
+  if ( players.length >= 8 ) {
+    let points = [0, 0];
+    for (const player of players) {
+      if ( player.team == 0 ) continue;
+      points[player.team - 1] += getStats(getAuth(player.id)).points;
+    };
+    let red_chance = ~~((50 + points[0]) / (100 + points[0] + points[1]) * 100); // 50 is the pseudocount in Bayesian probability
+    setTimeout(
+      room.sendAnnouncement.bind(
+        null,
+        `Máy tính dự đoán tỉ lệ thắng: ${red_chance}% ${"🟥".repeat(Math.round(red_chance / 10))}${"🟦".repeat(10 - Math.round(red_chance / 10))} ${100 - red_chance}%`,
+        null,
+        YELLOW,
+        "small",
+        0
+      ),
+      3000,
+    );
   };
-  let red_chance = ~~((50 + red_points) / (100 + red_points + blue_points) * 100); // 50 is the pseudocount in Bayesian probability
-  setTimeout(
-    room.sendAnnouncement.bind(
-      null,
-      `Máy tính dự đoán tỉ lệ thắng: ${red_chance}% ${"🟥".repeat(~~(red_chance / 10))}${"🟦".repeat(10 - ~~(red_chance / 10))} ${100 - red_chance}%`,
-      null,
-      YELLOW,
-      "small",
-      0
-    ),
-    3000,
-  );
 }
 
 room.onGameStop = async function(byPlayer) {
