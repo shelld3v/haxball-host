@@ -837,7 +837,7 @@ async function avatarEffect(playerId, avatars) {
   room.setPlayerAvatar(playerId, null);
 }
 
-async function celebrationEffect(player, hasScored) {
+async function celebrationEffect(player) {
   let players;
   switch ( getRandomInt(10) ) {
     case 0:
@@ -881,16 +881,16 @@ async function celebrationEffect(player, hasScored) {
       room.setDiscProperties(0, {color: originalColor});
       break;
     case 7:
-      playerIds = room.getPlayerList().flatMap(player_ => (player_.team == player.team && player_.id != player.id) ? [player_.id] : []);
+      let playerIds = room.getPlayerList().flatMap(player_ => (player_.team == player.team && player_.id != player.id) ? [player_.id] : []);
       await Promise.all(playerIds.map(id => room.setPlayerAvatar(id, "👏🏻")));
       await new Promise(r => setTimeout(r, 2500));
       await Promise.all(playerIds.map(id => room.setPlayerAvatar(id, null)));
       break;
     case 8:
-      playerIds = room.getPlayerList().flatMap(player_ => player_.team == getOppositeTeamId(player.team) ? [player_.id] : []);
-      await Promise.all(playerIds.map(player_ => room.setPlayerAvatar(id, "🐷")));
+      let playerIds = room.getPlayerList().flatMap(player_ => player_.team == getOppositeTeamId(player.team) ? [player_.id] : []);
+      await Promise.all(playerIds.map(id => room.setPlayerAvatar(id, "🐷")));
       await new Promise(r => setTimeout(r, 2500));
-      await Promise.all(playerIds.map(player_ => room.setPlayerAvatar(id, null)));
+      await Promise.all(playerIds.map(id => room.setPlayerAvatar(id, null)));
       break;
     case 9:
       for (const player_ of room.getPlayerList()) {
@@ -1859,7 +1859,7 @@ function updateGoalStats(team) {
   shooterStats.goals++;
   let comment = SCORER_COMMENTARIES[shooterStats.goals] || `Thật điên rồ, bàn thắng thứ ${shooterStats.goals} trong trận đấu này của`;
   comment = comment.concat(" ", getTag(shot.player.name));
-  celebrationEffect(shot.player, shooterStats.goals);
+  celebrationEffect(shot.player);
   if ( assist !== null ) {
     let assisterStats = getGameStats(assist.player);
     if ( assist.player.team != team ) {
