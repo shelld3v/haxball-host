@@ -249,7 +249,16 @@ class Penalty {
     return this.results[0].length - this.results[1].length;
   }
   // Returns the team that wins the penalty shootout
-  getPenaltyWinner() {
+  async getPenaltyWinner() {
+    // Too many penalties taken, pick the winner randomly
+    if ( this.results[1].length > 15 ) {
+      room.sendChat("Đã hết lượt sút penalty cho cả 2 đội, giờ trọng tài sẽ tung đồng xu để quyết định đội chiến thắng");
+      await new Promise(r => setTimeout(r, 3000));
+      room.sendChat("Đồng xu đã được tung lên... Và xin chúc mừng...");
+      await new Promise(r => setTimeout(r, 5000));
+      return getRandomInt(2);
+    }
+
     if ( this.results[0].length > 5 ) { // "Sudden Death" round
       if ( this.results[0].length != this.results[1].length ) return null;
       if ( this.results[0].at(-1) == this.results[1].at(-1) ) return null;
@@ -839,6 +848,7 @@ async function avatarEffect(playerId, avatars) {
 
 async function celebrationEffect(player) {
   let players;
+  let playerIds;
   switch ( getRandomInt(10) ) {
     case 0:
       avatarEffect(player.id, ["🤫", "😂", "🤫", "😂"]);
@@ -881,13 +891,13 @@ async function celebrationEffect(player) {
       room.setDiscProperties(0, {color: originalColor});
       break;
     case 7:
-      let playerIds = room.getPlayerList().flatMap(player_ => (player_.team == player.team && player_.id != player.id) ? [player_.id] : []);
+      playerIds = room.getPlayerList().flatMap(player_ => (player_.team == player.team && player_.id != player.id) ? [player_.id] : []);
       await Promise.all(playerIds.map(id => room.setPlayerAvatar(id, "👏🏻")));
       await new Promise(r => setTimeout(r, 2500));
       await Promise.all(playerIds.map(id => room.setPlayerAvatar(id, null)));
       break;
     case 8:
-      let playerIds = room.getPlayerList().flatMap(player_ => player_.team == getOppositeTeamId(player.team) ? [player_.id] : []);
+      playerIds = room.getPlayerList().flatMap(player_ => player_.team == getOppositeTeamId(player.team) ? [player_.id] : []);
       await Promise.all(playerIds.map(id => room.setPlayerAvatar(id, "🐷")));
       await new Promise(r => setTimeout(r, 2500));
       await Promise.all(playerIds.map(id => room.setPlayerAvatar(id, null)));
@@ -2147,10 +2157,10 @@ async function endPenaltyShootout(winner) {
 }
 
 async function takePenalty() {
-  let winner = game.penalty.getPenaltyWinner();
+  let winner = await game.penalty.getPenaltyWinner();
   // Found the winner in this penalty shootout
   if ( winner !== null ) {
-    room.sendChat(`Và đó cũng là dấu chấm hết, ${TEAM_NAMES[winner]} là những người chiến thắng, sau màn trình diễn đáng kinh ngạc của họ`);
+    room.sendChat(`${TEAM_NAMES[winner]} là những người chiến thắng, sau màn trình diễn đáng kinh ngạc của họ!`);
     endPenaltyShootout(winner);
     return;
   };
