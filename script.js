@@ -1203,14 +1203,17 @@ function showStatsFunc(value, player) {
     };
   };
   let item = getStats(getAuth(showPlayer.id));
-  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${showPlayer.name} (${item.points} sao):`, player.id, BLUE, "bold", 0);
-  room.sendAnnouncement(`│⚽ Bàn thắng: ${item.goals}
-│🤝🏻 Kiến tạo: ${item.assists}
-│❌ Bàn thắng phản lưới nhà: ${item.ownGoals}
-│🧤 Sạch lưới: ${item.cleansheets}
-│✨ Cầu thủ xuất sắc nhất trận: ${item.motms}
-│🔰 Số trận đã chơi: ${item.games}
-│🏆 Tỉ lệ thắng: ${item.getWinRate()}%`, player.id, BLUE, "small-bold", 0);
+  room.sendAnnouncement(`Thống kê tháng ${getMonths()} của ${showPlayer.name} (${item.points} ⭐):`, player.id, 0x5DB899, "bold", 0);
+  let str = "╭──────────────────────────────────────────────────╮";
+  str += `\n| ⚽ Bàn thắng: ` + item.goals.toString().padEnd(4);
+  str += `|  ✨ Cầu thủ xuất sắc nhất trận: ${item.motms}`;
+  str += `\n| 👟 Kiến tạo: ` + item.assists.toString().padEnd(8);
+  str += `|  🔰 Số trận đã chơi: ${item.games}`;
+  str += `\n| ❌ Phản lưới: ` + item.ownGoals.toString().padEnd(4);
+  str += `│  🧤 Sạch lưới: ${item.cleansheets}`;
+  str += `\n| 🏆 Tỉ lệ thắng: ${item.getWinRate()}%`;
+  str += "\n╰──────────────────────────────────────────────────╯";
+  room.sendAnnouncement(str, player.id, 0x5DB899, "small-bold", 0);
   return false;
 }
 
