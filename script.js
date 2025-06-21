@@ -1042,6 +1042,7 @@ function updateBallKick(player) {
     return;
   };
 
+  let timeGap = game.ballRecords[0].time - game.ballRecords[1].time;
   let travelingDistance = getDistance(ballProperties.x - game.ballRecords[1].properties.x, ballProperties.y - game.ballRecords[1].properties.y);
   let stats = getGameStats(player);
   if ( player.id != game.ballRecords[1].player.id ) {
@@ -2288,7 +2289,7 @@ async function pickPlayers() {
 function personalizeMsg(message, player) {
   let color = getRole(player) == ROLE.SUPER_ADMIN ? 0xDE3163 : getRole(player) == ROLE.ADMIN ? 0xFFD580 : 0xFFFFFF;
   let newMessage = `[${getStats(getAuth(player.id)).points}★] ${player.name.trim()}: ${message}`;
-  let newMessage = (getRole(player) == ROLE.SUPER_ADMIN ? "[SUPER ADMIN] " : getRole(player) == ROLE.ADMIN ? "[ADMIN] " : "") + newMessage;
+  newMessage = (getRole(player) == ROLE.SUPER_ADMIN ? "[SUPER ADMIN] " : getRole(player) == ROLE.ADMIN ? "[ADMIN] " : "") + newMessage;
   //let color = getSetting(player.id).msgColor;
   //if ( color == "normal" ) color = 0xFFFFFF;
   if ( message.includes("@") ) {
