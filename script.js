@@ -1050,8 +1050,8 @@ function updateBallKick(player) {
     stats.averagePosition += (player.position.x - stats.averagePosition) / stats.touches;
   }
   // If the previous kick was a shot on goal, check whether it was blocked and exclude that shot if it was
-  if ( game.ballRecords[1].isAShot && (travelingDistance < stadium.playerRadius * 1.5) ) {
-    getGameStats(game.ballRecords[1].player.id).shotsOnTarget--;
+  if ( game.ballRecords[1].isAShot && (travelingDistance < stadium.playerRadius * 2) ) {
+    getGameStats(game.ballRecords[1].player).shotsOnTarget--;
     game.ballRecords[1].isAShot = false;
   } else if ( game.ballRecords[0].isAShot ) {
     stats.shotsOnTarget++;
@@ -2128,7 +2128,7 @@ async function startPenaltyShootout() {
   room.getPlayerList().forEach(function(player) {
     if ( player.team == 0 ) return;
     let group = game.penalty.groups[player.team - 1];
-    let stats = getGameStats(player.id);
+    let stats = getGameStats(player);
     if (
       (group.length == 0) ||
       ((stats.averagePosition - deepestPositions[player.team - 1]) * (player.team * 2 - 3) > 0)
