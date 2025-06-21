@@ -1045,7 +1045,7 @@ function updateBallKick(player) {
   let timeGap = game.ballRecords[0].time - game.ballRecords[1].time;
   let travelingDistance = getDistance(ballProperties.x - game.ballRecords[1].properties.x, ballProperties.y - game.ballRecords[1].properties.y);
   let stats = getGameStats(player);
-  if ( player.id != game.ballRecords[1].player.id ) {
+  if ( (game.ballRecords[1] === null) || (player.id != game.ballRecords[1].player.id) ) {
     stats.touches++;
     stats.averagePosition += (player.position.x - stats.averagePosition) / stats.touches;
   }
@@ -1921,8 +1921,8 @@ function saveStats() {
     };
     if ( gk[1] !== null ) {
       let stats = getStats(gk[1]);
-      stats.cleensheets++;
-      localStorage.setItem(gk[1], JSON.stringify(item));
+      stats.cleansheets++;
+      localStorage.setItem(gk[1], JSON.stringify(stats));
     };
   };
 }
