@@ -224,6 +224,7 @@ class PlayerStats {
     this.attemptsLeadingToOG = 0;
     this.penaltiesScored = 0;
     this.penaltiesMissed = 0;
+    this.averagePosition = 0;
   }
 };
 class TeamStats {
@@ -1041,16 +1042,14 @@ function updateBallKick(player) {
     return;
   };
 
-  let timeGap = game.ballRecords[0].time - game.ballRecords[1].time;
   let travelingDistance = getDistance(ballProperties.x - game.ballRecords[1].properties.x, ballProperties.y - game.ballRecords[1].properties.y);
   let stats = getGameStats(player);
-  stats.touches++;
+  if ( player.id != game.ballRecords[1].player.id ) {
+    stats.touches++;
+    stats.averagePosition += (player.position.x - stats.averagePosition) / stats.touches;
+  }
   // If the previous kick was a shot on goal, check whether it was blocked and exclude that shot if it was
-  if (
-    game.ballRecords[1].isAShot &&
-    (timeGap < 1) &&
-    (travelingDistance < stadium.playerRadius)
-  ) {
+  if ( game.ballRecords[1].isAShot && (travelingDistance < stadium.playerRadius * 1.5) ) {
     getGameStats(game.ballRecords[1].player.id).shotsOnTarget--;
     game.ballRecords[1].isAShot = false;
   } else if ( game.ballRecords[0].isAShot ) {
@@ -1894,6 +1893,7 @@ function updateGoalStats(team) {
 function saveStats() {
   let motmAuth = getMotm()[0];
   for (let teamId = 1; teamId < 3; teamId++) {
+    let gk = [0, null];
     for (const [auth, report] of Object.entries(game.teams[teamId].players)) {
       let item = getStats(auth);
       item.name = report.name;
@@ -1907,10 +1907,21 @@ function saveStats() {
       } else if ( (item.points != 0) && (auth != motmAuth) ) {
         item.points--;
       };
-      if ( prevScore.split("0").length > (teamId != prevWinner) + 1 ) item.cleansheets++;
       if ( auth == motmAuth ) item.motms++;
+      if (
+        (prevScore.split("0").length > (teamId != prevWinner) + 1) &&
+        (
+          (gk[1] === null) ||
+          ((item.averagePosition - gk[0]) * (teamId * 2 - 3) > 0)
+        )
+      ) gk = [item.averagePosition, item.auth];
       delete item.auth; // Unused value
       localStorage.setItem(auth, JSON.stringify(item));
+    };
+    if ( gk[1] !== null ) {
+      let stats = getStats(gk[1]);
+      stats.cleensheets++;
+      localStorage.setItem(gk[1], JSON.stringify(item));
     };
   };
 }
@@ -2116,12 +2127,13 @@ async function startPenaltyShootout() {
   room.getPlayerList().forEach(function(player) {
     if ( player.team == 0 ) return;
     let group = game.penalty.groups[player.team - 1];
+    let stats = getGameStats(player.id);
     if (
       (group.length == 0) ||
-      ((player.position.x - deepestPositions[player.team - 1]) * (player.team * 2 - 3) > 0)
+      ((stats.averagePosition - deepestPositions[player.team - 1]) * (player.team * 2 - 3) > 0)
     ) { // The lowest player will be assigned to the GK role
       group.push(player.id); // GK is the player in the last index of the array
-      deepestPositions[player.team - 1] = player.position.x;
+      deepestPositions[player.team - 1] = stats.averagePosition;
     } else {
       group.unshift(player.id);
     };
@@ -2274,9 +2286,9 @@ async function pickPlayers() {
 }
 
 function personalizeMsg(message, player) {
-  let roleName = getRole(player) == ROLE.SUPER_ADMIN ? "SUPER ADMIN" : getRole(player) == ROLE.ADMIN ? "ADMIN" : "PLAYER";
   let color = getRole(player) == ROLE.SUPER_ADMIN ? 0xDE3163 : getRole(player) == ROLE.ADMIN ? 0xFFD580 : 0xFFFFFF;
-  let newMessage = `[${roleName} | ${getStats(getAuth(player.id)).points}★] ${player.name.trim()}: ${message}`;
+  let newMessage = `[${getStats(getAuth(player.id)).points}★] ${player.name.trim()}: ${message}`;
+  let newMessage = (getRole(player) == ROLE.SUPER_ADMIN ? "[SUPER ADMIN] " : getRole(player) == ROLE.ADMIN ? "[ADMIN] " : "") + newMessage;
   //let color = getSetting(player.id).msgColor;
   //if ( color == "normal" ) color = 0xFFFFFF;
   if ( message.includes("@") ) {
