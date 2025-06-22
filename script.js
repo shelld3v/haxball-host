@@ -47,8 +47,8 @@ const PLAYER_SCORING_RULES = {
   passes: 1,
   shotsOnTarget: 0.5,
   stoppedShots: 2,
-  errorsLeadingToGoal: -2,
-  attemptsLeadingToOG: 2,
+  errorsLedToGoal: -2,
+  attemptsLedToOG: 2,
   penaltiesScored: 1,
   penaltiesMissed: -1,
 };
@@ -220,11 +220,15 @@ class PlayerStats {
     this.passes = 0;
     this.shotsOnTarget = 0;
     this.stoppedShots = 0;
-    this.errorsLeadingToGoal = 0;
-    this.attemptsLeadingToOG = 0;
+    this.errorsLedToGoal = 0;
+    this.attemptsLedToOG = 0;
     this.penaltiesScored = 0;
     this.penaltiesMissed = 0;
-    this.averagePosition = 0;
+    this.totalPosition = 0;
+  }
+  getMeanPosition() { // The "zone" the player tends to play around
+    if ( this.touches == 0 ) return 0;
+    return this.totalPosition / this.touches;
   }
 };
 class TeamStats {
@@ -1047,7 +1051,7 @@ function updateBallKick(player) {
   let stats = getGameStats(player);
   if ( (game.ballRecords[1] === null) || (player.id != game.ballRecords[1].player.id) ) {
     stats.touches++;
-    stats.averagePosition += (player.position.x - stats.averagePosition) / stats.touches;
+    stats.totalPosition += player.position.x;
   }
   // If the previous kick was a shot on goal, check whether it was blocked and exclude that shot if it was
   if ( game.ballRecords[1].isAShot && (travelingDistance < stadium.playerRadius * 2) ) {
@@ -1862,7 +1866,7 @@ function updateGoalStats(team) {
     } else {
       getGameStats(shot.player).ownGoals++;
       room.sendChat(`Một bàn phản lưới nhà do sai lầm của ${getTag(shot.player.name)}`);
-      (assist !== null) && (assist.player.team == team) && getGameStats(assist.player).attemptsLeadingToOG++;
+      (assist !== null) && (assist.player.team == team) && getGameStats(assist.player).attemptsLedToOG++;
       return;
     };
   };
@@ -1876,7 +1880,7 @@ function updateGoalStats(team) {
   if ( assist !== null ) {
     let assisterStats = getGameStats(assist.player);
     if ( assist.player.team != team ) {
-      assisterStats.errorsLeadingToGoal++;
+      assisterStats.errorsLedToGoal++;
     } else if ( assist.player.id != shot.player.id ) { // Not a solo goal
       assisterStats.assists++;
       if ( assisterStats.assists != 1 ) { // Multiple assists O_O
@@ -1916,9 +1920,9 @@ function saveStats() {
         (prevScore.split("0").length > (teamId != prevWinner) + 1) &&
         (
           (gk[1] === null) ||
-          ((item.averagePosition - gk[0]) * (teamId * 2 - 3) > 0)
+          ((item.getMeanPosition() - gk[0]) * (teamId * 2 - 3) > 0)
         )
-      ) gk = [item.averagePosition, item.auth];
+      ) gk = [item.getMeanPosition(), item.auth];
       delete item.auth; // Unused value
       localStorage.setItem(auth, JSON.stringify(item));
     };
@@ -1959,8 +1963,8 @@ function reportStats() {
         player.passes.toString().padEnd(playerStats[0][5].length, " "),
         player.shotsOnTarget.toString().padEnd(playerStats[0][6].length, " "),
         player.stoppedShots.toString().padEnd(playerStats[0][7].length, " "),
-        player.attemptsLeadingToOG.toString().padEnd(playerStats[0][8].length, " "),
-        player.errorsLeadingToGoal.toString().padEnd(playerStats[0][9].length, " "),
+        player.attemptsLedToOG.toString().padEnd(playerStats[0][8].length, " "),
+        player.errorsLedToGoal.toString().padEnd(playerStats[0][9].length, " "),
         player.penaltiesScored.toString().padEnd(playerStats[0][10].length, " "),
         player.penaltiesMissed.toString().padEnd(playerStats[0][11].length, " "),
         player.touches.toString().padEnd(playerStats[0][12].length, " ")
@@ -2134,10 +2138,10 @@ async function startPenaltyShootout() {
     let stats = getGameStats(player);
     if (
       (group.length == 0) ||
-      ((stats.averagePosition - deepestPositions[player.team - 1]) * (player.team * 2 - 3) > 0)
+      ((stats.getMeanPosition() - deepestPositions[player.team - 1]) * (player.team * 2 - 3) > 0)
     ) { // The lowest player will be assigned to the GK role
       group.push(player.id); // GK is the player in the last index of the array
-      deepestPositions[player.team - 1] = stats.averagePosition;
+      deepestPositions[player.team - 1] = stats.getMeanPosition();
     } else {
       group.unshift(player.id);
     };
