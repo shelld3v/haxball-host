@@ -51,6 +51,7 @@ const PLAYER_SCORING_RULES = {
   attemptsLedToOG: 2,
   penaltiesScored: 1,
   penaltiesMissed: -1,
+  touches: 0.001,
 };
 const TEAM_COLORS = [
   [[60, 0xFFCC00, [0xE83030]], [60, 0xFFCC00, [0x004170]]],
@@ -224,11 +225,16 @@ class PlayerStats {
     this.attemptsLedToOG = 0;
     this.penaltiesScored = 0;
     this.penaltiesMissed = 0;
-    this.totalPosition = 0;
+    this.meanPosition = 0; // The "zone" the player tends to play around
   }
-  getMeanPosition() { // The "zone" the player tends to play around
-    if ( this.touches == 0 ) return 0;
-    return this.totalPosition / this.touches;
+  getPoints() {
+    let points = 0;
+    for (const [statName, value] of Object.entries(this)) {
+      if ( PLAYER_SCORING_RULES[statName] === undefined ) continue;
+      points += PLAYER_SCORING_RULES[statName] * value;
+    };
+    points += teamId == prevWinner; // Winners get an extra point
+    return points;
   }
 };
 class TeamStats {
@@ -774,20 +780,14 @@ function getPlayerByPos(number) {
 }
 
 function getMotm() {
-  if ( getNonAfkPlayers().length < MAX_PLAYERS * 2 ) return [null, new PlayerStats("")];
+  if ( getNonAfkPlayers().length < MAX_PLAYERS * 2 ) return [null, null];
   let motm;
   let highestPoints = Number.MIN_VALUE;
   for (let teamId = 1; teamId < 3; teamId++) {
     for (const [auth, stats] of Object.entries(game.teams[teamId].players)) {
-      let points = 0;
-      for (const [statName, value] of Object.entries(stats)) {
-        if ( PLAYER_SCORING_RULES[statName] === undefined ) continue;
-        points += PLAYER_SCORING_RULES[statName] * value;
-      };
-      if ( teamId == prevWinner ) points++; // Winners get an extra point
-      if ( (points > highestPoints) || ((points == highestPoints) && (stats.touches > motm[1].touches)) ) {
-        highestPoints = points;
-        motm = [auth, stats];
+      if ( stats.getPoints() > highestPoints ) {
+        highestPoints = stats.getPoints();
+        motm = [auth, name];
       };
     };
   };
@@ -1051,7 +1051,7 @@ function updateBallKick(player) {
   let stats = getGameStats(player);
   if ( (game.ballRecords[1] === null) || (player.id != game.ballRecords[1].player.id) ) {
     stats.touches++;
-    stats.totalPosition += player.position.x;
+    stats.meanPosition += (player.position.x - stats.meanPosition) / stats.touches;
   }
   // If the previous kick was a shot on goal, check whether it was blocked and exclude that shot if it was
   if ( game.ballRecords[1].isAShot && (travelingDistance < stadium.playerRadius * 2) ) {
@@ -1920,9 +1920,9 @@ function saveStats() {
         (prevScore.split("0").length > (teamId != prevWinner) + 1) &&
         (
           (gk[1] === null) ||
-          ((item.getMeanPosition() - gk[0]) * (teamId * 2 - 3) > 0)
+          ((item.meanPosition - gk[0]) * (teamId * 2 - 3) > 0)
         )
-      ) gk = [item.getMeanPosition(), item.auth];
+      ) gk = [item.meanPosition, item.auth];
       delete item.auth; // Unused value
       localStorage.setItem(auth, JSON.stringify(item));
     };
@@ -1948,7 +1948,7 @@ function reportStats() {
   room.sendAnnouncement(scoreline, null, YELLOW, "bold", 0);
 
   let stats = game.getStats();
-  let motm = getMotm()[1].name;
+  let motm = getMotm()[1];
   let contributions = [[], []];
   let playerStats = [["Người chơi                       ", "Đội ", "Bàn", "Kiến tạo", "Phản lưới", "Đường chuyền", "Sút trúng đích", "Chặn cú sút", "Nỗ lực tạo ra bàn thắng phản lưới", "Sai lầm dẫn đến bàn thua", "Penalty thành công", "Penalty không thành công", "Chạm bóng"]];
   playerStats.push(["-".repeat(playerStats[0].reduce((length, name) => length + name.length + 3, 0) - 3)]);
@@ -1990,7 +1990,7 @@ function reportStats() {
       contributions[i].push(msg);
     };
   };
-  playerStats.push([""], [`Man of the Match: ${motm}`])
+  if ( motm !== null ) playerStats.push([""], [`Man of the Match: ${motm}`]);
 
   // Generate a room message about game statistics
   let statsMsg = `Kiểm soát bóng: 🔴 ${stats.possession.map(possession => possession + "%").join(" - ")} 🔵
@@ -2002,7 +2002,7 @@ Lượt chuyền bóng: 🔴 ${stats.passes.join(" - ")} 🔵`;
   if ( contributions[1].length != 0 ) {
     statsMsg += `\nBLUE: ${contributions[1].join("  •  ")}`;
   };
-  statsMsg += `\nCầu thủ xuất sắc nhất trận: ${motm} 🎇`
+  if ( motm !== null ) statsMsg += `\nCầu thủ xuất sắc nhất trận: ${motm} 🎇`;
   statsMsg += `\nChuỗi bất bại: ${winningStreak} trận 🔥`;
   room.sendAnnouncement(statsMsg, null, YELLOW, "small-bold", 0);
 
@@ -2138,10 +2138,10 @@ async function startPenaltyShootout() {
     let stats = getGameStats(player);
     if (
       (group.length == 0) ||
-      ((stats.getMeanPosition() - deepestPositions[player.team - 1]) * (player.team * 2 - 3) > 0)
+      ((stats.meanPosition - deepestPositions[player.team - 1]) * (player.team * 2 - 3) > 0)
     ) { // The lowest player will be assigned to the GK role
       group.push(player.id); // GK is the player in the last index of the array
-      deepestPositions[player.team - 1] = stats.getMeanPosition();
+      deepestPositions[player.team - 1] = stats.meanPosition;
     } else {
       group.unshift(player.id);
     };
