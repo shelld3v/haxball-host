@@ -1917,7 +1917,7 @@ function saveStats() {
       };
       if ( auth == motmAuth ) item.motms++;
       if (
-        (prevScore.split("0").length > (teamId != prevWinner) + 1) &&
+        (prevScore.split("-").filter(score => score == "0").length > teamId != prevWinner) &&
         (
           (gk[1] === null) ||
           ((item.meanPosition - gk[0]) * (teamId * 2 - 3) > 0)
