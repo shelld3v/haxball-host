@@ -1204,21 +1204,18 @@ function helpFunc(value, player) {
   let allAlias = Object.keys(commands).filter(alias => canUseCommand(commands[alias], player));
   allAlias = allAlias.map(alias => "!" + alias)
   room.sendAnnouncement(`Các câu lệnh có sẵn: ${allAlias.join(", ")}`, player.id, GREEN);
-  return false;
 }
 
 function discordFunc(value, player) {
   if ( !DISCORD_LINK ) {
     room.sendAnnouncement(`Room hiện chưa có server Discord`, player.id, YELLOW, "normal", 0);
-    return false;
+    return;
   };
   room.sendAnnouncement(`Vào server Discord của De Paul 🥰: ${DISCORD_LINK}`, null, GREEN, "normal", 0);
-  return true;
 }
 
 function byeFunc(value, player) {
   room.kickPlayer(player.id, "Bye, sớm quay lại room nha 👋🏻🥺");
-  return false;
 }
 
 function showStatsFunc(value, player) {
@@ -1229,7 +1226,7 @@ function showStatsFunc(value, player) {
     showPlayer = getPlayerByName(value);
     if ( showPlayer === undefined ) {
       room.sendAnnouncement(`Người chơi "${value}" không tồn tại hoặc đã rời đi`, player.id, RED);
-      return false;
+      return;
     };
   };
   let item = getStats(getAuth(showPlayer.id));
@@ -1244,7 +1241,7 @@ function showStatsFunc(value, player) {
   str += `\n| 🏆 Tỉ lệ thắng: ${item.getWinRate()}%`;
   str += "\n╰──────────────────────────────────────────────────╯";
   room.sendAnnouncement(str, player.id, 0x5DB899, "small-bold", 0);
-  return false;
+  room.sendAnnouncement("Sử dụng !stat @người_chơi để xem thống kê của người chơi khác", player.id, YELLOW, "small-italic", 0);
 }
 
 function showGameStatsFunc(value, player) {
@@ -1255,14 +1252,13 @@ Kiến tạo: ${stats.assists}
 Bàn thắng phản lưới nhà: ${stats.ownGoals}
 Đường chuyền: ${stats.passes}
 Sút trúng đích: ${stats.shotsOnTarget}`, player.id, BLUE, "small-bold", 0);
-  return false;
 }
 
 function showRankingsFunc(value, player) {
   let playerList = getPlayerStats();
   if ( playerList.length == 0 ) {
     room.sendAnnouncement("Chưa có dữ liệu người chơi", player.id, RED);
-    return false;
+    return;
   };
 
   // Sort players by points
@@ -1295,34 +1291,32 @@ function showRankingsFunc(value, player) {
   msg += `\n (Xếp hạng của bạn: ${1 + playerList.findIndex(stats => stats.auth == getAuth(player.id)) || "Không có"})`;
 
   room.sendAnnouncement(msg, player.id, YELLOW, "small-italic", 0);
-  return false;
 }
 
 function kickAfkFunc(value, player) {
   if ( !isPlaying ) {
     room.sendAnnouncement("Chỉ có thể báo cáo AFK khi trận đấu đang diễn ra", player.id, RED);
-    return false;
+    return;
   };
 
   trackAfk();
-  room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick", null, GREEN);
-  return true;
+  room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick (hãy luôn nhớ sử dụng lệnh !kickafk để kick AFK)", null, GREEN);
+  return;
 }
 
 function specFunc(value, player) {
   if ( player.team == 0 ) {
     room.sendAnnouncement("Bạn đã ở Spectators", player.id, RED);
-    return false;
+    return;
   } else if ( getSpectators().length == 0 ) {
     room.sendAnnouncement("Đã hết người chơi để thay vào", player.id, RED);
-    return false;
+    return;
   };
 
   room.setPlayerTeam(player.id, 0);
-  room.sendAnnouncement("Bạn đã được di chuyển ra Spectators", player.id, GREEN);
+  room.sendAnnouncement(`${player.name} đã yêu cầu và được di chuyển ra Spectators`, null, GREEN);
   updateTeamPlayers();
   punishQuitGame(player);
-  return true;
 }
 
 function listCaptainsFunc(value, player) {
@@ -1334,31 +1328,31 @@ function listCaptainsFunc(value, player) {
 function predictFunc(prediction, player) {
   if ( player.team != 0 ) {
     room.sendAnnouncement("Cầu thủ không được tham gia dự đoán để tránh hiện tượng bán độ", player.id, RED);
-    return false;
+    return;
   };
   if ( !prediction ) {
     room.sendAnnouncement("Vui lòng cung cấp một tỉ số hợp lệ, có dạng RED-BLUE (VD: 3-1)", player.id, RED);
-    return false;
+    return;
   };
   if ( Object.values(predictions).some(predictors => predictors.includes(player.id)) ) { // Has already had a prediction
     room.sendAnnouncement("Bạn chỉ có thể thực hiện một dự đoán trong một trận đấu", player.id, RED);
-    return false;
+    return;
   };
   let scores = room.getScores();
   if ( isTakingPenalty || (scores === null) || (scores.time > PREDICTION_PERIOD) || (scores.red + scores.blue != 0) ) {
     room.sendAnnouncement("Chưa thể đoán tỉ số hoặc đã hết thời hạn dự đoán tỉ số", player.id, RED);
-    return false;
+    return;
   };
 
   let score = prediction.split("-").map(goals => Number(goals));
   if ( (score.length != 2) || score.some(goals => goals % 1 !== 0) ) {
     room.sendAnnouncement("Tỉ số không hợp lệ, vui lòng đảm bảo tỉ số có dạng RED-BLUE (VD: 2-1)", player.id, RED);
-    return false;
+    return;
   };
   let scoreLimit = room.getScores().scoreLimit;
   if ( (scoreLimit != 0) && (score.some(goals => goals > scoreLimit) || (score[0] + score[1] == scoreLimit * 2)) ) {
     room.sendAnnouncement("Tỉ số không thể xảy ra", player.id, RED);
-    return false;
+    return;
   };
   prediction = score.join("-"); // Re-format weird scores like "0x01-0x02", even though I don't know why I should even care
   if ( predictions[prediction] === undefined ) {
@@ -1367,71 +1361,69 @@ function predictFunc(prediction, player) {
     predictions[prediction].push(player.id);
   } else { // Maximum winners per match reached (1 in pick mode and maximum number of players each team in rand mode) 
     room.sendAnnouncement("Đã có đủ người dự đoán tỉ số này, vui lòng dự đoán tỉ số khác", player.id, RED);
-    return false;
+    return;
   };
   
   room.sendAnnouncement(`${player.name} đã dự đoán tỉ số RED ${prediction} BLUE`, null, GREEN);
-  return false;
 }
 
 function surrenderFunc(value, player) {
   if ( player.team == 0 ) {
     room.sendAnnouncement("Bạn không thể sử dụng lệnh này", player.id, RED);
-    return false;
+    return;
   };
   let scores = room.getScores();
   if ( isTakingPenalty || (scores === null) ) {
     room.sendAnnouncement("Lệnh không khả dụng lúc này", player.id, RED);
-    return false;
+    return;
   };
   if ( scores.time < 60 * TIME_LIMIT / 2 ) {
     room.sendAnnouncement("Chưa đủ thời gian chơi tối thiểu để có thể đầu hàng, vui lòng đợi thêm", player.id, RED);
-    return false;
+    return;
   };
   if ( ( player.team == 1 ) ? (scores.red >= scores.blue) : (scores.blue >= scores.red) ) {
     room.sendAnnouncement("Bạn chỉ có thể đầu hàng khi đội đang thua", player.id, RED);
-    return false;
+    return;
   };
   if ( surrenderVoter.hasVoted(player) ) {
     room.sendAnnouncement("Bạn đã bỏ phiếu đầu hàng trước đó", player.id, RED);
-    return false;
+    return;
   }
 
   surrenderVoter.vote(player);
-  return false;
 }
 
 function subFunc(value, player) {
   if ( isTakingPenalty || (room.getScores() === null) ) {
     room.sendAnnouncement("Bạn chỉ có thể thay người khi trận đấu đang diễn ra", player.id, RED);
-    return false;
+    return;
   };
   if ( game.teams[player.team].substitutions >= MAX_SUBSTITUTIONS ) {
     room.sendAnnouncement("Bạn đã hết lượt thay người", player.id, RED);
-    return false;
+    return;
   };
   let sub = value.split(" ", 2);
   if ( sub[0] == "" ) {
     room.sendAnnouncement("Đặt cầu thủ muốn thay ra TRƯỚC cầu thủ muốn thay vào, bỏ trống vị trí thay vào nếu muốn tự động thay vào cầu thủ có thống kê tốt nhất trong room (VD: !sub @a @b hoặc !sub @a)", player.id, RED);
-    return false;
+    return;
   };
 
   let [outPlayer, inPlayer] = [getPlayerByName(sub[0]), getPlayerByName(sub[1]) || getBestSpectatorByStats()];
   if ( !inPlayer || !outPlayer ) {
     room.sendAnnouncement("Một trong hai hoặc cả hai cầu thủ không tồn tại hoặc đã rời đi", player.id, RED);
-    return false;
+    return;
   };
   if ( inPlayer.team != 0 ) {
     room.sendAnnouncement("Chỉ có thể thay vào người chơi từ Spectators", player.id, RED);
-    return false;
+    return;
   };
   if ( afkList.has(inPlayer.id) ) {
     room.sendAnnouncement("Người chơi bạn muốn thay vào đang ở trạng thái AFK", player.id, RED);
-    return false;
+    return;
   };
   if ( outPlayer.team != player.team ) {
     room.sendAnnouncement("Không thể thay ra cầu thủ không nằm trong đội bạn", player.id, RED);
-    return false;
+    return;
   };
   room.sendAnnouncement(`🔻 ${outPlayer.name} đã được thay ra ngoài`, null, 0xFF0000, "small", 0);
   room.sendAnnouncement(`🔺 ${inPlayer.name} đã được thay vào sân`, null, 0x00FF00, "small", 0);
@@ -1439,13 +1431,12 @@ function subFunc(value, player) {
   room.setPlayerTeam(outPlayer.id, 0);
   game.teams[player.team].substitutions++;
   room.sendAnnouncement(`Lượt thay người còn lại: ${MAX_SUBSTITUTIONS - game.teams[player.team].substitutions}`, player.id, YELLOW, "small-italic", 0);
-  return false;
 }
 
 function pauseFunc(value, player) {
   if ( !canPause ) {
     room.sendAnnouncement("Bạn không thể dừng game vào lúc này", player.id, RED);
-    return false;
+    return;
   };
 
   pausedBy = player.team;
@@ -1453,45 +1444,43 @@ function pauseFunc(value, player) {
   room.sendChat(`Trận đấu đã được tạm dừng bởi đội trưởng của ${TEAM_NAMES[player.team]} để thay người`);
   room.sendAnnouncement(`Bạn có ${PAUSE_TIMEOUT} giây để thay người, dùng !resume khi đã xong việc`, player.id, YELLOW);
   timeouts.toResume = setTimeout(room.pauseGame.bind(null, false), PAUSE_TIMEOUT * 1000);
-  return false;
 }
 
 function resumeFunc(value, player) {
   if ( player.team != pausedBy ) {
     room.sendAnnouncement("Vui lòng đợi đội bạn thay người", player.id, RED);
-    return false;
+    return;
   };
 
   room.pauseGame(false);
-  return false;
 }
 
 function setMsgColorFunc(value, player) {
   if ( value != "normal" ) {
     if ( !/^[0-9A-F]{6}$/i.test(value) ) {
       room.sendAnnouncement('Vui lòng nhập một mã màu hợp lệ hoặc dùng "normal" để đặt lại về mặc định (VD: !msgcolor 00FFFF hoặc !msgcolor normal)', player.id, RED);
-      return false;
+      return;
     };
     value = `0x${value}`;
   };
   let setting = getSetting(player.id);
   setting.msgColor = value;
   saveSetting(player.id, setting);
-  return false;
+  room.sendAnnoucement("Đã đổi màu tin nhắn thành công", player.id, GREEN);
 }
 
 function adjustSizeFunc(value, player) {
   if ( !value || isNaN(value) ) {
     room.sendAnnouncement("Vui lòng cung cấp số đơn vị muốn thay đổi, dùng 0 để chỉnh lại về bình thường (VD: !adjustsize -2)", player.id, RED);
-    return false;
+    return;
   };
   if ( value > 0 ) {
     room.sendAnnouncement("Bạn không thể tăng kích cỡ cầu thủ", player.id, RED);
-    return false;
+    return;
   };
   if ( Math.abs(value) > stadium.playerRadius * MAX_SIZE_ADJUSTMENT_RATIO ) {
     room.sendAnnouncement("Kích cỡ cầu thủ đã bị chỉnh tới mức không hợp lệ", player.id, RED);
-    return false;
+    return;
   };
   let setting = getSetting(player.id);
   let gap = value - setting.sizeAdjustment;
@@ -1501,50 +1490,51 @@ function adjustSizeFunc(value, player) {
   let playerDiscProperties = room.getPlayerDiscProperties(player.id);
   (playerDiscProperties !== null) && room.setPlayerDiscProperties(player.id, { radius: playerDiscProperties.radius + gap });
   room.sendAnnouncement("Đã chỉnh và lưu kích thước cầu thủ", player.id, GREEN);
-  return false;
 }
 
 function assignCaptainFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp tên đội và một người chơi hợp lệ (VD: !assigncap red @De_Paul hoặc !assigncap blue paul)", player.id, RED);
-    return false;
+    return;
   };
 
   let teamIds = {"red": 1, "blue": 2};
   let [team, name] = value.split(" ", 2);
   if ( teamIds[team] === undefined ) {
     room.sendAnnouncement("Tên đội phải là \"red\" hoặc \"blue\" (VD: !assigncap red paul)", player.id, RED);
-    return false;
+    return;
   };
   let assignedPlayer = getPlayerByName(name);
   if ( !assignedPlayer ) {
     room.sendAnnouncement(`Người chơi "${value}" không tồn tại hoặc đã rời đi`, player.id, RED);
-    return false;
+    return;
   };
   if ( afkList.has(assignedPlayer.id) ) {
     room.sendAnnouncement("Người chơi đang ở trạng thái AFK", player.id, RED);
-    return false;
+    return;
   };
+
   updateCaptain(teamIds[team], assignedPlayer);
-  return true;
 }
 
 function leaveCaptainFunc(value, player) {
   let assignedPlayer = getPlayerByName(value);
   if ( !assignedPlayer ) {
     room.sendAnnouncement(`Người chơi "${value}" không tồn tại hoặc đã rời đi`, player.id, RED);
-    return false;
+    return;
   };
   if ( afkList.has(assignedPlayer.id) ) {
     room.sendAnnouncement("Người chơi đang ở trạng thái AFK", player.id, RED);
-    return false;
+    return;
   };
   if ( assignedPlayer.team == getOppositeTeamId(player.team) ) {
     room.sendAnnouncement("Người chơi đang chơi cho đội khác", player.id, RED);
-    return false;
+    return;
   };
+  if ( assignedPlayer.id == player.id ) return;
+
   updateCaptain(player.team, assignedPlayer);
-  return true;
+  room.sendAnnoucement(`${player.name} đã nhường băng đội trưởng cho ${assignedPlayer.name}`, null, YELLOW, "small-italic");
 }
 
 function loginFunc(password, player) {
@@ -1563,13 +1553,12 @@ function loginFunc(password, player) {
     default:
       room.kickPlayer(player.id, "Bạn đã nhập sai mật khẩu, vui lòng thử lại");
   };
-  return false;
 }
 
 function yellowCardFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp một người chơi hợp lệ và lý do phạt nếu có (VD: !yellow @De_Paul hoặc !yellow paul Láo)", player.id, RED);
-    return false;
+    return;
   };
 
   value = value.split(" ");
@@ -1577,11 +1566,11 @@ function yellowCardFunc(value, player) {
   let toPlayer = getPlayerByName(name);
   if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
-    return false;
+    return;
   };
   if ( getRole(player) < getRole(toPlayer) ) {
     room.sendAnnouncement(`Bạn không có quyền phạt thẻ vàng người chơi "${name}"`, player.id, RED);
-    return false;
+    return;
   };
 
   let yellowCards = JSON.parse(localStorage.getItem("yellow_cards")) || [];
@@ -1598,38 +1587,36 @@ function yellowCardFunc(value, player) {
   room.sendAnnouncement(msg, null, YELLOW);
   localStorage.setItem("yellow_cards", JSON.stringify(yellowCards));
   log(`${toPlayer.name} was given a yellow card by ${player.name} (reason: ${reason})`);
-  return false;
 }
 
 function clearYellowCardFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp một người chơi hợp lệ (VD: !clearyellow @De_Paul hoặc !clearyellow paul)", player.id, RED);
-    return false;
+    return;
   };
 
   let toPlayer = getPlayerByName(value);
   if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${value}"`, player.id, RED);
-    return false;
+    return;
   };
 
   let yellowCards = JSON.parse(localStorage.getItem("yellow_cards")) || [];
   let index = yellowCards.indexOf(getConn(toPlayer.id));
   if ( index == -1 ) {
     room.sendAnnouncement(`${toPlayer.name} chưa nhận thẻ vàng nào`, player.id, RED);
-    return false;
+    return;
   };
   yellowCards.splice(index, 1);
   localStorage.setItem("yellow_cards", JSON.stringify(yellowCards));
   room.sendAnnouncement(`🟨❌ ${toPlayer.name} đã được xóa thẻ vàng`, null, YELLOW);
   log(`${toPlayer.name}'s yellow card was cleared by ${player.name}`);
-  return false;
 }
 
 function muteFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp người chơi, thời hạn cấm chat (đơn vị phút, để 0 để cấm vĩnh viễn) và lý do nếu có (VD: !mute @ân 1 / !mute paul 0 Ngu)", player.id, RED);
-    return false;
+    return;
   };
 
   value = value.split(" ");
@@ -1637,16 +1624,16 @@ function muteFunc(value, player) {
   let toPlayer = getPlayerByName(name);
   if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
-    return false;
+    return;
   };
   if ( getRole(player) < getRole(toPlayer) ) {
     room.sendAnnouncement(`Bạn không có quyền cấm chat người chơi "${name}"`, player.id, RED);
-    return false;
+    return;
   };
 
   if ( isNaN(period) || period < 0 ) {
     room.sendAnnouncement("Vui lòng cung cấp một thời hạn cấm chat hợp lệ (VD: !mute @De_Paul 3)", player.id, RED);
-    return false;
+    return;
   };
 
   muteList.add(getConn(toPlayer.id));
@@ -1660,54 +1647,49 @@ function muteFunc(value, player) {
   };
   reason && (msg += `: ${reason}`);
   room.sendAnnouncement(msg, null, RED, "bold", 0);
-  return false;
 }
 
 function unmuteFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp một người chơi hợp lệ (VD: !unmute @De_Paul hoặc !unmute paul)", player.id, RED);
-    return false;
+    return;
   };
 
   let toPlayer = getPlayerByName(value);
   if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${value}"`, player.id, RED);
-    return false;
+    return;
   };
 
   muteList.delete(getConn(toPlayer.id));
   room.sendAnnouncement(`${toPlayer.name} đã có thể chat trở lại`, null, GREEN);
   log(`${toPlayer.name} was unmuted by ${player.name})`);
-  return false;
 }
 
 function clearMutesFunc(value, player) {
   muteList.clear();
   room.sendAnnouncement("Đã xóa các lượt cấm chat", null, GREEN);
   log(`${player.name} unmuted all`);
-  return false;
 }
 
 function lockFunc(value, player) {
-  if ( isChatLocked ) return false;
+  if ( isChatLocked ) return;
   isChatLocked = true;
   room.sendAnnouncement(`${player.name} đã khóa khung chat`, null, YELLOW);
   log(`${player.name} locked the chat`);
-  return false;
 }
 
 function unlockFunc(value, player) {
-  if ( !isChatLocked ) return false;
+  if ( !isChatLocked ) return;
   isChatLocked = false;
   room.sendAnnouncement(`${player.name} đã mở khóa khung chat`, null, YELLOW);
   log(`${player.name} unlocked the chat`);
-  return false
 }
 
 function banFunc(value, player) {
   if ( !value ) {
     room.sendAnnouncement("Vui lòng cung cấp người chơi, thời hạn ban (đơn vị giờ, để 0 để cấm vĩnh viễn) và lý do nếu có (VD: !ban @ân 24 / !ban paul 0 Phá room)", player.id, RED);
-    return false;
+    return;
   };
 
   value = value.split(" ");
@@ -1715,18 +1697,17 @@ function banFunc(value, player) {
   let toPlayer = getPlayerByName(name);
   if ( !toPlayer ) {
     room.sendAnnouncement(`Không thể tìm thấy người chơi "${name}"`, player.id, RED);
-    return false;
+    return;
   };
   if ( getRole(player) < getRole(toPlayer) ) {
     room.sendAnnouncement(`Bạn không có quyền cấm người chơi "${name}"`, player.id, RED);
-    return false;
+    return;
   };
   if ( isNaN(period) || period < 0 ) {
     room.sendAnnouncement("Vui lòng cung cấp một thời hạn cấm chat hợp lệ (VD: !mute @De_Paul 3)", player.id, RED);
-    return false;
+    return;
   };
   ban(toPlayer.id, reason, +period);
-  return false;
 }
 
 function showBansFunc(value, player) {
@@ -1734,29 +1715,27 @@ function showBansFunc(value, player) {
   for (const details of banList) {
     room.sendAnnouncement(`• [${details[0]}] ${details[1]} (Lí do: ${details[2]})`, player.id, GREEN, "small", 0);
   };
-  return false;
 }
 
 function unbanFunc(value, player) {
   if ( !value || isNaN(value) ) {
     room.sendAnnouncement("Vui lòng cung cấp ID người chơi bị cấm, dùng !bans để xem danh sách cấm (VD: !clearban 133)", player.id, RED);
-    return false;
+    return;
   };
   let banDetails = banList.find(details => details[0] == value);
   if ( !banDetails ) {
     room.sendAnnouncement(`Không tìm thấy người chơi bị cấm với ID ${value}`, player.id, RED);
-    return false;
+    return;
   }
   unban(banDetails[0]);
   room.sendAnnouncement(`Đã bỏ cấm người chơi ${banDetails[1]}`, null, GREEN);
-  return false;
+  return;
 }
 
 function clearBansFunc(value, player) {
   room.clearBans();
   banList.length = 0;
   room.sendAnnouncement("Đã xóa các lượt ban", null, GREEN);
-  return false;
 }
 
 function afkFunc(value, player) {
@@ -1780,7 +1759,7 @@ function afkFunc(value, player) {
       // Only allows a limited number of AFK players including the host
       if ( afkList.size == MAX_AFK_PLAYERS ) {
         room.sendAnnouncement("Đã có quá nhiều người chơi AFK, bạn không thể AFK", player.id, RED);
-        return false;
+        return;
       };
       timeouts.toQuitAfk[player.id] = setTimeout(oversleepCallback.bind(null, player.id), AFK_TIMEOUT * 1000);
     };
@@ -1807,12 +1786,10 @@ function afkFunc(value, player) {
   updateTeamPlayers();
   reorderPlayers();
   showSpecTable();
-  return false;
 };
 
 function showAfksFunc(value, player) {
   room.sendAnnouncement(`Danh sách những người chơi đang AFK: ${Array.from(afkList).map(id => room.getPlayer(id).name).join(", ")}`, player.id, GREEN);
-  return false;
 }
 
 function punishQuitGame(player) {
@@ -2575,7 +2552,8 @@ room.onPlayerChat = function(player, message) {
       if ( (getRole(player) < ROLE.ADMIN) && checkSpam(player, message) ) return false;
     };
   };
-  if ( message.startsWith("!") && !handleCommand(player, message.slice(1)) ) {
+  if ( message.startsWith("!") ) {
+    handleCommand(player, message.slice(1);
     return false;
   };
   personalizeMsg(message, player);
