@@ -2553,7 +2553,7 @@ room.onPlayerChat = function(player, message) {
     };
   };
   if ( message.startsWith("!") ) {
-    handleCommand(player, message.slice(1);
+    handleCommand(player, message.slice(1));
     return false;
   };
   personalizeMsg(message, player);
