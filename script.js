@@ -372,7 +372,7 @@ class Surrender {
     return this.votes[player.team - 1].has(player.id);
   }
   reset() {
-    this.votes.every((votes) => votes.clear());
+    this.votes.forEach((votes) => votes.clear());
   }
 }
 
@@ -813,7 +813,7 @@ function getMotm() {
     for (const [auth, stats] of Object.entries(game.teams[teamId].players)) {
       if ( stats.getPoints() > highestPoints ) {
         highestPoints = stats.getPoints();
-        motm = [auth, name];
+        motm = [auth, stats.name];
       };
     };
   };
@@ -903,7 +903,7 @@ async function celebrationEffect(player) {
       break;
     case 5:
       playerIds = room.getPlayerList().flatMap(player_ => (player_.team == player.team) && (player_.id != player.id) ? [player_.id] : []);
-      for (let i = 0; i < players.length; i++) {
+      for (let i = 0; i < playerIds.length; i++) {
         room.setPlayerDiscProperties(
           playerIds[i],
           {
@@ -1244,16 +1244,6 @@ function showStatsFunc(value, player) {
   room.sendAnnouncement("Sử dụng !stat @người_chơi để xem thống kê của người chơi khác", player.id, YELLOW, "small-italic", 0);
 }
 
-function showGameStatsFunc(value, player) {
-  let stats = game[player.team][getAuth(showPlayer.id)];
-  room.sendAnnouncement(`Thống kê trong tháng ${getMonths()} của ${player.name}:`, player.id, BLUE, "bold", 0);
-  room.sendAnnouncement(`Bàn thắng: ${stats.goals}
-Kiến tạo: ${stats.assists}
-Bàn thắng phản lưới nhà: ${stats.ownGoals}
-Đường chuyền: ${stats.passes}
-Sút trúng đích: ${stats.shotsOnTarget}`, player.id, BLUE, "small-bold", 0);
-}
-
 function showRankingsFunc(value, player) {
   let playerList = getPlayerStats();
   if ( playerList.length == 0 ) {
@@ -1301,7 +1291,6 @@ function kickAfkFunc(value, player) {
 
   trackAfk();
   room.sendAnnouncement("Đang theo dõi AFK, AFK sẽ sớm bị kick (hãy luôn nhớ sử dụng lệnh !kickafk để kick AFK)", null, GREEN);
-  return;
 }
 
 function specFunc(value, player) {
@@ -1466,7 +1455,7 @@ function setMsgColorFunc(value, player) {
   let setting = getSetting(player.id);
   setting.msgColor = value;
   saveSetting(player.id, setting);
-  room.sendAnnoucement("Đã đổi màu tin nhắn thành công", player.id, GREEN);
+  room.sendAnnouncement("Đã đổi màu tin nhắn thành công", player.id, GREEN);
 }
 
 function adjustSizeFunc(value, player) {
@@ -1534,7 +1523,7 @@ function leaveCaptainFunc(value, player) {
   if ( assignedPlayer.id == player.id ) return;
 
   updateCaptain(player.team, assignedPlayer);
-  room.sendAnnoucement(`${player.name} đã nhường băng đội trưởng cho ${assignedPlayer.name}`, null, YELLOW, "small-italic");
+  room.sendAnnouncement(`${player.name} đã nhường băng đội trưởng cho ${assignedPlayer.name}`, null, YELLOW, "small-italic");
 }
 
 function loginFunc(password, player) {
@@ -2141,7 +2130,7 @@ Discord: ${DISCORD_LINK}`;
 async function startPenaltyShootout() {
   isTakingPenalty = true;
   prevScore = Array(2).fill(room.getScores().red).join("-");
-  let deepestPositions = [Number.MAX_NUMBER, Number.MIN_NUMBER];
+  let deepestPositions = [Number.MAX_VALUE, Number.MIN_VALUE];
   // Store players' team and role (GK or not) for the penalty shootout
   room.getPlayerList().forEach(function(player) {
     if ( player.team == 0 ) return;
