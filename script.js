@@ -234,7 +234,6 @@ class PlayerStats {
       if ( PLAYER_SCORING_RULES[statName] === undefined ) continue;
       points += PLAYER_SCORING_RULES[statName] * value;
     };
-    points += teamId == prevWinner; // Winners get an extra point
     return points;
   }
 };
@@ -811,8 +810,8 @@ function getMotm() {
   let highestPoints = Number.MIN_VALUE;
   for (let teamId = 1; teamId < 3; teamId++) {
     for (const [auth, stats] of Object.entries(game.teams[teamId].players)) {
-      if ( stats.getPoints() > highestPoints ) {
-        highestPoints = stats.getPoints();
+      if ( stats.getPoints() + (teamId == prevWinner) > highestPoints ) {
+        highestPoints = stats.getPoints() + (teamId == prevWinner); // Winners get an extra point
         motm = [auth, stats.name];
       };
     };
