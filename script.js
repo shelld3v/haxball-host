@@ -1304,9 +1304,9 @@ function specFunc(value, player) {
     return;
   };
 
-  room.setPlayerTeam(player.id, 0);
-  room.sendAnnouncement(`${player.name} đã yêu cầu và được di chuyển ra Spectators`, null, GREEN);
-  updateTeamPlayers();
+  room.setPlayerTeam(player.id, 0)
+    .then(() => room.sendAnnouncement(`${player.name} đã yêu cầu và được di chuyển ra Spectators`, null, GREEN))
+    .then(() => updateTeamPlayers());
   punishQuitGame(player);
 }
 
