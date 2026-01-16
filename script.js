@@ -2100,7 +2100,7 @@ function checkSpam(player, message) {
 
 // Only track AFKs if there are many players in the room
 function checkAfk() {
-  if ( getNonAfkPlayers().length < MAX_PLAYERS * 2 ) return;
+  if ( !isPlaying || getNonAfkPlayers().length < MAX_PLAYERS * 2 ) return;
   trackAfk();
 }
 
