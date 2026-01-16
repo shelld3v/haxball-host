@@ -19,6 +19,7 @@ const MIN_PLAYERS_FOR_STATS = MAX_PLAYERS - 1;
 const MIN_VOTES_FOR_SURRENDER = MAX_PLAYERS - 2;
 const MAX_ADDED_TIME = 90;
 const NOTIFICATION_INTERVAL = 5 * 60;
+const CHECK_AFK_INTERVAL = 60;
 const LATE_SUBSTITUTION_PERIOD = 30;
 const MAX_AFK_PLAYERS = 3;
 const MAX_SIZE_ADJUSTMENT_RATIO = 0.3;
@@ -458,6 +459,7 @@ room.setKickRateLimit(6, 0, 0);
 loadStadium("training").then(_ => { room.startGame() });
 setInterval(randomAnnouncement, NOTIFICATION_INTERVAL * 1000);
 setInterval(randomGameStat, 2.5 * 60 * 1000);
+setInterval(checkAfk, CHECK_AFK_INTERVAL * 1000);
 if ( MODE == "pick" ) setInterval(showSpecTable.bind(null), 5 * 1000); // Send Spectators table once every few seconds to prevent it from being faded away by other messages
 updateMetadata();
 
@@ -536,6 +538,7 @@ function randomGameStat() {
     case 3:
       if ( winningStreak < 3 ) return;
       fact = `Chuỗi bất bại của ${TEAM_NAMES[prevWinner]}: ${winningStreak}`;
+      break;
     case 4:
       let topPasser = new PlayerStats();
       for (let teamId = 1; teamId < 3; teamId++) {
@@ -2093,6 +2096,12 @@ function checkSpam(player, message) {
   lastMessages.unshift([message, player.id, time]);
   if ( lastMessages.length > 4 ) lastMessages.pop();
   return false;
+}
+
+// Only track AFKs if there are many players in the room
+function checkAfk() {
+  if ( getNonAfkPlayers().length < MAX_PLAYERS * 2 ) return;
+  trackAfk();
 }
 
 // Track all players on the pitch to find and kick AFK players
