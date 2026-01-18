@@ -446,6 +446,7 @@ var timeouts = {
 var selectedCaptain = null;
 var quotes = [];
 var logMsg = "";
+var currentStadium = null;
 var ballColor = new BallColor();
 
 var room = HBInit({
@@ -464,7 +465,7 @@ if ( MODE == "pick" ) setInterval(showSpecTable.bind(null), 5 * 1000); // Send S
 updateMetadata();
 
 async function loadStadium(name) {
-  if ( isTakingPenalty && (name != "penalty") ) return;
+  if ( (isTakingPenalty && (name != "penalty")) || (name == currentStadium) ) return;
   let _stadium = {
     "penalty": [PENALTY_STADIUM, 0, 0],
     "5v5": [STADIUM, SCORE_LIMIT, TIME_LIMIT],
@@ -477,6 +478,7 @@ async function loadStadium(name) {
   room.setCustomStadium(_stadium[0]);
   room.setScoreLimit(_stadium[1]);
   room.setTimeLimit(_stadium[2]);
+  currentStadium = name;
   wasPlaying && room.startGame();
   // Analyze the stadium
   let parsedStadium = JSON.parse(_stadium[0]);
