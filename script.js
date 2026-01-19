@@ -2370,9 +2370,20 @@ room.onPlayerJoin = async function(player) {
 }
 
 room.onPlayerLeave = async function(player) {
-  if ( player.team != 0 ) {
+  if ( player.team != 0 ) { // An active player just left
     await updateTeamPlayers();
     punishQuitGame(player);
+    if ( !isTakingPenalty ) {
+      switch ( getNonAfkPlayers().length ) {
+      case 7:
+        loadStadium("3v3");
+        break;
+      case 5:
+        loadStadium("1v1");
+        break;
+      case 1:
+        loadStadium("training");
+    };
   } else if ( afkList.has(player.id) ) { // Player was in AFK list
     // Remove from AFK list
     afkList.delete(player.id);
@@ -2390,17 +2401,6 @@ room.onPlayerLeave = async function(player) {
         await endPenaltyShootout(2 - i);
         break;
       };
-    };
-  } else {
-    switch ( getNonAfkPlayers().length ) {
-      case 7:
-        loadStadium("3v3");
-        break;
-      case 5:
-        loadStadium("1v1");
-        break;
-      case 1:
-        loadStadium("training");
     };
   };
 
